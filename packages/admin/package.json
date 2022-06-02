@@ -1,0 +1,18 @@
+{
+  "name": "@madatdata/admin",
+  "packageManager": "yarn@3.2.0",
+  "private": true,
+  "scripts": {
+    "admin": "yarn run esno start.ts",
+    "admin-debug-brk": "yarn run esno --inspect-brk=0.0.0.0:8888 start.ts"
+  },
+  "dependencies": {
+    "@rushstack/ts-command-line": "4.10.6",
+    "chalk": "5.0.1",
+    "esno": "0.16.3",
+    "typescript": "4.7.2"
+  },
+  "devDependencies": {
+    "@types/node": "16.11.38"
+  }
+}

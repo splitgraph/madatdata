@@ -1,0 +1,1 @@
+# admin CLI for madatdata

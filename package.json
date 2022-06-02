@@ -1,0 +1,22 @@
+{
+  "name": "@madatdata/root",
+  "packageManager": "yarn@3.2.1",
+  "private": true,
+  "scripts": {
+    "start": "yarn workspace @madatdata/server run start",
+    "admin": "yarn workspace @madatdata/admin run admin",
+    "typecheck": "yarn tsc --build --verbose",
+    "format": "yarn run format.base --write --list-different .",
+    "format.check": "yarn run format.base --check . || { yarn run format.warn ; }",
+    "format.base": "yarn prettier --config .prettierrc --ignore-path .prettierignore --ignore-unknown",
+    "format.warn": "echo ; echo \"Formatting issues found. To apply changes, run yarn format\" ; exit 1 ;"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@types/node": "16.11.38",
+    "prettier": "2.6.2",
+    "typescript": "4.7.2"
+  }
+}
