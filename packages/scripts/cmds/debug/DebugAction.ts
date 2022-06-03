@@ -2,7 +2,7 @@ import chalk from "chalk";
 import { CommandLineAction } from "@rushstack/ts-command-line";
 
 import { openDevtools } from "./devtools";
-import { makePersistentBrowser as makeBrowser } from "@madatdata/admin/lib/browser";
+import { makePersistentBrowser as makeBrowser } from "@madatdata/scripts/lib/browser";
 import { getDebugConfig } from "./debug-config";
 
 // todo: get from args

@@ -31,7 +31,7 @@
     "experimentalDecorators": true,
     "paths": {
       "@madatdata/root/*": ["*"],
-      "@madatdata/admin/*": ["./packages/admin/*"]
+      "@madatdata/scripts/*": ["./packages/scripts/*"]
     }
   },
   "exclude": ["node_modules", ".*", "public", "dist"],

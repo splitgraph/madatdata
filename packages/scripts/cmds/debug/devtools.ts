@@ -3,7 +3,7 @@
 // import { CommandLineAction } from "@rushstack/ts-command-line";
 
 // import { startScrape, startPassiveScrape } from "./scrape-slack";
-// import { makePersistentBrowser as makeBrowser } from "@madatdata/admin/lib/browser";
+// import { makePersistentBrowser as makeBrowser } from "@madatdata/scripts/lib/browser";
 
 import type { BrowserContext } from "playwright";
 
