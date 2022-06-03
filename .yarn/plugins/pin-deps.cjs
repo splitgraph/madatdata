@@ -1,7 +1,7 @@
 module.exports = {
   name: `pin-deps`,
   factory: (require) => {
-    const { Command } = require(`clipanion`);
+    const { BaseCommand} = require(`@yarnpkg/cli`);
 
     const core = require(`@yarnpkg/core`);
     const semver = require(`semver`);
@@ -16,7 +16,9 @@ module.exports = {
       structUtils,
       Manifest,
     } = core;
-    const { getPluginConfiguration } = require("@yarnpkg/cli");
+
+    const { getPluginConfiguration, } = require("@yarnpkg/cli");
+    const { Command, Option } = require("clipanion")
     const { ppath } = require("@yarnpkg/fslib");
 
     const green = (text) => `\x1b[32m${text}\x1b[0m`;
@@ -42,7 +44,39 @@ module.exports = {
       );
     };
 
-    class PinDepsCommand extends Command {
+    class PinDepsCommand extends BaseCommand {
+      static paths = [["pin-deps"]]
+
+      dryRun = Option.Boolean("--dry", {
+        description: "Print the changes to stdout but do not apply them to package.json files."
+      })
+
+      onlyDevDependencies = Option.Boolean("--only-dev", {
+        description: "Only devDependencies"
+      })
+
+      ignoreDevDependencies = Option.Boolean("--ignore-dev", {
+        description: "Ignore devDependencies (default is false, to pin dependencies and devDependencies)."
+      })
+
+
+      verbose = Option.Boolean("--verbose", {
+        description: "Print more information about skipped or already pinned packages"
+      })
+
+      onlyPackages = Option.Array("--only", {
+        description: `To _only_ include a specific name:range package (or packages).`,
+      })
+
+      alsoIncludePackages = Option.Array("--also", {
+        description: `To pin a specific name:range that would otherwise be skipped`,
+      })
+
+
+      onlyWorkspaces = Option.Array("--workspace", {
+        description: `To _only_ include a specific workspace (or workspaces)`,
+      })
+
       async execute() {
         this.configuration = await Configuration.find(
           this.context.cwd,
@@ -458,72 +492,16 @@ module.exports = {
       }
     }
 
-    // Similarly we would be able to use a decorator here too, but since
-    // we're writing our code in JS-only we need to go through "addPath".
-    PinDepsCommand.addPath(`pin-deps`);
-
-    PinDepsCommand.addOption(
-      `dryRun`,
-      Command.Boolean("--dry", false, {
-        description: `Print the changes to stdout but do not apply them to package.json files.`,
-      })
-    );
-
-    PinDepsCommand.addOption(
-      `ignoreDevDependencies`,
-      Command.Boolean("--ignore-dev", false, {
-        description: `Ignore devDependencies (default is false, to pin dependencies and devDependencies).`,
-      })
-    );
-
-    PinDepsCommand.addOption(
-      `onlyDevDependencies`,
-      Command.Boolean("--only-dev", false, {
-        description: `Only devDependencies`,
-      })
-    );
-
-    PinDepsCommand.addOption(
-      `verbose`,
-      Command.Boolean("--verbose", false, {
-        description: `Print more information about skipped or already pinned packages`,
-      })
-    );
-
-    PinDepsCommand.addOption(
-      `onlyWorkspaces`,
-      Command.Array(`--workspace`, undefined, {
-        description: `To _only_ include a specific workspace (or workspaces)`,
-      })
-    );
-
-    PinDepsCommand.addOption(
-      `alsoIncludePackages`,
-      Command.Array(`--include`, undefined, {
-        description: `To pin a specific name:range that would otherwise be skipped`,
-      })
-    );
-
-    PinDepsCommand.addOption(
-      `onlyPackages`,
-      Command.Array(`--only`, undefined, {
-        description: `To _only_ include a specific name:range package (or packages).`,
-      })
-    );
-
     // Show descriptive usage for a --help argument passed to this command
     PinDepsCommand.usage = Command.Usage({
       description: `pin-deps [--dry] [--include name:range]`,
       details: `
         Pin any unpinned dependencies to their currently resolved version.
-
         Pass \`--dry\` for a dry-run. Otherwise, write changes to \`package.json\`
         files directly. You will still need to \`yarn install\` for the changes
         to take effect.
-
         Search all workspaces by default. Pass \`--workspace\` flag(s) to focus
         on one or multiple workspace(s).
-
         Search all packages with semver range references by default. To include
         otherwise skipped packages, specify \`--include name:range\`. To focus
         only on specific package(s), specify \`--only name:range\`
