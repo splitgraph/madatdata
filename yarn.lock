@@ -2221,7 +2221,7 @@ __metadata:
   resolution: "@madatdata/root@workspace:."
   dependencies:
     "@types/node": 16.11.38
-    "@yarnpkg/cli": ^4.0.0-rc.6
+    "@yarnpkg/cli": 4.0.0-rc.6
     prettier: 2.6.2
     typescript: 4.7.2
   languageName: unknown
@@ -2602,7 +2602,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/jest-dom@npm:^5.16.4":
+"@testing-library/jest-dom@npm:5.16.4":
   version: 5.16.4
   resolution: "@testing-library/jest-dom@npm:5.16.4"
   dependencies:
@@ -2619,7 +2619,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/react@npm:^13.3.0":
+"@testing-library/react@npm:13.3.0":
   version: 13.3.0
   resolution: "@testing-library/react@npm:13.3.0"
   dependencies:
@@ -2633,7 +2633,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/user-event@npm:^13.5.0":
+"@testing-library/user-event@npm:13.5.0":
   version: 13.5.0
   resolution: "@testing-library/user-event@npm:13.5.0"
   dependencies:
@@ -3462,7 +3462,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@yarnpkg/cli@npm:^4.0.0-rc.6":
+"@yarnpkg/cli@npm:4.0.0-rc.6":
   version: 4.0.0-rc.6
   resolution: "@yarnpkg/cli@npm:4.0.0-rc.6"
   dependencies:
@@ -10702,13 +10702,13 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "playground-cra@workspace:packages/playground-cra"
   dependencies:
-    "@testing-library/jest-dom": ^5.16.4
-    "@testing-library/react": ^13.3.0
-    "@testing-library/user-event": ^13.5.0
-    react: ^18.1.0
-    react-dom: ^18.1.0
+    "@testing-library/jest-dom": 5.16.4
+    "@testing-library/react": 13.3.0
+    "@testing-library/user-event": 13.5.0
+    react: 18.1.0
+    react-dom: 18.1.0
     react-scripts: 5.0.1
-    web-vitals: ^2.1.4
+    web-vitals: 2.1.4
   languageName: unknown
   linkType: soft
 
@@ -11875,7 +11875,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dom@npm:^18.1.0":
+"react-dom@npm:18.1.0":
   version: 18.1.0
   resolution: "react-dom@npm:18.1.0"
   dependencies:
@@ -12002,6 +12002,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react@npm:18.1.0":
+  version: 18.1.0
+  resolution: "react@npm:18.1.0"
+  dependencies:
+    loose-envify: ^1.1.0
+  checksum: 5bb296b561b43ef2220395da4faac86c14a087c8c80e1a7598a5740f01ee605c11eaf249985c1e2000971c4cd32ccb46d40f00479bbd9fb6b1c7cf857393b7d4
+  languageName: node
+  linkType: hard
+
 "react@npm:^16.13.1":
   version: 16.14.0
   resolution: "react@npm:16.14.0"
@@ -12010,15 +12019,6 @@ __metadata:
     object-assign: ^4.1.1
     prop-types: ^15.6.2
   checksum: 8484f3ecb13414526f2a7412190575fc134da785c02695eb92bb6028c930bfe1c238d7be2a125088fec663cc7cda0a3623373c46807cf2c281f49c34b79881ac
-  languageName: node
-  linkType: hard
-
-"react@npm:^18.1.0":
-  version: 18.1.0
-  resolution: "react@npm:18.1.0"
-  dependencies:
-    loose-envify: ^1.1.0
-  checksum: 5bb296b561b43ef2220395da4faac86c14a087c8c80e1a7598a5740f01ee605c11eaf249985c1e2000971c4cd32ccb46d40f00479bbd9fb6b1c7cf857393b7d4
   languageName: node
   linkType: hard
 
@@ -13928,7 +13928,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"web-vitals@npm:^2.1.4":
+"web-vitals@npm:2.1.4":
   version: 2.1.4
   resolution: "web-vitals@npm:2.1.4"
   checksum: 03d3f47dbf55c3dce07beb0ff5de8ddd52e2d0a53a8df5c84e7a16dda93543341d67231fa79b1d9772b091419af4ec0fd395b8bcf451a0e26846e3f76b3d0efc
