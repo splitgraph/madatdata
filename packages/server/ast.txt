@@ -1,0 +1,144 @@
+{
+  "columns": [
+    {
+      "expr": {
+        "type": "ref",
+        "table": {
+          "name": "top"
+        },
+        "name": "source_slug"
+      },
+      "alias": {
+        "name": "sourceSlug"
+      }
+    },
+    {
+      "expr": {
+        "type": "ref",
+        "table": {
+          "name": "top"
+        },
+        "name": "table_name"
+      },
+      "alias": {
+        "name": "tableName"
+      }
+    },
+    {
+      "expr": {
+        "type": "ref",
+        "table": {
+          "name": "top"
+        },
+        "name": "query_slug"
+      },
+      "alias": {
+        "name": "querySlug"
+      }
+    },
+    {
+      "expr": {
+        "type": "ref",
+        "table": {
+          "name": "top"
+        },
+        "name": "query"
+      },
+      "alias": {
+        "name": "query"
+      }
+    },
+    {
+      "expr": {
+        "type": "ref",
+        "table": {
+          "name": "top"
+        },
+        "name": "query_description"
+      },
+      "alias": {
+        "name": "queryDescription"
+      }
+    }
+  ],
+  "from": [
+    {
+      "type": "statement",
+      "statement": {
+        "columns": [
+          {
+            "expr": {
+              "type": "ref",
+              "table": {
+                "name": "queries"
+              },
+              "name": "*"
+            }
+          },
+          {
+            "expr": {
+              "type": "call",
+              "function": {
+                "name": "rank"
+              },
+              "args": [],
+              "over": {
+                "partitionBy": [
+                  {
+                    "type": "ref",
+                    "name": "table_name"
+                  }
+                ],
+                "orderBy": [
+                  {
+                    "by": {
+                      "type": "ref",
+                      "name": "query_description"
+                    },
+                    "order": "ASC"
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "from": [
+          {
+            "type": "table",
+            "name": {
+              "name": "xxxxx",
+              "alias": "queries"
+            }
+          }
+        ],
+        "where": {
+          "type": "binary",
+          "left": {
+            "type": "ref",
+            "name": "source_slug"
+          },
+          "right": {
+            "type": "string",
+            "value": "stripe"
+          },
+          "op": "="
+        },
+        "type": "select"
+      },
+      "alias": "top"
+    }
+  ],
+  "where": {
+    "type": "binary",
+    "left": {
+      "type": "ref",
+      "name": "rank"
+    },
+    "right": {
+      "type": "integer",
+      "value": 3
+    },
+    "op": "<="
+  },
+  "type": "select"
+}

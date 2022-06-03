@@ -1,5 +1,6 @@
 import { CommandLineParser } from "@rushstack/ts-command-line";
-import { StartServerAction } from "@madatdata/admin/cmds/server";
+import { StartServerAction } from "./cmds/server/StartServerAction";
+import { DebugAction } from "./cmds/debug/DebugAction";
 
 export class AdminCommandLine extends CommandLineParser {
   public constructor() {
@@ -9,6 +10,7 @@ export class AdminCommandLine extends CommandLineParser {
     });
 
     this.addAction(new StartServerAction());
+    this.addAction(new DebugAction());
   }
 
   protected onDefineParameters(): void {}
