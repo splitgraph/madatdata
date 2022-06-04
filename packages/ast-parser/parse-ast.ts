@@ -26,6 +26,4 @@ const ast: Statement = parseFirst(query);
 
 console.log(JSON.stringify(ast, null, 2));
 
-// debugger;
-
 // console.log("done or something lol");

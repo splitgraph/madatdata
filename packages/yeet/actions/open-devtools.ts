@@ -66,11 +66,37 @@ const openDevtools = async ({ debugConfig }: OpenDevToolsOpts) => {
     debugConfig.userDataDir,
     {
       ignoreHTTPSErrors: true,
+      devtools: true,
     }
   );
 
   const page = await browser.newPage();
 
   await page.goto(debugConfig.inspectorURL);
-  await page.locator("#node-frontend").click();
+
+  // TODO: How to get event when devtools "page" (popup?) opens?
+  await Promise.all([
+    // page.waitForEvent("console", (details) => {
+    //   console.log("opened console:", details);
+    //   return true;
+    // }),
+
+    // page.waitForEvent("popup", (details) => {
+    //   console.log("opened popup:", details);
+    //   return true;
+    // }),
+    // page.waitForEvent("frameattached", (details) => {
+    //   console.log("opened frameattached:", details);
+    //   return true;
+    // }),
+    // browser.waitForEvent("page", (details) => {
+    //   console.log("opened page:", details);
+    //   return true;
+    // }),
+    // browser.waitForEvent("backgroundpage", (details) => {
+    //   console.log("opened backgroundpage:", details);
+    //   return true;
+    // }),
+    page.locator("#node-frontend").click(),
+  ]);
 };
