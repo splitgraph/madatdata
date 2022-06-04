@@ -35,6 +35,12 @@
       "@madatdata/ast-parser/*": ["./packages/ast-parser/*"]
     }
   },
-  "exclude": ["node_modules", ".*", "public", "dist"],
+  "exclude": [
+    "node_modules",
+    ".*",
+    "public",
+    "dist",
+    "packages/tiny-react-sandbox/www/dist"
+  ],
   "include": ["packages/**/*.js", "packages/**/*.ts", "packages/**/*.tsx"]
 }
