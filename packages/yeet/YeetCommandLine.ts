@@ -1,5 +1,5 @@
 import { CommandLineParser } from "@rushstack/ts-command-line";
-import { OpenDevtoolsAction } from "./cmds/open-devtools";
+import { OpenDevtoolsAction } from "./actions/open-devtools";
 
 export class YeetCommandLine extends CommandLineParser {
   public constructor() {

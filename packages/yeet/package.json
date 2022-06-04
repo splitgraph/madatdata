@@ -1,10 +1,10 @@
 {
-  "name": "@madatdata/scripts",
+  "name": "@madatdata/yeet",
   "packageManager": "yarn@3.2.0",
   "private": true,
   "scripts": {
     "scripts": "yarn run esno start.ts",
-    "scripts-debug-brk": "yarn run esno --inspect-brk=0.0.0.0:8888 start.ts"
+    "scripts-debug-brk": "yarn run esno --inspect-brk=127.0.0.1:9229 start.ts"
   },
   "dependencies": {
     "@rushstack/ts-command-line": "4.10.6",

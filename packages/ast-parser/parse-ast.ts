@@ -1,4 +1,4 @@
-import { parse, parseFirst, Statement } from "pgsql-ast-parser";
+import { parseFirst, Statement } from "pgsql-ast-parser";
 // https://github.com/oguimbal/pgsql-ast-parser
 
 const query = `

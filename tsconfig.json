@@ -31,7 +31,8 @@
     "experimentalDecorators": true,
     "paths": {
       "@madatdata/root/*": ["*"],
-      "@madatdata/yeet/*": ["./packages/yeet/*"]
+      "@madatdata/yeet/*": ["./packages/yeet/*"],
+      "@madatdata/ast-parser/*": ["./packages/ast-parser/*"]
     }
   },
   "exclude": ["node_modules", ".*", "public", "dist"],

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "yarn workspace @madatdata/server run start",
-    "scripts": "yarn workspace @madatdata/scripts run scripts",
+    "yeet": "yarn workspace @madatdata/yeet run yeet",
     "typecheck": "yarn tsc --build --verbose",
     "format": "yarn run format.base --write --list-different .",
     "format.check": "yarn run format.base --check . || { yarn run format.warn ; }",

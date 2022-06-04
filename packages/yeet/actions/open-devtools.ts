@@ -1,11 +1,7 @@
-import chalk from "chalk";
 import { CommandLineAction } from "@rushstack/ts-command-line";
-
-import { makePersistentBrowser as makeBrowser } from "@madatdata/yeet/lib/browser";
-
 import { chromium } from "playwright";
-
-import type { BrowserContext } from "playwright";
+import chalk from "chalk";
+import path from "path";
 
 export class OpenDevtoolsAction extends CommandLineAction {
   persistentBrowserSessionId: string = "debugging";
@@ -27,14 +23,10 @@ export class OpenDevtoolsAction extends CommandLineAction {
 
   protected async onExecute(): Promise<void> {
     // no need to create .data/sessions directory; playwright will do it for us
-    const { browser } = await makeBrowser(
-      `.data/sessions/${this.persistentBrowserSessionId}`
-    );
     try {
       const debugConfig = await getDebugConfig();
 
       await openDevtools({
-        browser,
         debugConfig,
       });
     } catch (openDevtoolsError) {
@@ -48,9 +40,13 @@ export class OpenDevtoolsAction extends CommandLineAction {
   }
 }
 
-// TODO: async for now because later it will get cdp uuid from another process
-export const getDebugConfig = async () => {
+// TODO: async for now so that later it can get cdp uuid from another process
+export const getDebugConfig = async (opts?: { sessionId?: string }) => {
+  const { sessionId = "debugging" } = opts ?? {};
+
   return Promise.resolve({
+    userDataDir: path.join(".data", "sessions", sessionId),
+
     inspectorURL: "chrome://inspect/#devices",
 
     // TODO: This one works if we have the ID from the node process being debugged
@@ -62,14 +58,16 @@ export const getDebugConfig = async () => {
 type DebugConfig = Unpromise<ReturnType<typeof getDebugConfig>>;
 
 type OpenDevToolsOpts = {
-  browser: BrowserContext;
   debugConfig: DebugConfig;
 };
 
 const openDevtools = async ({ debugConfig }: OpenDevToolsOpts) => {
-  const browser = await (
-    await chromium.launch()
-  ).newContext({ ignoreHTTPSErrors: true });
+  const browser = await chromium.launchPersistentContext(
+    debugConfig.userDataDir,
+    {
+      ignoreHTTPSErrors: true,
+    }
+  );
 
   const page = await browser.newPage();
 
