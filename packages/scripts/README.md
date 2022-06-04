@@ -1,1 +1,0 @@
-# scripts CLI for madatdata

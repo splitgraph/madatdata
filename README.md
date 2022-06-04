@@ -29,7 +29,7 @@ nvm install --reinstall-packages-from=current
 Main CLI:
 
 ```bash
-yarn run scripts --help
+yarn run yeet --help
 ```
 
 ## Upgrade everything at once, interactively
