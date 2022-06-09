@@ -32,7 +32,8 @@
     "paths": {
       "@madatdata/root/*": ["*"],
       "@madatdata/yeet/*": ["./packages/yeet/*"],
-      "@madatdata/ast-parser/*": ["./packages/ast-parser/*"]
+      "@madatdata/ast-parser/*": ["./packages/ast-parser/*"],
+      "@madatdata/client/*": ["./packages/client/*"]
     }
   },
   "exclude": [

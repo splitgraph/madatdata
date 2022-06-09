@@ -1,0 +1,15 @@
+{
+  "name": "@madatdata/client",
+  "packageManager": "yarn@3.2.0",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "dev": "yarn run esno parse-ast.ts",
+    "debug": "yarn run esno --inspect-brk=127.0.0.1:9229 parse-ast.ts"
+  },
+  "devDependencies": {
+    "@types/node": "16.11.38",
+    "esbuild": "0.14.42",
+    "esno": "0.16.3"
+  }
+}

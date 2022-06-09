@@ -37,3 +37,16 @@ yarn run yeet --help
 ```bash
 yarn up -E -i '*'
 ```
+
+## Adding a new package
+
+Checklist:
+
+```
+- [ ] In `packages` directory, create a new workspace directory
+- [ ] In new directory, create `package.json` (copy from another or `yarn init`)
+- [ ] In new `package.json`, ensure value of `name` begins with `@madatdata/`
+- In main `tsconfig.json`
+  - [ ] Add line to `paths` object for new package
+  - [ ] If package has build artifacts e.g. `dist`, add to `exclude`
+```
