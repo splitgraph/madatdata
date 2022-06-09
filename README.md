@@ -49,4 +49,6 @@ Checklist:
 - In main `tsconfig.json`
   - [ ] Add line to `paths` object for new package
   - [ ] If package has build artifacts e.g. `dist`, add to `exclude`
+- In main `vitest.config.ts`
+  - [ ] Add resolve alias for package
 ```
