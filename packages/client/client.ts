@@ -1,8 +1,12 @@
 import {
   type CredentialOptions,
-  type BaseCredential,
+  type CredentialFromOptions,
+  isAuthenticatedTokenCredential,
   Credential,
   makeAuthHeaders,
+  isKeypairCredential,
+  isTokenCredential,
+  isAnonymousTokenCredential,
 } from "./credential";
 
 import { type Host, defaultHost } from "./host";
@@ -15,13 +19,14 @@ interface ClientOptions {
   database: Database | null;
 }
 
-class SplitgraphHTTPClient {
-  private credential: BaseCredential;
+class SplitgraphHTTPClient<InputCredentialOptions extends CredentialOptions> {
+  private credential: CredentialFromOptions<InputCredentialOptions>;
   private host: Host;
   private database: Database;
 
   constructor(opts: ClientOptions) {
     this.credential = Credential(opts.credential);
+
     this.host = opts.host ?? defaultHost;
     this.database = opts.database ?? defaultDatabase;
   }
@@ -35,6 +40,12 @@ class SplitgraphHTTPClient {
       },
       body: JSON.stringify({ sql: query }),
     };
+
+    if (isTokenCredential(this.credential)) {
+      // this.credential.
+    } else if (isKeypairCredential(this.credential)) {
+      // this.credential.
+    }
 
     const response = await fetch(this.host.baseUrls.sql, fetchOptions)
       .then((r) => r.json())

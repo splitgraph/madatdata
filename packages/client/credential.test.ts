@@ -5,14 +5,31 @@ import {
   isTokenCredential,
   makeAuthHeaders,
   isKeypairCredential,
+  isAuthenticatedTokenCredential,
 } from "./credential";
 
 describe("Credential", () => {
   it("returns anonymous credential for null input", () => {
-    const unpacked = Credential(null);
-    expect(unpacked.anonymous).toEqual(true);
-    expect(isAnonymousTokenCredential(unpacked)).toEqual(true);
-    expect(isTokenCredential(unpacked)).toEqual(true);
+    const cred = Credential(null);
+    expect(cred.anonymous).toEqual(true);
+    expect(isTokenCredential(cred)).toEqual(true);
+    expect(isAnonymousTokenCredential(cred)).toEqual(true);
+    expect(isAuthenticatedTokenCredential(cred)).toEqual(false);
+    expect(isKeypairCredential(cred)).toEqual(false);
+  });
+
+  it("returns anonymous credential for input anonymous : true ", () => {
+    const cred = Credential({ anonymous: true, token: "mine" });
+    expect(cred.anonymous).toEqual(true);
+    expect(isTokenCredential(cred)).toEqual(true);
+    expect(isAnonymousTokenCredential(cred)).toEqual(true);
+    expect(isAuthenticatedTokenCredential(cred)).toEqual(false);
+    expect(isKeypairCredential(cred)).toEqual(false);
+    expect(makeAuthHeaders(cred)).toMatchInlineSnapshot(`
+      {
+        "Authorization": "Bearer mine",
+      }
+    `);
   });
 
   it("throws error for empty object input", () => {
@@ -25,17 +42,19 @@ describe("Credential", () => {
   });
 
   it("returns token credential with anonymous = false for token input", () => {
-    const unpacked = Credential({ token: "xxx" });
-    expect(unpacked.anonymous).toEqual(false);
-    expect(isAnonymousTokenCredential(unpacked)).toEqual(false);
-    expect(isTokenCredential(unpacked)).toEqual(true);
+    const cred = Credential({ token: "xxx" });
+    expect(cred.anonymous).toEqual(false);
+    expect(isTokenCredential(cred)).toEqual(true);
+    expect(isAnonymousTokenCredential(cred)).toEqual(false);
+    expect(isAuthenticatedTokenCredential(cred)).toEqual(true);
+    expect(isKeypairCredential(cred)).toEqual(false);
   });
 
   it("returns keypair credential for keypair input", () => {
-    const unpacked = Credential({ apiKey: "xxx", apiSecret: "yyy" });
-    expect(unpacked.anonymous).toEqual(false);
-    expect(isKeypairCredential(unpacked)).toEqual(true);
-    expect(isTokenCredential(unpacked)).toEqual(false);
+    const cred = Credential({ apiKey: "xxx", apiSecret: "yyy" });
+    expect(cred.anonymous).toEqual(false);
+    expect(isKeypairCredential(cred)).toEqual(true);
+    expect(isTokenCredential(cred)).toEqual(false);
   });
 });
 
