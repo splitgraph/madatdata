@@ -2,9 +2,3 @@
 // The dependency is in the root of the mono-repo, and any package that relies
 // on it is responsible for polyfilling it in its own bundle
 import "cross-fetch/polyfill";
-
-import { afterEach } from "vitest";
-
-afterEach(() => {
-  console.log("test done!");
-});

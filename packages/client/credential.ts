@@ -5,36 +5,70 @@ export interface Credential {
 interface KeypairCredential extends Credential {
   apiKey: string;
   apiSecret: string;
+  anonymous: false;
 }
 
 interface TokenCredential extends Credential {
   token: string;
 }
 
-interface AnonymousCredential extends TokenCredential {
+interface AuthenticatedTokenCredential extends TokenCredential {
+  anonymous: false;
+}
+interface AnonymousTokenCredential extends TokenCredential {
   anonymous: true;
 }
 
-export const unpackCredential = (maybeCred: Credential | null) => {
-  if (maybeCred === null) {
+type CredentialOptions<TargetCredential extends Credential> = Omit<
+  TargetCredential,
+  "anonymous"
+>;
+
+export const unpackCredential = (
+  maybeCred:
+    | CredentialOptions<KeypairCredential>
+    | CredentialOptions<TokenCredential>
+    | CredentialOptions<AnonymousTokenCredential>
+    | CredentialOptions<AuthenticatedTokenCredential>
+    | null,
+  opts?: {
+    defaultAnonymous?: boolean;
+  }
+) => {
+  if (isAnonymousTokenCredential(maybeCred)) {
+    return maybeCred as AnonymousTokenCredential;
+  } else if (isTokenCredential(maybeCred)) {
+    return { ...maybeCred, anonymous: false } as AuthenticatedTokenCredential;
+  } else if (isKeypairCredential(maybeCred)) {
+    return { ...maybeCred, anonymous: false } as KeypairCredential;
+  } else if (maybeCred === null || opts?.defaultAnonymous) {
     return {
       token: "anonymous-token",
       anonymous: true,
-    } as AnonymousCredential;
-  } else if (isAnonymousCredential(maybeCred)) {
-    return maybeCred;
-  } else if (isTokenCredential(maybeCred)) {
-    return maybeCred;
-  } else if (isKeypairCredential(maybeCred)) {
-    return maybeCred;
+    } as AnonymousTokenCredential;
   } else {
     throw Error("Unexpected credentialType");
   }
 };
 
-export const isAnonymousCredential = (
+export const makeAuthHeaders = (cred: Credential) => {
+  if (isTokenCredential(cred)) {
+    return {
+      Authorization: `Bearer ${cred.token}`,
+    };
+  } else if (isKeypairCredential(cred)) {
+    return {
+      "X-API-Key": cred.apiKey,
+      "X-API-Secret": cred.apiSecret,
+    };
+  } else {
+    throw Error("Unexpected credential type not keypair nor token");
+  }
+};
+
+export const isAnonymousTokenCredential = (
   cred: unknown
-): cred is AnonymousCredential => {
+): cred is AnonymousTokenCredential => {
   return (cred as Credential)?.["anonymous"] === true;
 };
 
