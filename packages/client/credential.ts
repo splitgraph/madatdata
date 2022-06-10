@@ -19,17 +19,22 @@ interface AnonymousTokenCredential extends TokenCredential {
   anonymous: true;
 }
 
-type CredentialOptions<TargetCredential extends Credential> = Omit<
+type UnconstrainedCredentialOptions<TargetCredential extends Credential> = Omit<
   TargetCredential,
   "anonymous"
 >;
 
-export const unpackCredential = (
+// Ensure that {} is not a valid option
+type CredentialOptions<TargetCredential extends Credential> =
+  UnconstrainedCredentialOptions<TargetCredential> extends never
+    ? never
+    : UnconstrainedCredentialOptions<TargetCredential>;
+
+export const Credential = (
   maybeCred:
     | CredentialOptions<KeypairCredential>
-    | CredentialOptions<TokenCredential>
-    | CredentialOptions<AnonymousTokenCredential>
     | CredentialOptions<AuthenticatedTokenCredential>
+    | CredentialOptions<AnonymousTokenCredential>
     | null,
   opts?: {
     defaultAnonymous?: boolean;
