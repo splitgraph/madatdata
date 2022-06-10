@@ -1,4 +1,4 @@
-export interface Credential {
+export interface Credential extends CredentialOptions {
   anonymous: boolean;
 }
 
@@ -11,52 +11,81 @@ interface KeypairCredential extends Credential {
 interface TokenCredential extends Credential {
   token: string;
 }
-
 interface AuthenticatedTokenCredential extends TokenCredential {
+  token: string;
   anonymous: false;
 }
+
 interface AnonymousTokenCredential extends TokenCredential {
+  token: string;
   anonymous: true;
 }
 
-type UnconstrainedCredentialOptions<TargetCredential extends Credential> = Omit<
-  TargetCredential,
-  "anonymous"
->;
+interface CredentialOptions {
+  anonymous?: boolean;
+}
 
-// Ensure that {} is not a valid option
-type CredentialOptions<TargetCredential extends Credential> =
-  UnconstrainedCredentialOptions<TargetCredential> extends never
-    ? never
-    : UnconstrainedCredentialOptions<TargetCredential>;
+interface KeypairCredentialOptions
+  extends CredentialOptions,
+    Omit<KeypairCredential, keyof Credential> {}
 
-export const Credential = (
-  maybeCred:
-    | CredentialOptions<KeypairCredential>
-    | CredentialOptions<AuthenticatedTokenCredential>
-    | CredentialOptions<AnonymousTokenCredential>
-    | null,
+interface AuthenticatedTokenCredentialOptions
+  extends CredentialOptions,
+    Omit<AuthenticatedTokenCredential, keyof Credential> {}
+
+interface AnonymousTokenCredentialOptions
+  extends CredentialOptions,
+    Omit<AnonymousTokenCredential, keyof Credential> {}
+
+type CredentialFromOptions<Opt extends CredentialOptions> =
+  Opt extends KeypairCredentialOptions
+    ? KeypairCredential
+    : Opt extends AnonymousTokenCredentialOptions
+    ? AnonymousTokenCredential
+    : Opt extends AuthenticatedTokenCredentialOptions
+    ? AuthenticatedTokenCredential
+    : AnonymousTokenCredential;
+
+export const Credential = <
+  InputCredentialOptions extends
+    | KeypairCredentialOptions
+    | AuthenticatedTokenCredentialOptions
+    | AnonymousTokenCredentialOptions,
+  TargetCredential = CredentialFromOptions<InputCredentialOptions>
+>(
+  maybeCred: InputCredentialOptions | null,
   opts?: {
     defaultAnonymous?: boolean;
   }
-) => {
-  if (isAnonymousTokenCredential(maybeCred)) {
-    return maybeCred as AnonymousTokenCredential;
-  } else if (isTokenCredential(maybeCred)) {
-    return { ...maybeCred, anonymous: false } as AuthenticatedTokenCredential;
-  } else if (isKeypairCredential(maybeCred)) {
-    return { ...maybeCred, anonymous: false } as KeypairCredential;
-  } else if (maybeCred === null || opts?.defaultAnonymous) {
+): TargetCredential => {
+  if (maybeCred === null) {
     return {
       token: "anonymous-token",
       anonymous: true,
-    } as AnonymousTokenCredential;
+    } as unknown as TargetCredential;
+  } else if (isAnonymousTokenCredentialOptions(maybeCred)) {
+    return maybeCred as unknown as TargetCredential;
+  } else if (isAuthenticatedTokenCredentialOptions(maybeCred)) {
+    return {
+      ...maybeCred,
+      anonymous: false,
+    } as unknown as TargetCredential;
+  } else if (isKeypairCredentialOptions(maybeCred)) {
+    return {
+      ...maybeCred,
+      anonymous: false,
+    } as unknown as TargetCredential;
+  } else if (opts?.defaultAnonymous) {
+    return {
+      token: "defaultn-anonymous",
+      anonymous: true,
+    } as unknown as TargetCredential;
   } else {
     throw Error("Unexpected credentialType");
   }
 };
 
-export const makeAuthHeaders = (cred: Credential) => {
+export const makeAuthHeaders = (cred: CredentialOptions) => {
   if (isTokenCredential(cred)) {
     return {
       Authorization: `Bearer ${cred.token}`,
@@ -71,18 +100,56 @@ export const makeAuthHeaders = (cred: Credential) => {
   }
 };
 
+const isAnonymousTokenCredentialOptions = (
+  cred: unknown
+): cred is AnonymousTokenCredentialOptions => {
+  return (cred as CredentialOptions)?.["anonymous"] === true;
+};
+
+const isKeypairCredentialOptions = (
+  cred: unknown
+): cred is KeypairCredentialOptions => {
+  return !!(cred as KeypairCredentialOptions)?.["apiKey"];
+};
+
+const isAuthenticatedTokenCredentialOptions = (
+  cred: unknown
+): cred is AuthenticatedTokenCredentialOptions => {
+  return (
+    !isAnonymousTokenCredentialOptions(cred) &&
+    !!(cred as AuthenticatedTokenCredentialOptions)?.["token"]
+  );
+};
+
+export const isTokenCredential = (
+  cred: unknown
+): cred is AuthenticatedTokenCredential | AnonymousTokenCredential => {
+  return !!(cred as AuthenticatedTokenCredential).token;
+};
+export const isAuthenticatedTokenCredential = (
+  cred: unknown
+): cred is AuthenticatedTokenCredential => {
+  return (
+    (cred as AuthenticatedTokenCredential).anonymous === false &&
+    !!(cred as AuthenticatedTokenCredential).token
+  );
+};
+
 export const isAnonymousTokenCredential = (
   cred: unknown
 ): cred is AnonymousTokenCredential => {
-  return (cred as Credential)?.["anonymous"] === true;
+  return (
+    (cred as AnonymousTokenCredential).anonymous === true &&
+    !!(cred as AnonymousTokenCredential).token
+  );
 };
 
 export const isKeypairCredential = (
   cred: unknown
 ): cred is KeypairCredential => {
-  return !!(cred as KeypairCredential)?.["apiKey"];
-};
-
-export const isTokenCredential = (cred: unknown): cred is TokenCredential => {
-  return !!(cred as TokenCredential)?.["token"];
+  return (
+    (cred as KeypairCredential).anonymous === false &&
+    !!(cred as KeypairCredential).apiKey &&
+    !!(cred as KeypairCredential).apiSecret
+  );
 };
