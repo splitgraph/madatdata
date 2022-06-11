@@ -7,25 +7,17 @@ describe("makeClient", () => {
       credential: null,
     });
 
-    expect(client.fetchOptions).toMatchInlineSnapshot(`
-      {
-        "headers": {
-          "Content-type": "application/json",
-        },
-        "method": "POST",
-      }
-    `);
-
-    const result = await client.execute("SELECT 1;");
+    const result = await client.execute<{ "?column?": number }>("SELECT 1;");
 
     expect(
       (() => {
-        delete result.response["executionTime"];
-        delete result.response["executionTimeHighRes"];
+        delete result.response?.["executionTime"];
+        delete result.response?.["executionTimeHighRes"];
         return result;
       })()
     ).toMatchInlineSnapshot(`
       {
+        "error": null,
         "response": {
           "command": "SELECT",
           "fields": [

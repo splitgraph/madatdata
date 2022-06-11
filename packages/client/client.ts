@@ -16,7 +16,59 @@ interface ClientOptions {
   host?: Host | null;
   database?: Database | null;
 }
-class SplitgraphHTTPClient<InputCredentialOptions extends CredentialOptions> {
+
+interface Response<ResultShape extends Record<PropertyKey, unknown>> {
+  rows: ResultShape[];
+  success: boolean;
+}
+
+interface WebBridgeResponse<ResultShape extends Record<PropertyKey, unknown>>
+  extends Response<ResultShape> {
+  command: string;
+  fields: {
+    columnID: number;
+    dataTypeID: number;
+    dataTypeModifier: number;
+    dataTypeSize: number;
+    format: string;
+    formattedType: string;
+    name: string;
+    tableID: number;
+  }[];
+  rowCount: 1;
+  rows: ResultShape[];
+  success: true;
+  /** FIXME: optional to allow deleting it for inline snapshots */
+  executionTime?: string;
+  /** FIXME: optional to allow deleting it for inline snapshots */
+  executionTimeHighRes?: string;
+}
+
+type QueryResult<
+  ResultShape extends Record<PropertyKey, unknown> = Record<
+    PropertyKey,
+    unknown
+  >,
+  ExpectedResult extends Response<ResultShape> = WebBridgeResponse<ResultShape>
+> = {
+  [k in keyof ExpectedResult]: ExpectedResult[k];
+} & { success: true };
+
+interface QueryError {
+  success: false;
+}
+interface Client {
+  execute: <ResultShape extends Record<PropertyKey, unknown>>(
+    query: string
+  ) => Promise<{
+    response: QueryResult<ResultShape> | null;
+    error: QueryError | null;
+  }>;
+}
+
+class SplitgraphHTTPClient<InputCredentialOptions extends CredentialOptions>
+  implements Client
+{
   private credential: CredentialFromOptions<InputCredentialOptions>;
   private host: Host;
   private database: Database;
@@ -30,7 +82,7 @@ class SplitgraphHTTPClient<InputCredentialOptions extends CredentialOptions> {
     this.queryUrl = this.host.baseUrls.sql + "/" + this.database.dbname;
   }
 
-  get fetchOptions() {
+  private get fetchOptions() {
     return {
       method: "POST",
       headers: {
@@ -40,18 +92,28 @@ class SplitgraphHTTPClient<InputCredentialOptions extends CredentialOptions> {
     };
   }
 
-  async execute(query: string) {
+  async execute<ResultShape extends Record<PropertyKey, unknown>>(
+    query: string
+  ) {
     const fetchOptions = {
       ...this.fetchOptions,
       body: JSON.stringify({ sql: query }),
     };
 
-    const response = await fetch(this.queryUrl, fetchOptions)
+    const { response, error } = await fetch(this.queryUrl, fetchOptions)
       .then((r) => r.json())
-      .catch((err) => ({ success: false, error: err, trace: err.stack }));
+      .then((rJson) => ({
+        response: rJson as QueryResult<ResultShape>,
+        error: null,
+      }))
+      .catch((err) => ({
+        response: null,
+        error: { success: false, error: err, trace: err.stack } as QueryError,
+      }));
 
     return {
       response,
+      error,
     };
   }
 }
