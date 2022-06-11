@@ -1,12 +1,10 @@
 import {
   type CredentialOptions,
   type CredentialFromOptions,
-  isAuthenticatedTokenCredential,
   Credential,
   makeAuthHeaders,
   isKeypairCredential,
   isTokenCredential,
-  isAnonymousTokenCredential,
 } from "./credential";
 
 import { type Host, defaultHost } from "./host";
@@ -14,40 +12,41 @@ import { type Host, defaultHost } from "./host";
 import { type Database, defaultDatabase } from "./database";
 
 interface ClientOptions {
-  credential: CredentialOptions | null;
-  host: Host | null;
-  database: Database | null;
+  credential?: CredentialOptions | null;
+  host?: Host | null;
+  database?: Database | null;
 }
-
 class SplitgraphHTTPClient<InputCredentialOptions extends CredentialOptions> {
   private credential: CredentialFromOptions<InputCredentialOptions>;
   private host: Host;
   private database: Database;
+  private queryUrl: string;
 
   constructor(opts: ClientOptions) {
-    this.credential = Credential(opts.credential);
+    this.credential = Credential(opts.credential || null);
 
     this.host = opts.host ?? defaultHost;
     this.database = opts.database ?? defaultDatabase;
+    this.queryUrl = this.host.baseUrls.sql + "/" + this.database.dbname;
+  }
+
+  get fetchOptions() {
+    return {
+      method: "POST",
+      headers: {
+        // ...makeAuthHeaders(this.credential),
+        "Content-type": "application/json",
+      },
+    };
   }
 
   async execute(query: string) {
     const fetchOptions = {
-      method: "POST",
-      headers: {
-        ...makeAuthHeaders(this.credential),
-        "Content-type": "application/json",
-      },
+      ...this.fetchOptions,
       body: JSON.stringify({ sql: query }),
     };
 
-    if (isTokenCredential(this.credential)) {
-      // this.credential.
-    } else if (isKeypairCredential(this.credential)) {
-      // this.credential.
-    }
-
-    const response = await fetch(this.host.baseUrls.sql, fetchOptions)
+    const response = await fetch(this.queryUrl, fetchOptions)
       .then((r) => r.json())
       .catch((err) => ({ success: false, error: err, trace: err.stack }));
 
@@ -58,6 +57,6 @@ class SplitgraphHTTPClient<InputCredentialOptions extends CredentialOptions> {
 }
 
 export const makeClient = (args: ClientOptions) => {
-  // const client = new SplitgraphHTTPClient(args);
-  // return client;
+  const client = new SplitgraphHTTPClient(args);
+  return client;
 };

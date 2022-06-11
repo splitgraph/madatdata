@@ -1,26 +1,37 @@
 import * as React from "react";
 import { SplitPaneInputOutput } from "../debugging/SplitPaneInputOutput";
 
-export const DebugQueryAST = () => {
+import { makeClient } from "@madatdata/client/client";
+
+const client = makeClient({
+  credential: null,
+});
+
+export const DebugDDN = () => {
   return (
     <SplitPaneInputOutput
       makeOutput={(inputValue) => {
         return inputValue;
       }}
       renderOutputToString={(output) => {
-        return (
-          typeof output === "object" && output?.toString
-            ? output.toString()
-            : output
-        ) as string;
+        try {
+          return JSON.stringify(output, null, 2);
+        } catch (err) {
+          return (
+            (typeof output === "object" || typeof output === "function"
+              ? output
+              : {}
+            )?.toString?.() ?? `Unknown type [${typeof output}]`
+          );
+        }
       }}
       fetchOutput={async (inputValue) => {
-        return new Promise((resolve, _reject) => {
-          setTimeout(
-            () => resolve(new Date().toString() + "\n" + inputValue),
-            2000
-          );
-        });
+        if (!inputValue) {
+          return;
+        }
+
+        const result = await client.execute(inputValue);
+        return result;
       }}
     />
   );

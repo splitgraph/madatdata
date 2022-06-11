@@ -12,7 +12,11 @@ const clients = [];
 
 esbuild
   .build({
-    entryPoints: ["./pages/ast-debugger.tsx", "./pages/dsx.tsx"],
+    entryPoints: [
+      "./pages/ast-debugger.tsx",
+      "./pages/dsx.tsx",
+      "./pages/ddn.tsx",
+    ],
     bundle: true,
     outdir: "./www/dist",
     watch: {
@@ -70,5 +74,6 @@ esbuild.serve({ servedir: "./www", host: "localhost" }, {}).then(() => {
     console.log("Listening on localhost:3000 ...");
     console.log(" http://localhost:3000/ast-debugger.html");
     console.log(" http://localhost:3000/dsx.html");
+    console.log(" http://localhost:3000/ddn.html");
   });
 });
