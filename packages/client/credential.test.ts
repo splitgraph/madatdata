@@ -25,11 +25,8 @@ describe("Credential", () => {
     expect(isAnonymousTokenCredential(cred)).toEqual(true);
     expect(isAuthenticatedTokenCredential(cred)).toEqual(false);
     expect(isKeypairCredential(cred)).toEqual(false);
-    expect(makeAuthHeaders(cred)).toMatchInlineSnapshot(`
-      {
-        "Authorization": "Bearer mine",
-      }
-    `);
+    // TODO: We should be using anonymous tokens but it's technically not required
+    expect(makeAuthHeaders(cred)).toMatchInlineSnapshot("{}");
   });
 
   it("throws error for empty object input", () => {
@@ -80,10 +77,6 @@ describe("makeAuthHeaders", () => {
 
   it("returns Authorization header for anonymous credential", () => {
     // TODO: "anonymous-token" is currently a hardcoded placeholder
-    expect(makeAuthHeaders(Credential(null))).toMatchInlineSnapshot(`
-      {
-        "Authorization": "Bearer anonymous-token",
-      }
-    `);
+    expect(makeAuthHeaders(Credential(null))).toMatchInlineSnapshot("{}");
   });
 });

@@ -82,11 +82,15 @@ class SplitgraphHTTPClient<InputCredentialOptions extends CredentialOptions>
     this.queryUrl = this.host.baseUrls.sql + "/" + this.database.dbname;
   }
 
+  setCredential(newCredential: InputCredentialOptions | null) {
+    this.credential = Credential(newCredential || null);
+  }
+
   private get fetchOptions() {
     return {
       method: "POST",
       headers: {
-        // ...makeAuthHeaders(this.credential),
+        ...makeAuthHeaders(this.credential),
         "Content-type": "application/json",
       },
     };

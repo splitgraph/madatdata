@@ -4,12 +4,26 @@ import { SplitPaneInputOutput } from "../debugging/SplitPaneInputOutput";
 import { AuthWidget } from "./AuthWidget";
 
 import { makeClient } from "@madatdata/client/client";
+import { usePersistedCredential } from "./usePersistedCredential";
 
-const client = makeClient({
-  credential: null,
-});
+const client = makeClient({});
 
 export const DebugDDN = () => {
+  const { credential, loading } = usePersistedCredential();
+
+  React.useEffect(() => {
+    if (!loading) {
+      if (credential?.apiKey && credential?.apiSecret) {
+        client.setCredential({
+          apiKey: credential.apiKey!,
+          apiSecret: credential.apiSecret!,
+        });
+      } else {
+        client.setCredential(null);
+      }
+    }
+  }, [credential, loading]);
+
   return (
     <>
       <SplitPaneInputOutput

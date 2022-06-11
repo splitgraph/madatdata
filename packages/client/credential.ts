@@ -93,9 +93,11 @@ export const Credential = <
 
 export const makeAuthHeaders = (cred: BaseCredentialOptions): HeadersInit => {
   if (isTokenCredential(cred)) {
-    return {
-      Authorization: `Bearer ${cred.token}`,
-    };
+    return isAnonymousTokenCredential(cred)
+      ? {}
+      : {
+          Authorization: `Bearer ${cred.token}`,
+        };
   } else if (isKeypairCredential(cred)) {
     return {
       "X-API-Key": cred.apiKey,
