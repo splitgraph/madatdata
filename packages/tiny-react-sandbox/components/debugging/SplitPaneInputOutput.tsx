@@ -6,7 +6,19 @@ export const SplitPaneInputOutput = () => {
       return inputValue;
     },
     renderOutputToString: (output) => {
-      return output as string;
+      return (
+        typeof output === "object" && output?.toString
+          ? output.toString()
+          : output
+      ) as string;
+    },
+    fetchOutput: async (inputValue) => {
+      return new Promise((resolve, _reject) => {
+        setTimeout(
+          () => resolve(new Date().toString() + "\n" + inputValue),
+          2000
+        );
+      });
     },
   });
 
@@ -23,8 +35,8 @@ export const SplitPaneInputOutput = () => {
 };
 
 const useInputOutput = (opts: Parameters<typeof useOutputPane>["0"]) => {
-  const { ref: outputRef, onChangeInput } = useOutputPane(opts);
-  const { ref: inputRef } = useInputPane({ onChangeInput });
+  const { ref: outputRef, onChangeInput, onSubmitInput } = useOutputPane(opts);
+  const { ref: inputRef } = useInputPane({ onChangeInput, onSubmitInput });
 
   return {
     outputRef,
@@ -34,9 +46,11 @@ const useInputOutput = (opts: Parameters<typeof useOutputPane>["0"]) => {
 
 const useOutputPane = <UnknownOutput extends unknown>({
   makeOutput,
+  fetchOutput,
   renderOutputToString,
 }: {
-  makeOutput: (inputValue?: string) => UnknownOutput;
+  makeOutput?: (inputValue?: string) => UnknownOutput;
+  fetchOutput?: (inputValue?: string) => Promise<UnknownOutput>;
   renderOutputToString: (res: UnknownOutput) => string;
 }) => {
   const ref = React.useRef<HTMLTextAreaElement | null>(null);
@@ -47,8 +61,31 @@ const useOutputPane = <UnknownOutput extends unknown>({
         return;
       }
 
-      const nextValue = renderOutputToString(makeOutput(inputValue));
+      const nextValue = renderOutputToString(
+        makeOutput ? makeOutput(inputValue) : (inputValue as UnknownOutput)
+      );
       ref.current.value = nextValue;
+    },
+    [ref]
+  );
+
+  const onSubmitInput = React.useCallback(
+    (inputValue: string | undefined) => {
+      if (!ref.current) {
+        return;
+      }
+
+      if (!inputValue) {
+        return;
+      }
+
+      fetchOutput?.(inputValue).then(function (nextResult) {
+        if (ref.current) {
+          ref.current.value = renderOutputToString(nextResult);
+        } else {
+          console.warn("Lost ref.current");
+        }
+      });
     },
     [ref]
   );
@@ -56,20 +93,38 @@ const useOutputPane = <UnknownOutput extends unknown>({
   return {
     ref,
     onChangeInput,
+    onSubmitInput,
   };
 };
 
+const wasCmdEnter = (ev: KeyboardEvent) => ev.metaKey && ev.key === "Enter";
+
 const useInputPane = ({
   onChangeInput,
+  onSubmitInput,
 }: {
   onChangeInput: (currentValue: string | undefined) => void;
+  onSubmitInput?: (currentValue: string | undefined) => void;
 }) => {
   const ref = React.useRef<HTMLTextAreaElement | null>(null);
   const [curValue, setValue] = React.useState(ref.current?.value);
 
   const onChange = React.useCallback(
-    function (this: HTMLTextAreaElement) {
-      onChangeInput(this.value);
+    function (this: HTMLTextAreaElement, ev: KeyboardEvent) {
+      if (onSubmitInput && wasCmdEnter(ev)) {
+        console.log("cmd+enter: Skip onChange in favor of onSubmitInput");
+        onChangeInput(this.value);
+      }
+    },
+    [setValue]
+  );
+
+  const onMaybeSubmit = React.useCallback(
+    function (this: HTMLTextAreaElement, ev: KeyboardEvent) {
+      if (wasCmdEnter(ev)) {
+        console.log("Was submitted");
+        onSubmitInput?.(this.value);
+      }
     },
     [setValue]
   );
@@ -84,9 +139,13 @@ const useInputPane = ({
     ref.current.addEventListener("keydown", onChange);
     ref.current.addEventListener("keyup", onChange);
 
+    // Listen fr cmd + enter
+    ref.current.addEventListener("keydown", onMaybeSubmit);
+
     return () => {
       ref.current?.removeEventListener("keydown", onChange);
       ref.current?.removeEventListener("keyup", onChange);
+      ref.current?.removeEventListener("keydown", onMaybeSubmit);
     };
   }, [onChange, ref.current]);
 
