@@ -9,6 +9,8 @@ describe("makeClient", () => {
 
     const result = await client.execute<{ "?column?": number }>("SELECT 1;");
 
+    expect(result.response?.rows[0]["?column?"]).toEqual(1);
+
     expect(
       (() => {
         delete result.response?.["executionTime"];
