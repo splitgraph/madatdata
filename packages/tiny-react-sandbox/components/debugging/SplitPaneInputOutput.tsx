@@ -1,25 +1,14 @@
 import * as React from "react";
 
-export const SplitPaneInputOutput = () => {
+export const SplitPaneInputOutput = ({
+  makeOutput,
+  renderOutputToString,
+  fetchOutput,
+}: Parameters<typeof useInputOutput>[0]) => {
   const { inputRef, outputRef } = useInputOutput({
-    makeOutput: (inputValue) => {
-      return inputValue;
-    },
-    renderOutputToString: (output) => {
-      return (
-        typeof output === "object" && output?.toString
-          ? output.toString()
-          : output
-      ) as string;
-    },
-    fetchOutput: async (inputValue) => {
-      return new Promise((resolve, _reject) => {
-        setTimeout(
-          () => resolve(new Date().toString() + "\n" + inputValue),
-          2000
-        );
-      });
-    },
+    makeOutput,
+    renderOutputToString,
+    fetchOutput,
   });
 
   return (
@@ -113,6 +102,7 @@ const useInputPane = ({
     function (this: HTMLTextAreaElement, ev: KeyboardEvent) {
       if (onSubmitInput && wasCmdEnter(ev)) {
         console.log("cmd+enter: Skip onChange in favor of onSubmitInput");
+      } else {
         onChangeInput(this.value);
       }
     },
@@ -122,7 +112,6 @@ const useInputPane = ({
   const onMaybeSubmit = React.useCallback(
     function (this: HTMLTextAreaElement, ev: KeyboardEvent) {
       if (wasCmdEnter(ev)) {
-        console.log("Was submitted");
         onSubmitInput?.(this.value);
       }
     },
@@ -147,7 +136,7 @@ const useInputPane = ({
       ref.current?.removeEventListener("keyup", onChange);
       ref.current?.removeEventListener("keydown", onMaybeSubmit);
     };
-  }, [onChange, ref.current]);
+  }, [onChange, onMaybeSubmit, ref.current]);
 
   return {
     curValue,
