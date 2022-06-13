@@ -1,0 +1,4 @@
+{
+  "extends": "../../tsconfig.base-noncomposite-esno.json",
+  "include": ["*.ts", "**/*.ts"]
+}

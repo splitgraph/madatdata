@@ -7,7 +7,7 @@
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
-    "strictPropertyInitialization": false,
+    "strictPropertyInitialization": true,
     "forceConsistentCasingInFileNames": true,
     "noEmit": false,
     "emitDeclarationOnly": true,

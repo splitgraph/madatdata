@@ -1,16 +1,7 @@
 {
-  "extends": "../../tsconfig.json",
-  "include": ["**/*.ts", "**/*.tsx"],
+  "extends": "../../tsconfig.base-noncomposite-esno.json",
+  "include": ["*.ts", "**/*.ts"],
   "compilerOptions": {
-    "noEmit": true,
-    "emitDeclarationOnly": false,
-    "incremental": true,
-    "module": "commonjs",
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "strictPropertyInitialization": false,
-    "emitDecoratorMetadata": true
+    "strictPropertyInitialization": false
   }
 }

@@ -2,9 +2,11 @@
   "extends": "./tsconfig.base.json",
   "files": [],
   "include": [],
-  "exclude": ["node_moduless", ".*", "public", "dist"],
+  "exclude": ["node_modules", ".*", "public", "dist"],
   "references": [
+    { "path": "./packages/ast-parser" },
     { "path": "./packages/client" },
-    { "path": "./packages/tiny-react-sandbox" }
+    { "path": "./packages/tiny-react-sandbox" },
+    { "path": "./packages/yeet" }
   ]
 }

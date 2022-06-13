@@ -9,3 +9,5 @@ Specifically, it's a script runner for development of this monorepo, built with
 [ts-command-line-npm]: https://www.npmjs.com/package/@rushstack/ts-command-line
 [ts-command-line-github]:
   https://github.com/microsoft/rushstack/tree/main/libraries/ts-command-line
+
+It's also an example of a package using `tsconfig.base-noncomposite-esno.json`.
