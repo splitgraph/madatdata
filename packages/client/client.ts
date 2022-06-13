@@ -3,8 +3,6 @@ import {
   type CredentialFromOptions,
   Credential,
   makeAuthHeaders,
-  isKeypairCredential,
-  isTokenCredential,
 } from "./credential";
 
 import { type Host, defaultHost } from "./host";
