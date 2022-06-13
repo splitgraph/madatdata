@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.build-base.json",
+  "include": ["*.ts"],
+  "exclude": ["*.test.ts"],
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "AMD",
+    "resolveJsonModule": false,
+    "outFile": "../../build/packages/client/splitgraph-client.js",
+    "isolatedModules": false
+  }
+}

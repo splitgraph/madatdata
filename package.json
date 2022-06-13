@@ -6,6 +6,7 @@
     "start": "yarn workspace @madatdata/server run start",
     "yeet": "yarn workspace @madatdata/yeet run yeet",
     "typecheck": "yarn tsc --build --verbose",
+    "build": "yarn tsc --build --verbose --project tsconfig.build.json",
     "format": "yarn run format.base --write --list-different .",
     "format.check": "yarn run format.base --check . || { yarn run format.warn ; }",
     "format.base": "yarn prettier --config .prettierrc --ignore-path .prettierignore --ignore-unknown",

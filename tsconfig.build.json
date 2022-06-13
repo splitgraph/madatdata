@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.build-base.json",
+  "files": [],
+  "include": [],
+  "exclude": ["node_modules", ".*", "public", "dist"],
+  "references": [{ "path": "./packages/client/tsconfig.build.json" }]
+}
