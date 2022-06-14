@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.build-base.json",
+  "exclude": ["*.test.ts", "build"],
+  "include": ["*.ts"],
+  "compilerOptions": {
+    "outDir": "./packages/client/build",
+    "rootDir": "."
+  }
+}
