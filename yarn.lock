@@ -71,7 +71,7 @@ __metadata:
     "@types/node": 16.11.38
     cross-fetch: 3.1.5
     jsdom: 19.0.0
-    msw: ^0.42.1
+    msw: 0.42.1
     prettier: 2.6.2
     typescript: 4.7.2
     vitest: 0.14.1
@@ -2353,7 +2353,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"msw@npm:^0.42.1":
+"msw@npm:0.42.1":
   version: 0.42.1
   resolution: "msw@npm:0.42.1"
   dependencies:
