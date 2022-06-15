@@ -33,7 +33,8 @@
       "@madatdata/root/*": ["*"],
       "@madatdata/yeet/*": ["./packages/yeet/*"],
       "@madatdata/ast-parser/*": ["./packages/ast-parser/*"],
-      "@madatdata/client/*": ["./packages/client/*"]
+      "@madatdata/client/*": ["./packages/client/*"],
+      "@madatdata/test-helpers/*": ["./packages/test-helpers/*"]
     }
   }
 }

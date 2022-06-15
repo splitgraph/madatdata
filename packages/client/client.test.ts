@@ -1,8 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { makeClient } from "./client";
+import { setupServer } from "msw/node";
+import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
 
-describe("makeClient", () => {
-  it("should create a new instance of client", async () => {
+describe("makeClient creates a client which", () => {
+  const mswServer = setupServer();
+  setupMswServerTestHooks(mswServer);
+
+  it("receives SELECT 1 with expected metadata shape", async () => {
     const client = makeClient({
       credential: null,
     });
@@ -44,5 +49,15 @@ describe("makeClient", () => {
         },
       }
     `);
+  });
+
+  it("receives INT8 column parsed as an integer by the server", async () => {
+    const client = makeClient({
+      credential: null,
+    });
+
+    const result = await client.execute<{ count: number }>("SELECT count(1);");
+
+    expect(result.response?.rows[0]["count"]).toEqual(1);
   });
 });

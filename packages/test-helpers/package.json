@@ -1,0 +1,29 @@
+{
+  "name": "@madatdata/test-helpers",
+  "packageManager": "yarn@3.2.0",
+  "private": true,
+  "peerDependencies": {
+    "@types/node": "*",
+    "jsdom": "*",
+    "msw": "*",
+    "typescript": "*",
+    "vitest": "*"
+  },
+  "peerDependenciesMeta": {
+    "@types/node": {
+      "optional": true
+    },
+    "jsdom": {
+      "optional": true
+    },
+    "msw": {
+      "optional": true
+    },
+    "typescript": {
+      "optional": true
+    },
+    "vitest": {
+      "optional": true
+    }
+  }
+}
