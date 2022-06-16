@@ -17,3 +17,7 @@ build
 
 .data
 .notes
+
+# Follows dotenv ordering, mostly
+.env*.local
+
