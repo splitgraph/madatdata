@@ -1,11 +1,11 @@
-import { type CredentialOptions, makeAuthHeaders } from "./credential";
-
 import {
   BaseClient,
+  makeAuthHeaders,
   type QueryError,
   type QueryResult,
   type ClientOptions,
-} from "./client-base";
+  type CredentialOptions,
+} from "@madatdata/client-base";
 
 class SplitgraphHTTPClient<
   InputCredentialOptions extends CredentialOptions

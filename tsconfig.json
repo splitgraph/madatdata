@@ -5,6 +5,7 @@
   "exclude": ["node_modules", ".*", "public", "dist", "build"],
   "references": [
     { "path": "./packages/ast-parser" },
+    { "path": "./packages/client-base" },
     { "path": "./packages/client" },
     { "path": "./packages/client-pg" },
     { "path": "./packages/tiny-react-sandbox" },

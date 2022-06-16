@@ -53,6 +53,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@madatdata/client-base@workspace:*, @madatdata/client-base@workspace:packages/client-base":
+  version: 0.0.0-use.local
+  resolution: "@madatdata/client-base@workspace:packages/client-base"
+  peerDependencies:
+    typescript: "*"
+  peerDependenciesMeta:
+    typescript:
+      optional: true
+  languageName: unknown
+  linkType: soft
+
 "@madatdata/client-pg@workspace:packages/client-pg":
   version: 0.0.0-use.local
   resolution: "@madatdata/client-pg@workspace:packages/client-pg"
@@ -67,6 +78,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@madatdata/client@workspace:packages/client"
   dependencies:
+    "@madatdata/client-base": "workspace:*"
     "@madatdata/test-helpers": "workspace:*"
     "@types/node": 16.11.38
   peerDependencies:

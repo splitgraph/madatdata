@@ -91,6 +91,7 @@ export const Credential = <
   }
 };
 
+// todo: move to somewhere non-http specific
 export const makeAuthHeaders = (cred: BaseCredentialOptions): HeadersInit => {
   if (isTokenCredential(cred)) {
     return isAnonymousTokenCredential(cred)

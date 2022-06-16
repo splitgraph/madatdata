@@ -1,0 +1,13 @@
+{
+  "name": "@madatdata/client-base",
+  "packageManager": "yarn@3.2.0",
+  "private": true,
+  "peerDependencies": {
+    "typescript": "*"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": true
+    }
+  }
+}

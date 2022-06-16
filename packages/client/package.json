@@ -5,6 +5,7 @@
   "main": "index.ts",
   "types": "./build/es2015/index.d.ts",
   "devDependencies": {
+    "@madatdata/client-base": "workspace:*",
     "@madatdata/test-helpers": "workspace:*",
     "@types/node": "16.11.38"
   },
