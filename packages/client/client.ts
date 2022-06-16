@@ -5,7 +5,31 @@ import {
   type QueryResult,
   type ClientOptions,
   type CredentialOptions,
+  type Response,
 } from "@madatdata/client-base";
+
+export interface WebBridgeResponse<
+  ResultShape extends Record<PropertyKey, unknown>
+> extends Response<ResultShape> {
+  command: string;
+  fields: {
+    columnID: number;
+    dataTypeID: number;
+    dataTypeModifier: number;
+    dataTypeSize: number;
+    format: string;
+    formattedType: string;
+    name: string;
+    tableID: number;
+  }[];
+  rowCount: 1;
+  rows: ResultShape[];
+  success: true;
+  /** FIXME: optional to allow deleting it for inline snapshots */
+  executionTime?: string;
+  /** FIXME: optional to allow deleting it for inline snapshots */
+  executionTimeHighRes?: string;
+}
 
 class SplitgraphHTTPClient<
   InputCredentialOptions extends CredentialOptions
@@ -38,7 +62,10 @@ class SplitgraphHTTPClient<
     const { response, error } = await fetch(this.queryUrl, fetchOptions)
       .then((r) => r.json())
       .then((rJson) => ({
-        response: rJson as QueryResult<ResultShape>,
+        response: rJson as QueryResult<
+          ResultShape,
+          WebBridgeResponse<ResultShape>
+        >,
         error: null,
       }))
       .catch((err) => ({
