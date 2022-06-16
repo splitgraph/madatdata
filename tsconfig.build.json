@@ -1,4 +1,5 @@
 {
+  "//": "Solution file to build all projects that can be built",
   "extends": "./tsconfig.build-base.json",
   "files": [],
   "include": [],

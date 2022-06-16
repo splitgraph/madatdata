@@ -1,4 +1,5 @@
 {
+  "//": "Solution file to build client",
   "files": [],
   "exclude": ["*.test.ts"],
   "references": [
