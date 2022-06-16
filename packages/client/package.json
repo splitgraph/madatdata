@@ -11,6 +11,11 @@
   "peerDependencies": {
     "cross-fetch": "*"
   },
+  "peerDependenciesMeta": {
+    "cross-fetch": {
+      "optional": true
+    }
+  },
   "publishConfig": {
     "access": "public",
     "main": "./build/es2015-commonjs/index.js",

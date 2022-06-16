@@ -1,0 +1,16 @@
+{
+  "name": "@madatdata/client-pg",
+  "packageManager": "yarn@3.2.0",
+  "private": true,
+  "scripts": {
+    "testing": "yarn run esno testing.ts",
+    "debug": "yarn run esno --inspect-brk=127.0.0.1:9229 testing.ts"
+  },
+  "devDependencies": {
+    "@types/node": "16.11.38",
+    "esno": "0.16.3"
+  },
+  "dependencies": {
+    "@madatdata/client": "workspace:*"
+  }
+}

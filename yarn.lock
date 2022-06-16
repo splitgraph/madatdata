@@ -53,7 +53,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@madatdata/client@workspace:packages/client":
+"@madatdata/client-pg@workspace:packages/client-pg":
+  version: 0.0.0-use.local
+  resolution: "@madatdata/client-pg@workspace:packages/client-pg"
+  dependencies:
+    "@madatdata/client": "workspace:*"
+    "@types/node": 16.11.38
+    esno: 0.16.3
+  languageName: unknown
+  linkType: soft
+
+"@madatdata/client@workspace:*, @madatdata/client@workspace:packages/client":
   version: 0.0.0-use.local
   resolution: "@madatdata/client@workspace:packages/client"
   dependencies:
@@ -61,6 +71,9 @@ __metadata:
     "@types/node": 16.11.38
   peerDependencies:
     cross-fetch: "*"
+  peerDependenciesMeta:
+    cross-fetch:
+      optional: true
   languageName: unknown
   linkType: soft
 

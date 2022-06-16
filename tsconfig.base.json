@@ -34,6 +34,7 @@
       "@madatdata/yeet/*": ["./packages/yeet/*"],
       "@madatdata/ast-parser/*": ["./packages/ast-parser/*"],
       "@madatdata/client/*": ["./packages/client/*"],
+      "@madatdata/client-pg/*": ["./packages/client-pg/*"],
       "@madatdata/test-helpers/*": ["./packages/test-helpers/*"]
     }
   }
