@@ -68,13 +68,13 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@madatdata/client-pg@workspace:packages/client-pg"
   dependencies:
-    "@madatdata/client": "workspace:*"
+    "@madatdata/client-base": "workspace:*"
     "@types/node": 16.11.38
     esno: 0.16.3
   languageName: unknown
   linkType: soft
 
-"@madatdata/client@workspace:*, @madatdata/client@workspace:packages/client":
+"@madatdata/client@workspace:packages/client":
   version: 0.0.0-use.local
   resolution: "@madatdata/client@workspace:packages/client"
   dependencies:
