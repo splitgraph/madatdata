@@ -1,5 +1,5 @@
 {
-  "name": "@madatdata/client-pg",
+  "name": "@madatdata/client-postgres",
   "packageManager": "yarn@3.2.0",
   "private": true,
   "scripts": {

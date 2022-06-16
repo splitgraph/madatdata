@@ -7,7 +7,7 @@
     { "path": "./packages/ast-parser" },
     { "path": "./packages/client-base" },
     { "path": "./packages/client" },
-    { "path": "./packages/client-pg" },
+    { "path": "./packages/client-postgres" },
     { "path": "./packages/tiny-react-sandbox" },
     { "path": "./packages/yeet" }
   ]

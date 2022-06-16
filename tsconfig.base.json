@@ -35,7 +35,7 @@
       "@madatdata/ast-parser/*": ["./packages/ast-parser/*"],
       "@madatdata/client-base/*": ["./packages/client-base/*"],
       "@madatdata/client/*": ["./packages/client/*"],
-      "@madatdata/client-pg/*": ["./packages/client-pg/*"],
+      "@madatdata/client-postgres/*": ["./packages/client-postgres/*"],
       "@madatdata/test-helpers/*": ["./packages/test-helpers/*"]
     }
   }

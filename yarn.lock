@@ -64,9 +64,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@madatdata/client-pg@workspace:packages/client-pg":
+"@madatdata/client-postgres@workspace:packages/client-postgres":
   version: 0.0.0-use.local
-  resolution: "@madatdata/client-pg@workspace:packages/client-pg"
+  resolution: "@madatdata/client-postgres@workspace:packages/client-postgres"
   dependencies:
     "@madatdata/client-base": "workspace:*"
     "@types/node": 16.11.38
