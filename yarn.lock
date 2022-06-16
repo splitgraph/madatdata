@@ -71,6 +71,7 @@ __metadata:
     "@madatdata/client-base": "workspace:*"
     "@types/node": 16.11.38
     esno: 0.16.3
+    postgres: 3.2.4
   languageName: unknown
   linkType: soft
 
@@ -2683,6 +2684,13 @@ __metadata:
     picocolors: ^1.0.0
     source-map-js: ^1.0.2
   checksum: fe58766ff32e4becf65a7d57678995cfd239df6deed2fe0557f038b47c94e4132e7e5f68b5aa820c13adfec32e523b693efaeb65798efb995ce49ccd83953816
+  languageName: node
+  linkType: hard
+
+"postgres@npm:3.2.4":
+  version: 3.2.4
+  resolution: "postgres@npm:3.2.4"
+  checksum: 613d09d66927bd436e286685881fa40297bac97ca3fc34359abf347f1e9cf00fb3c6fea328b004c632c507129e279883354b4e411d9c0c7478f88d670df78503
   languageName: node
   linkType: hard
 
