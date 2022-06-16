@@ -109,6 +109,22 @@ export const makeAuthHeaders = (cred: BaseCredentialOptions): HeadersInit => {
   }
 };
 
+export const makeAuthPgParams = (cred: BaseCredentialOptions) => {
+  if (isTokenCredential(cred)) {
+    return {
+      username: cred.token,
+      password: "ddn",
+    };
+  } else if (isKeypairCredential(cred)) {
+    return {
+      username: cred.apiKey,
+      password: cred.apiSecret,
+    };
+  } else {
+    throw Error("Unexpected credential type not keypair nor token");
+  }
+};
+
 const isAnonymousTokenCredentialOptions = (
   cred: unknown
 ): cred is AnonymousTokenCredentialOptions => {

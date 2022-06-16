@@ -3,6 +3,11 @@ export interface Host {
   dataHost: string;
   apiHost: string;
   baseUrls: BaseUrls;
+  postgres: {
+    host: string;
+    port: number;
+    ssl: boolean;
+  };
 }
 
 interface BaseUrls {
@@ -18,5 +23,10 @@ export const defaultHost: Host = {
     // NOTE: still needs to append ddn name to path
     sql: "https://data.splitgraph.com/sql/query",
     auth: "https://api.splitgraph.com/auth",
+  },
+  postgres: {
+    host: "data.splitgraph.com",
+    port: 5432,
+    ssl: true,
   },
 };

@@ -10,7 +10,7 @@ export { type CredentialOptions };
 
 // TODO: this is HTTP specific, just exporting here as a shim during refactor so
 // that derived classes don't need to add includes for `base-client/credential`
-export { makeAuthHeaders } from "./credential";
+export { makeAuthHeaders, makeAuthPgParams } from "./credential";
 export interface ClientOptions {
   credential?: CredentialOptions | null;
   host?: Host | null;
@@ -18,7 +18,7 @@ export interface ClientOptions {
 }
 
 export interface Response<ResultShape extends Record<PropertyKey, unknown>> {
-  rows: ResultShape[];
+  rows: ResultShape[] | Iterable<ResultShape>;
   success: boolean;
 }
 

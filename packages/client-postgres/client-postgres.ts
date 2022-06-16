@@ -1,60 +1,57 @@
 import {
   BaseClient,
+  makeAuthPgParams,
   type QueryError,
   type QueryResult,
   type ClientOptions,
   type CredentialOptions,
 } from "@madatdata/client-base";
 
+import postgres from "postgres";
+
 class SplitgraphPostgresClient<
   InputCredentialOptions extends CredentialOptions
 > extends BaseClient<InputCredentialOptions> {
-  private pgConn: string;
+  public connection: ReturnType<typeof postgres>;
 
   constructor(opts: ClientOptions) {
     super(opts);
 
-    this.pgConn = "testing 1 2 3";
+    this.connection = postgres(this.connectionOptions);
   }
 
-  private get execOptions() {
+  private get connectionOptions() {
+    const { username, password } = makeAuthPgParams(this.credential);
+
     return {
-      pgConn: this.pgConn,
+      host: this.host.postgres.host,
+      port: this.host.postgres.port,
+      ssl: this.host.postgres.ssl,
+      database: this.database.dbname,
+      username: username,
+      password: password,
     };
   }
 
   async execute<ResultShape extends Record<PropertyKey, unknown>>(
     query: string
   ) {
-    const execOptions = {
-      ...this.execOptions,
-      body: JSON.stringify({ sql: query }),
-    };
+    try {
+      const rows = await this.connection<ResultShape[]>.unsafe(query);
 
-    console.log("execOptions:", execOptions);
-
-    const { response, error } = await Promise.resolve({
-      command: "SELECT",
-      fields: [],
-      rowCount: 0,
-      rows: [],
-      success: true,
-      executionTime: "0",
-      executionTimeHighRes: "0.00000",
-    })
-      .then((rJson) => ({
-        response: rJson as QueryResult<ResultShape>,
-        error: null,
-      }))
-      .catch((err) => ({
+      return {
+        response: {
+          success: true,
+          rows
+        } as QueryResult<ResultShape>,
+        error: null
+      }
+    } catch (err: any) {
+      return {
         response: null,
-        error: { success: false, error: err, trace: err.stack } as QueryError,
-      }));
-
-    return {
-      response,
-      error,
-    };
+        error: { success: false, error: err, trace: err?.stack } as QueryError
+      }
+    }
   }
 }
 
