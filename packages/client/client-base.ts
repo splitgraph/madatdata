@@ -1,6 +1,10 @@
-import type { CredentialOptions } from "./credential";
-import type { Host } from "./host";
-import type { Database } from "./database";
+import {
+  type CredentialOptions,
+  type CredentialFromOptions,
+  Credential,
+} from "./credential";
+import { type Host, defaultHost } from "./host";
+import { type Database, defaultDatabase } from "./database";
 
 export interface ClientOptions {
   credential?: CredentialOptions | null;
@@ -54,6 +58,33 @@ export interface Client {
   execute: <ResultShape extends Record<PropertyKey, unknown>>(
     query: string
   ) => Promise<{
+    response: QueryResult<ResultShape> | null;
+    error: QueryError | null;
+  }>;
+}
+
+export abstract class BaseClient<
+  InputCredentialOptions extends CredentialOptions
+> implements Client
+{
+  protected credential: CredentialFromOptions<InputCredentialOptions>;
+  protected host: Host;
+  protected database: Database;
+
+  constructor(opts: ClientOptions) {
+    this.credential = Credential(opts.credential || null);
+
+    this.host = opts.host ?? defaultHost;
+    this.database = opts.database ?? defaultDatabase;
+  }
+
+  setCredential(newCredential: InputCredentialOptions | null) {
+    this.credential = Credential(newCredential || null);
+  }
+
+  abstract execute<ResultShape extends Record<PropertyKey, unknown>>(
+    query: string
+  ): Promise<{
     response: QueryResult<ResultShape> | null;
     error: QueryError | null;
   }>;

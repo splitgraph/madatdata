@@ -1,39 +1,20 @@
+import { type CredentialOptions, makeAuthHeaders } from "./credential";
+
 import {
-  type CredentialOptions,
-  type CredentialFromOptions,
-  Credential,
-  makeAuthHeaders,
-} from "./credential";
-
-import { type Host, defaultHost } from "./host";
-
-import { type Database, defaultDatabase } from "./database";
-
-import type {
-  Client,
-  QueryError,
-  QueryResult,
-  ClientOptions,
+  BaseClient,
+  type QueryError,
+  type QueryResult,
+  type ClientOptions,
 } from "./client-base";
 
-class SplitgraphHTTPClient<InputCredentialOptions extends CredentialOptions>
-  implements Client
-{
-  private credential: CredentialFromOptions<InputCredentialOptions>;
-  private host: Host;
-  private database: Database;
+class SplitgraphHTTPClient<
+  InputCredentialOptions extends CredentialOptions
+> extends BaseClient<InputCredentialOptions> {
   private queryUrl: string;
 
   constructor(opts: ClientOptions) {
-    this.credential = Credential(opts.credential || null);
-
-    this.host = opts.host ?? defaultHost;
-    this.database = opts.database ?? defaultDatabase;
+    super(opts);
     this.queryUrl = this.host.baseUrls.sql + "/" + this.database.dbname;
-  }
-
-  setCredential(newCredential: InputCredentialOptions | null) {
-    this.credential = Credential(newCredential || null);
   }
 
   private get fetchOptions() {
