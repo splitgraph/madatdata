@@ -3,7 +3,7 @@ import { SplitPaneInputOutput } from "../debugging/SplitPaneInputOutput";
 
 import { AuthWidget } from "./AuthWidget";
 
-import { makeClient } from "@madatdata/client/client";
+import { makeClient } from "@madatdata/client-http/client-http";
 import { usePersistedCredential } from "./usePersistedCredential";
 
 const client = makeClient({});

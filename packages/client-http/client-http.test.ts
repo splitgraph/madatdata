@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { makeClient } from "./client";
+import { makeClient } from "./client-http";
 import { setupServer } from "msw/node";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
 import { rest } from "msw";

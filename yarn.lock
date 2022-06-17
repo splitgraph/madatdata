@@ -64,20 +64,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@madatdata/client-postgres@workspace:packages/client-postgres":
+"@madatdata/client-http@workspace:packages/client-http":
   version: 0.0.0-use.local
-  resolution: "@madatdata/client-postgres@workspace:packages/client-postgres"
-  dependencies:
-    "@madatdata/client-base": "workspace:*"
-    "@types/node": 16.11.38
-    esno: 0.16.3
-    postgres: 3.2.4
-  languageName: unknown
-  linkType: soft
-
-"@madatdata/client@workspace:packages/client":
-  version: 0.0.0-use.local
-  resolution: "@madatdata/client@workspace:packages/client"
+  resolution: "@madatdata/client-http@workspace:packages/client-http"
   dependencies:
     "@madatdata/client-base": "workspace:*"
     "@madatdata/test-helpers": "workspace:*"
@@ -87,6 +76,17 @@ __metadata:
   peerDependenciesMeta:
     cross-fetch:
       optional: true
+  languageName: unknown
+  linkType: soft
+
+"@madatdata/client-postgres@workspace:packages/client-postgres":
+  version: 0.0.0-use.local
+  resolution: "@madatdata/client-postgres@workspace:packages/client-postgres"
+  dependencies:
+    "@madatdata/client-base": "workspace:*"
+    "@types/node": 16.11.38
+    esno: 0.16.3
+    postgres: 3.2.4
   languageName: unknown
   linkType: soft
 

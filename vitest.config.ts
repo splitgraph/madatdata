@@ -13,8 +13,8 @@ export default defineConfig({
         replacement: currentDirectoryPath,
       },
       {
-        find: "@madatdata/client",
-        replacement: join(currentDirectoryPath, "packages", "client"),
+        find: "@madatdata/client-http",
+        replacement: join(currentDirectoryPath, "packages", "client-http"),
       },
     ],
   },

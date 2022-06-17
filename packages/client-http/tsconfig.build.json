@@ -3,7 +3,7 @@
   "exclude": ["*.test.ts", "build"],
   "include": ["*.ts"],
   "compilerOptions": {
-    "outDir": "./packages/client/build",
+    "outDir": "./packages/client-http/build",
     "rootDir": "."
   },
   "references": [{ "path": "../client-base/tsconfig.build.json" }]

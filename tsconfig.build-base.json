@@ -2,7 +2,7 @@
   "//": "Inheritable base config with options shared by build tasks",
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "./packages/client/dist",
+    "outDir": "./packages/client-http/dist",
     "rootDir": "./packages",
     "emitDeclarationOnly": false,
     "resolveJsonModule": false,
