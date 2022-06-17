@@ -53,9 +53,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@madatdata/client-base@workspace:*, @madatdata/client-base@workspace:packages/client-base":
+"@madatdata/base-client@workspace:*, @madatdata/base-client@workspace:packages/base-client":
   version: 0.0.0-use.local
-  resolution: "@madatdata/client-base@workspace:packages/client-base"
+  resolution: "@madatdata/base-client@workspace:packages/base-client"
   peerDependencies:
     typescript: "*"
   peerDependenciesMeta:
@@ -68,7 +68,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@madatdata/client-http@workspace:packages/client-http"
   dependencies:
-    "@madatdata/client-base": "workspace:*"
+    "@madatdata/base-client": "workspace:*"
     "@madatdata/test-helpers": "workspace:*"
     "@types/node": 16.11.38
   peerDependencies:
@@ -83,7 +83,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@madatdata/client-postgres@workspace:packages/client-postgres"
   dependencies:
-    "@madatdata/client-base": "workspace:*"
+    "@madatdata/base-client": "workspace:*"
     "@types/node": 16.11.38
     esno: 0.16.3
     postgres: 3.2.4

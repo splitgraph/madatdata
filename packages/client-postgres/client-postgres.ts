@@ -5,7 +5,7 @@ import {
   type QueryResult,
   type ClientOptions,
   type CredentialOptions,
-} from "@madatdata/client-base";
+} from "@madatdata/base-client";
 
 import postgres from "postgres";
 

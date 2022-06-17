@@ -6,7 +6,7 @@ import {
   type ClientOptions,
   type CredentialOptions,
   type Response,
-} from "@madatdata/client-base";
+} from "@madatdata/base-client";
 
 export interface WebBridgeResponse<
   ResultShape extends Record<PropertyKey, unknown>

@@ -4,7 +4,7 @@ import { setupServer } from "msw/node";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
 import { rest } from "msw";
 
-import { defaultHost } from "@madatdata/client-base/host";
+import { defaultHost } from "@madatdata/base-client/host";
 
 describe("makeClient creates a client which", () => {
   const mswServer = setupServer();

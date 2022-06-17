@@ -6,5 +6,5 @@
     "outDir": "./packages/client-http/build",
     "rootDir": "."
   },
-  "references": [{ "path": "../client-base/tsconfig.build.json" }]
+  "references": [{ "path": "../base-client/tsconfig.build.json" }]
 }

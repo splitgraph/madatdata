@@ -3,7 +3,7 @@
   "exclude": ["*.test.ts", "build"],
   "include": ["*.ts"],
   "compilerOptions": {
-    "outDir": "./packages/client-base/build",
+    "outDir": "./packages/base-client/build",
     "rootDir": "."
   }
 }

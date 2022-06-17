@@ -1,5 +1,5 @@
 {
-  "name": "@madatdata/client-base",
+  "name": "@madatdata/base-client",
   "packageManager": "yarn@3.2.0",
   "private": true,
   "peerDependencies": {
