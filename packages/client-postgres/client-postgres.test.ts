@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { makeClient } from "./client-postgres";
 
 // TODO: We're using the real DDN atm, which requires these env vars to exist,
@@ -13,8 +13,12 @@ const credential = {
 const hasCredential = !!credential.apiKey && !!credential.apiSecret;
 
 describe.skipIf(!hasCredential)("makeClient creates a pg client which", () => {
-  const client = makeClient({
-    credential,
+  let client: ReturnType<typeof makeClient>;
+
+  beforeEach(() => {
+    client = makeClient({
+      credential,
+    });
   });
 
   it("selects 1 from ddn during integration testing", async () => {

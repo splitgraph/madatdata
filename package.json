@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "typecheck": "yarn tsc --build --verbose",
-    "build": "yarn tsc --build --verbose tsconfig.build.json",
+    "build": "yarn tsc-multi",
     "test": "yarn vitest",
     "test-ci": "yarn vitest run",
     "clean": "yarn rimraf dist packages/*/build",
