@@ -42,15 +42,15 @@ class SplitgraphPostgresClient<
       return {
         response: {
           success: true,
-          rows
+          rows,
         } as QueryResult<ResultShape>,
-        error: null
-      }
+        error: null,
+      };
     } catch (err: any) {
       return {
         response: null,
-        error: { success: false, error: err, trace: err?.stack } as QueryError
-      }
+        error: { success: false, error: err, trace: err?.stack } as QueryError,
+      };
     }
   }
 }
