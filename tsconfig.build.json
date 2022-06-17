@@ -4,5 +4,8 @@
   "files": [],
   "include": [],
   "exclude": ["node_modules", ".*", "public", "dist"],
-  "references": [{ "path": "./packages/client/tsconfig.build.json" }]
+  "references": [
+    { "path": "./packages/client/tsconfig.build.json" },
+    { "path": "./packages/client-base/tsconfig.build.json" }
+  ]
 }
