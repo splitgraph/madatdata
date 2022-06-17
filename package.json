@@ -7,7 +7,7 @@
     "build": "yarn tsc-multi",
     "test": "yarn vitest",
     "test-ci": "yarn vitest run",
-    "clean": "yarn rimraf dist packages/*/build",
+    "clean": "yarn rimraf dist packages/*/build || true",
     "yeet": "yarn workspace @madatdata/yeet run yeet",
     "format": "yarn run format.base --write --list-different .",
     "format.check": "yarn run format.base --check . || { yarn run format.warn ; }",
@@ -29,5 +29,8 @@
   },
   "dependencies": {
     "cross-fetch": "3.1.5"
+  },
+  "resolutions": {
+    "tsc-multi@0.6.1": "patch:tsc-multi@npm:0.6.1#.yarn/patches/tsc-multi-npm-0.6.1-6c7411b6ff.patch"
   }
 }
