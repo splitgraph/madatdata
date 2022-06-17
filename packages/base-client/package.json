@@ -1,7 +1,9 @@
 {
   "name": "@madatdata/base-client",
+  "version": "0.0.1",
   "packageManager": "yarn@3.2.0",
-  "private": true,
+  "main": "index.ts",
+  "types": "./build/es2020/index.d.ts",
   "peerDependencies": {
     "typescript": "*"
   },
@@ -9,5 +11,10 @@
     "typescript": {
       "optional": true
     }
+  },
+  "publishConfig": {
+    "access": "public",
+    "main": "./build/es2020-commonjs/index.js",
+    "module": "./build/es2020/index.js"
   }
 }

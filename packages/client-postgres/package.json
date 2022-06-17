@@ -1,17 +1,22 @@
 {
   "name": "@madatdata/client-postgres",
+  "version": "0.0.1",
   "packageManager": "yarn@3.2.0",
-  "private": true,
-  "scripts": {
-    "testing": "yarn run esno testing.ts",
-    "debug": "yarn run esno --inspect-brk=127.0.0.1:9229 testing.ts"
-  },
+  "main": "index.ts",
+  "types": "./build/es2020/index.d.ts",
   "devDependencies": {
     "@types/node": "16.11.38",
-    "esno": "0.16.3"
+    "postgres": "3.2.4"
   },
   "dependencies": {
-    "@madatdata/base-client": "workspace:*",
-    "postgres": "3.2.4"
+    "@madatdata/base-client": "workspace:*"
+  },
+  "peerDependencies": {
+    "postgres": "^3.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "main": "./build/es2020-commonjs/index.js",
+    "module": "./build/es2020/index.js"
   }
 }
