@@ -1,0 +1,23 @@
+{
+  "targets": [
+    {
+      "outDir": "build/es2015-commonjs",
+      "module": "CommonJS",
+      "target": "ES2015",
+      "extname": ".cjs"
+    },
+    {
+      "outDir": "build/es2015",
+      "target": "es2015",
+      "module": "es2015",
+      "extname": ".mjs"
+    },
+    {
+      "outDir": "build/esnext",
+      "target": "esnext",
+      "module": "esnext",
+      "extname": ".mjs"
+    }
+  ],
+  "projects": ["./tsconfig.build.json"]
+}

@@ -1,10 +1,10 @@
 {
-  "//": "Solution file to build client",
-  "files": [],
-  "exclude": ["*.test.ts"],
-  "references": [
-    { "path": "./tsconfig.build-es2015-commonjs.json" },
-    { "path": "./tsconfig.build-es2015-es2015.json" },
-    { "path": "./tsconfig.build-esnext-esnext.json" }
-  ]
+  "extends": "../../tsconfig.build-base.json",
+  "exclude": ["*.test.ts", "build"],
+  "include": ["*.ts"],
+  "compilerOptions": {
+    "outDir": "./packages/client/build",
+    "rootDir": "."
+  },
+  "references": [{ "path": "../client-base" }]
 }
