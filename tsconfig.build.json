@@ -6,6 +6,7 @@
   "exclude": ["node_modules", ".*", "public", "dist"],
   "references": [
     { "path": "./packages/base-client/tsconfig.build.json" },
-    { "path": "./packages/client-http/tsconfig.build.json" }
+    { "path": "./packages/client-http/tsconfig.build.json" },
+    { "path": "./packages/client-postgres/tsconfig.build.json" }
   ]
 }

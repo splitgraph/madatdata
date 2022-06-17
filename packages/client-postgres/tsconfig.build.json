@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.build-base.json",
+  "exclude": ["*.test.ts", "build"],
+  "include": ["*.ts"],
+  "compilerOptions": {
+    "outDir": "./packages/client-postgres/build",
+    "rootDir": "."
+  },
+  "references": [{ "path": "../base-client/tsconfig.build.json" }]
+}

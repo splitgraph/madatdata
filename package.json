@@ -6,7 +6,7 @@
     "typecheck": "yarn tsc --build --verbose",
     "test": "yarn vitest",
     "build": "yarn tsc-multi",
-    "clean": "yarn clean.verbose-default 2>&1 | grep -vi 'no matches'",
+    "clean": "yarn clean.verbose-default 2>&1 >/dev/null || true",
     "check": "yarn format.check && yarn typecheck && yarn test-ci && yarn build",
     "test-ci": "yarn vitest run",
     "yeet": "yarn workspace @madatdata/yeet run yeet",
