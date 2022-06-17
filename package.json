@@ -7,7 +7,7 @@
     "build": "yarn tsc --build --verbose tsconfig.build.json",
     "test": "yarn vitest",
     "test-ci": "yarn vitest run",
-    "start": "yarn workspace @madatdata/server run start",
+    "clean": "yarn rimraf dist packages/*/build",
     "yeet": "yarn workspace @madatdata/yeet run yeet",
     "format": "yarn run format.base --write --list-different .",
     "format.check": "yarn run format.base --check . || { yarn run format.warn ; }",
@@ -22,6 +22,7 @@
     "jsdom": "19.0.0",
     "msw": "0.42.1",
     "prettier": "2.6.2",
+    "rimraf": "3.0.2",
     "typescript": "4.7.2",
     "vitest": "0.14.1"
   },
