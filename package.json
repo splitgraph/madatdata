@@ -4,16 +4,17 @@
   "private": true,
   "scripts": {
     "typecheck": "yarn tsc --build --verbose",
-    "build": "yarn tsc-multi",
     "test": "yarn vitest",
-    "test-ci": "yarn vitest run",
-    "clean": "yarn rimraf dist packages/*/build || true",
+    "build": "yarn tsc-multi",
+    "clean": "yarn clean.verbose-default 2>&1 | grep -vi 'no matches'",
     "check": "yarn format.check && yarn typecheck && yarn test-ci && yarn build",
+    "test-ci": "yarn vitest run",
     "yeet": "yarn workspace @madatdata/yeet run yeet",
     "format": "yarn run format.base --write --list-different .",
     "format.check": "yarn run format.base --check . || { yarn run format.warn ; }",
     "format.base": "yarn prettier --config .prettierrc --ignore-path .prettierignore --ignore-unknown",
-    "format.warn": "echo ; echo \"Formatting issues found. To apply changes, run yarn format\" ; exit 1 ;"
+    "format.warn": "echo ; echo \"Formatting issues found. To apply changes, run yarn format\" ; exit 1 ;",
+    "clean.verbose-default": "yarn rimraf dist packages/*/build/* || true"
   },
   "workspaces": [
     "packages/*"
