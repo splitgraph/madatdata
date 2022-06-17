@@ -2,21 +2,35 @@
   "targets": [
     {
       "outDir": "build/es2015-commonjs",
-      "tsBuildInfoFile": "build/tsconfig-es2015-commonjs.tsbuildinfo",
+      "tsBuildInfoFile": "build/es2015-commonjs.tsbuildinfo",
       "module": "CommonJS",
       "target": "ES2015",
       "extname": ".cjs"
     },
     {
       "outDir": "build/es2015",
-      "tsBuildInfoFile": "build/tsconfig-es2015-es2015.tsbuildinfo",
+      "tsBuildInfoFile": "build/es2015-es2015.tsbuildinfo",
       "target": "es2015",
       "module": "es2015",
       "extname": ".js"
     },
     {
+      "outDir": "build/es2020-commonjs",
+      "tsBuildInfoFile": "build/es2020-commonjs.tsbuildinfo",
+      "module": "CommonJS",
+      "target": "ES2020",
+      "extname": ".cjs"
+    },
+    {
+      "outDir": "build/es2020",
+      "tsBuildInfoFile": "build/es2020-es2020.tsbuildinfo",
+      "target": "es2020",
+      "module": "es2020",
+      "extname": ".js"
+    },
+    {
       "outDir": "build/esnext",
-      "tsBuildInfoFile": "build/tsconfig-esnext-esnext.tsbuildinfo",
+      "tsBuildInfoFile": "build/esnext-esnext.tsbuildinfo",
       "target": "esnext",
       "module": "esnext",
       "extname": ".mjs"

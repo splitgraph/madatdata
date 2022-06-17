@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "packageManager": "yarn@3.2.0",
   "main": "index.ts",
-  "types": "./build/es2015/index.d.ts",
+  "types": "./build/es2020/index.d.ts",
   "dependencies": {
     "@madatdata/client-base": "workspace:*"
   },
@@ -21,7 +21,7 @@
   },
   "publishConfig": {
     "access": "public",
-    "main": "./build/es2015-commonjs/index.js",
-    "module": "./build/es2015/index.js"
+    "main": "./build/es2020-commonjs/index.js",
+    "module": "./build/es2020/index.js"
   }
 }
