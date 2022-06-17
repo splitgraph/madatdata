@@ -4,9 +4,7 @@ let suppressed = false;
 
 /**
  * Don't emit the NODE_TLS_REJECT_UNAUTHORIZED warning on every request in
- * development, where we intentionally set the variable, because it's easier
- * than creating a standardized way to import the root certificate for each
- * proxied deployment (if we implement that in the future, this can be deleted).
+ * development, if INSECURE_TLS is set to "1"
  *
  * The process, and any child process it spawns, should call this function prior
  * to executing any other code.
