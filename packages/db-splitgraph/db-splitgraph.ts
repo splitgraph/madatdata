@@ -1,8 +1,25 @@
-import { BaseDb } from "@madatdata/base-db";
+import { BaseDb, DbPlugin } from "@madatdata/base-db";
 
-type CSVPlugin = {
+interface SplitgraphPlugin extends DbPlugin {
+  importData: {
+    sourceOptions: DbPlugin["importData"]["sourceOptions"];
+    destOptions: {
+      tableName: string;
+      tag?: string;
+    };
+    resultShape: {
+      success: true;
+    };
+    errorShape: {
+      success: false;
+    };
+  };
+}
+
+interface CSVPlugin extends SplitgraphPlugin {
   importData: {
     sourceOptions: {
+      /** URL of the csv file */
       url: string;
     };
     destOptions: {
@@ -15,12 +32,24 @@ type CSVPlugin = {
       success: false;
     };
   };
-};
+}
 
 // NOTE: In theory this will be auto-generated
-type SplitgraphPluginMap = {
+type DEFAULT_PLUGINS = "mysql" | "postgres";
+
+type SPECIAL_PLUGINS = {
   csv: CSVPlugin;
 };
+
+type SpecialPluginMap = {
+  [k in keyof SPECIAL_PLUGINS]: SPECIAL_PLUGINS[k];
+};
+
+type DefaultPluginMap = {
+  [k in DEFAULT_PLUGINS]: SplitgraphPlugin;
+};
+
+type SplitgraphPluginMap = DefaultPluginMap & SpecialPluginMap;
 
 class DbSplitgraph extends BaseDb<SplitgraphPluginMap> {
   async importData<

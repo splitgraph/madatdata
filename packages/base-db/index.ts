@@ -1,12 +1,19 @@
-export interface PluginMap {
-  [pluginName: string]: {
-    importData: {
-      sourceOptions: Record<PropertyKey, unknown>;
-      destOptions: Record<PropertyKey, unknown>;
-      resultShape: Record<PropertyKey, unknown>;
-      errorShape: Record<PropertyKey, unknown>;
-    };
-  };
+export interface DbPluginAction {
+  resultShape: Record<PropertyKey, unknown>;
+  errorShape: Record<PropertyKey, unknown>;
+}
+
+export interface ActionImportData extends DbPluginAction {
+  sourceOptions: Record<PropertyKey, unknown>;
+  destOptions: Record<PropertyKey, unknown>;
+}
+
+export interface DbPlugin extends Record<PropertyKey, DbPluginAction> {
+  importData: ActionImportData;
+}
+
+export interface PluginMap extends Record<PropertyKey, DbPlugin> {
+  [pluginName: string]: DbPlugin;
 }
 
 export interface Db<ConcretePluginMap extends PluginMap> {
