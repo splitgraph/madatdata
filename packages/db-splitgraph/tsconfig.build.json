@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.build-base.json",
+  "exclude": ["*.test.ts", "build"],
+  "include": ["*.ts"],
+  "compilerOptions": {
+    "outDir": "./packages/db-splitgraph/build",
+    "rootDir": "."
+  },
+  "references": [{ "path": "../base-db/tsconfig.build.json" }]
+}

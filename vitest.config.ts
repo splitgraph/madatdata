@@ -16,6 +16,10 @@ export default defineConfig({
         find: "@madatdata/client-http",
         replacement: join(currentDirectoryPath, "packages", "client-http"),
       },
+      {
+        find: "@madatdata/db-splitgraph",
+        replacement: join(currentDirectoryPath, "packages", "db-splitgraph"),
+      },
     ],
   },
   test: {

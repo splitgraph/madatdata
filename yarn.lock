@@ -64,6 +64,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@madatdata/base-db@workspace:*, @madatdata/base-db@workspace:packages/base-db":
+  version: 0.0.0-use.local
+  resolution: "@madatdata/base-db@workspace:packages/base-db"
+  peerDependencies:
+    typescript: "*"
+  peerDependenciesMeta:
+    typescript:
+      optional: true
+  languageName: unknown
+  linkType: soft
+
 "@madatdata/client-http@workspace:packages/client-http":
   version: 0.0.0-use.local
   resolution: "@madatdata/client-http@workspace:packages/client-http"
@@ -88,6 +99,21 @@ __metadata:
     postgres: 3.2.4
   peerDependencies:
     postgres: ^3.0.0
+  languageName: unknown
+  linkType: soft
+
+"@madatdata/db-splitgraph@workspace:packages/db-splitgraph":
+  version: 0.0.0-use.local
+  resolution: "@madatdata/db-splitgraph@workspace:packages/db-splitgraph"
+  dependencies:
+    "@madatdata/base-db": "workspace:*"
+    "@madatdata/test-helpers": "workspace:*"
+    "@types/node": 16.11.38
+  peerDependencies:
+    cross-fetch: "*"
+  peerDependenciesMeta:
+    cross-fetch:
+      optional: true
   languageName: unknown
   linkType: soft
 

@@ -1,0 +1,27 @@
+{
+  "name": "@madatdata/db-splitgraph",
+  "version": "0.0.3",
+  "packageManager": "yarn@3.2.0",
+  "main": "index.ts",
+  "types": "./build/es2020/index.d.ts",
+  "dependencies": {
+    "@madatdata/base-db": "workspace:*"
+  },
+  "devDependencies": {
+    "@madatdata/test-helpers": "workspace:*",
+    "@types/node": "16.11.38"
+  },
+  "peerDependencies": {
+    "cross-fetch": "*"
+  },
+  "peerDependenciesMeta": {
+    "cross-fetch": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "main": "./build/es2020-commonjs/index.cjs",
+    "module": "./build/es2020/index.mjs"
+  }
+}

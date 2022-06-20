@@ -37,6 +37,8 @@
     - [Clean](#clean)
     - [Final check before commit](#final-check-before-commit)
   - [Upgrade everything at once, interactively](#upgrade-everything-at-once-interactively)
+- [Appendix](#appendix)
+  - [Alternative Names](#alternative-names)
 
 ## Why are you mad at the data?
 
@@ -520,3 +522,11 @@ yarn up -E -i '*'
 [tsc-multi]: https://github.com/tommy351/tsc-multi
 [in-anger]:
   https://english.stackexchange.com/questions/30939/is-used-in-anger-a-britishism-for-something
+
+# Appendix
+
+## Alternative Names
+
+- Madatdata
+- DSX
+- DDX
