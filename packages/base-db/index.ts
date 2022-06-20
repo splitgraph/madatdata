@@ -1,17 +1,28 @@
-type ImportDataFunction = <SourceOptions, DestOptions>(
+export type ImportDataFunction = <
+  SourceOptions,
+  DestOptions,
+  ResultShape extends Record<PropertyKey, unknown>,
+  ErrorShape extends Record<PropertyKey, unknown>
+>(
   sourceOptions: SourceOptions,
   destOptions: DestOptions
-) => Promise<{ response: unknown | null; error: unknown | null }>;
+) => Promise<
+  { response: ResultShape; error: null } | { response: null; error: ErrorShape }
+>;
 
 export interface Plugin {
   importData: ImportDataFunction;
 }
+
 export interface PluginMap {
   [pluginName: string]: Plugin;
 }
 
 export interface Db<ConcretePluginMap extends PluginMap> {
-  importData: ConcretePluginMap[string]["importData"];
+  importData: <PluginName extends keyof ConcretePluginMap>(
+    pluginName: PluginName,
+    ...rest: Parameters<ConcretePluginMap[PluginName]["importData"]>
+  ) => ReturnType<ConcretePluginMap[PluginName]["importData"]>;
 }
 
 export abstract class BaseDb<ConcretePluginMap extends PluginMap>
@@ -19,18 +30,9 @@ export abstract class BaseDb<ConcretePluginMap extends PluginMap>
 {
   // constructor(opts: DbOptions) {}
 
-  // abstract importData(
-  //   plugin
-  //   sourceOptions,
-  //   destOptions,
-  // ): ReturnType<ConcretePluginMap[PluginName]["importData"]>;
-
-  abstract importData: ImportDataFunction;
-
-  // abstract importData<SourceOptions, DestOptions>(
-  //   sourceOptions: SourceOptions,
-  //   destOptions: DestOptions
-  // ): Promise<{ response: unknown | null; error: unknown | null }>;
+  abstract importData<PluginName extends keyof ConcretePluginMap>(
+    pluginName: PluginName,
+    sourceOptions: Parameters<ConcretePluginMap[PluginName]["importData"]>[0],
+    destOptions: Parameters<ConcretePluginMap[PluginName]["importData"]>[1]
+  ): ReturnType<ConcretePluginMap[PluginName]["importData"]>;
 }
-
-type Expand<T> = T extends infer O ? { [K in keyof O]: O[K] } : never;

@@ -6,7 +6,7 @@ describe("importData", () => {
     const db = makeDb();
 
     const importResult = await db.importData("csv", {}, {});
-    expect(importResult.response?.success).toEqual(true);
+    expect(importResult.response?.["success"]).toEqual(true);
 
     // NOTE: Intellisense is working, but these unknown keys do not cause
     // typechecking errors, because root type is Record<PropertyKey, unknown>
@@ -16,7 +16,7 @@ describe("importData", () => {
       { xxx: "xxx", xxxxx: "sdsdsds" },
       { tableName: "string", yyy: "xxxx" }
     );
-    expect(badResult.response?.success).toEqual(true);
+    expect(badResult.response?.["success"]).toEqual(true);
   });
 
   it("returns false for unknown plugin", async () => {
@@ -25,7 +25,7 @@ describe("importData", () => {
     // @ts-expect-error not a key in SplitgraphPluginMap
     const importResult = await db.importData("unknown-doesnotexist", {}, {});
 
-    expect(importResult.response?.success).toEqual(undefined);
-    expect(importResult.error?.success).toEqual(false);
+    expect(importResult.response?.["success"]).toEqual(undefined);
+    expect(importResult.error?.["success"]).toEqual(false);
   });
 });
