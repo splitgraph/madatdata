@@ -1,14 +1,25 @@
 import { describe, it, expect } from "vitest";
 import { makeDb } from "./db-splitgraph";
 
-describe("makeDb creates a database which", () => {
-  it('has dbname set to "ddn"', () => {
+describe("importData", () => {
+  it("returns true for plugin csv", async () => {
     const db = makeDb();
-    expect(db.dbname).toEqual("ddn");
+
+    const importResult = await db.importData(
+      "csv",
+      { url: "fff" },
+      { tableName: "string" }
+    );
+    expect(importResult.response?.success).toEqual(true);
   });
 
-  it("has property helloWorld from base-db which returns hello world", () => {
+  it("returns false for plugin not csv", async () => {
     const db = makeDb();
-    expect(db.helloWorld()).toEqual("hello world");
+
+    // @ts-expect-error "mysql" is not a key in SplitgraphPluginMap
+    const importResult = await db.importData("mysql", {}, {});
+
+    expect(importResult.response?.success).toEqual(undefined);
+    expect(importResult.error?.success).toEqual(false);
   });
 });

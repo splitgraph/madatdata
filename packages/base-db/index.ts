@@ -1,15 +1,21 @@
-export const helloWorld = () => {
-  console.log("Hello world from base-db");
-  return "hello world";
-};
+export interface PluginMap {
+  [pluginName: string]: {
+    importData: {
+      sourceOptions: Record<PropertyKey, unknown>;
+      destOptions: Record<PropertyKey, unknown>;
+      resultShape: Record<PropertyKey, unknown>;
+      errorShape: Record<PropertyKey, unknown>;
+    };
+  };
+}
 
-export interface Db<PluginMap extends Record<string, unknown>> {
+export interface Db<ConcretePluginMap extends PluginMap> {
   importData: <
-    PluginName extends keyof PluginMap,
-    SourceOptions extends Record<PropertyKey, unknown>,
-    DestOptions extends Record<PropertyKey, unknown>,
-    ImportResultShape extends Record<PropertyKey, unknown>,
-    ImportErrorShape extends Record<PropertyKey, unknown>
+    PluginName extends keyof ConcretePluginMap,
+    SourceOptions extends ConcretePluginMap[PluginName]["importData"]["sourceOptions"],
+    DestOptions extends ConcretePluginMap[PluginName]["importData"]["destOptions"],
+    ImportResultShape extends ConcretePluginMap[PluginName]["importData"]["resultShape"],
+    ImportErrorShape extends ConcretePluginMap[PluginName]["importData"]["errorShape"]
   >(
     plugin: PluginName,
     source: SourceOptions,
@@ -20,17 +26,17 @@ export interface Db<PluginMap extends Record<string, unknown>> {
   }>;
 }
 
-export abstract class BaseDb<PluginMap extends Record<string, unknown>>
-  implements Db<PluginMap>
+export abstract class BaseDb<ConcretePluginMap extends PluginMap>
+  implements Db<ConcretePluginMap>
 {
   // constructor(opts: DbOptions) {}
 
   abstract importData<
-    PluginName extends keyof PluginMap,
-    SourceOptions extends Record<PropertyKey, unknown>,
-    DestOptions extends Record<PropertyKey, unknown>,
-    ImportResultShape extends Record<PropertyKey, unknown>,
-    ImportErrorShape extends Record<PropertyKey, unknown>
+    PluginName extends keyof ConcretePluginMap,
+    SourceOptions extends ConcretePluginMap[PluginName]["importData"]["sourceOptions"],
+    DestOptions extends ConcretePluginMap[PluginName]["importData"]["destOptions"],
+    ImportResultShape extends ConcretePluginMap[PluginName]["importData"]["resultShape"],
+    ImportErrorShape extends ConcretePluginMap[PluginName]["importData"]["errorShape"]
   >(
     plugin: PluginName,
     source: SourceOptions,

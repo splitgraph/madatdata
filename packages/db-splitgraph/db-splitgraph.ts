@@ -1,20 +1,23 @@
-import { BaseDb, helloWorld } from "@madatdata/base-db";
+import { BaseDb } from "@madatdata/base-db";
 
 type CSVPlugin = {
-  sourceOptions: {
-    url: string;
-  };
-  destOptions: {
-    tableName: string;
-  };
-  resultShape: {
-    success: true;
-  };
-  errorShape: {
-    success: false;
+  importData: {
+    sourceOptions: {
+      url: string;
+    };
+    destOptions: {
+      tableName: string;
+    };
+    resultShape: {
+      success: true;
+    };
+    errorShape: {
+      success: false;
+    };
   };
 };
 
+// NOTE: In theory this will be auto-generated
 type SplitgraphPluginMap = {
   csv: CSVPlugin;
 };
@@ -22,11 +25,11 @@ type SplitgraphPluginMap = {
 class DbSplitgraph extends BaseDb<SplitgraphPluginMap> {
   async importData<
     PluginName extends keyof SplitgraphPluginMap,
-    SourceOptions = SplitgraphPluginMap[PluginName]["sourceOptions"],
-    DestOptions = SplitgraphPluginMap[PluginName]["destOptions"],
-    ImportResultShape = SplitgraphPluginMap[PluginName]["resultShape"],
-    ImportErrorShape = SplitgraphPluginMap[PluginName]["errorShape"]
-  >(plugin: PluginName, source: SourceOptions, dest: DestOptions) {
+    SourceOptions = SplitgraphPluginMap[PluginName]["importData"]["sourceOptions"],
+    DestOptions = SplitgraphPluginMap[PluginName]["importData"]["destOptions"],
+    ImportResultShape = SplitgraphPluginMap[PluginName]["importData"]["resultShape"],
+    ImportErrorShape = SplitgraphPluginMap[PluginName]["importData"]["errorShape"]
+  >(plugin: PluginName, _source: SourceOptions, _dest: DestOptions) {
     if (plugin === "csv") {
       return Promise.resolve({
         response: {
@@ -46,8 +49,6 @@ class DbSplitgraph extends BaseDb<SplitgraphPluginMap> {
 }
 
 export const makeDb = () => {
-  return {
-    dbname: "ddn",
-    helloWorld,
-  };
+  const db = new DbSplitgraph();
+  return db;
 };
