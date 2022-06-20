@@ -2,5 +2,8 @@
   "//": "Default tsconfig for client, intended for typechecking only",
   "extends": "../../tsconfig.base.json",
   "include": ["*.ts"],
-  "references": [{ "path": "../test-helpers" }, { "path": "../base-client" }]
+  "references": [
+    { "path": "../test-helpers" },
+    { "path": "../base-client/tsconfig.json" }
+  ]
 }
