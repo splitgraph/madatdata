@@ -1,47 +1,5 @@
-import { BaseDb, type Plugin } from "@madatdata/base-db";
-
-interface SplitgraphImportPlugin extends Plugin {
-  importData: <
-    SourceOptions = { otherother: string },
-    DestOptions = SplitgraphDestOptions,
-    ResultShape = { success: boolean },
-    ErrorShape = { success: boolean }
-  >(
-    sourceOptions: SourceOptions,
-    destOptions: DestOptions
-  ) => Promise<{ response: ResultShape | null; error: ErrorShape | null }>;
-}
-
-type SplitgraphDestOptions = {
-  tableName: string;
-};
-
-interface ImportCSVPlugin {
-  importData: (
-    sourceOptions: { url: string },
-    destOptions: SplitgraphDestOptions
-  ) => Promise<{
-    response: { success: true } | null;
-    error: { success: false } | null;
-  }>;
-}
-
-// NOTE: In theory this will be auto-generated
-type DEFAULT_PLUGINS = "mysql" | "postgres";
-
-type SPECIAL_PLUGINS = {
-  csv: ImportCSVPlugin;
-};
-
-type SpecialPluginMap = {
-  [k in keyof SPECIAL_PLUGINS]: SPECIAL_PLUGINS[k];
-};
-
-type DefaultPluginMap = {
-  [k in DEFAULT_PLUGINS]: SplitgraphImportPlugin;
-};
-
-type SplitgraphImportPluginMap = DefaultPluginMap & SpecialPluginMap;
+import { BaseDb } from "@madatdata/base-db";
+import type { SplitgraphImportPluginMap } from "./plugins/importers";
 
 class DbSplitgraph extends BaseDb<SplitgraphImportPluginMap> {
   importData<PluginName extends keyof SplitgraphImportPluginMap>(
