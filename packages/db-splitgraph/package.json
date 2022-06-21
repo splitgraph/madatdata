@@ -7,7 +7,7 @@
   "scripts": {
     "codegen": "yarn run clean-generated-plugins ; yarn run generate-plugins",
     "clean-generated-plugins": "yarn rimraf plugins/importers/generated/*",
-    "generate-plugins": "yarn run esno ./plugins/generate-plugins.ts",
+    "generate-plugins": "yarn run esno ./plugins/generate-plugins.script.ts",
     "generate-plugins-debug": "yarn run esno --inspect-brk=127.0.0.1:9229 ./plugins/generate-plugins.ts"
   },
   "dependencies": {

@@ -66,6 +66,14 @@
         "tableParamsSchema": {
           "type": "object",
           "properties": {
+            "cursor_fields": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "title": "Replication cursor",
+              "description": "Column(s) to use as a replication cursor. This must be always increasing in the source table and is used to track which rows should be replicated."
+            },
             "table_name": {
               "type": "string",
               "title": "Table name"
@@ -118,6 +126,14 @@
         "tableParamsSchema": {
           "type": "object",
           "properties": {
+            "cursor_fields": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "title": "Replication cursor",
+              "description": "Column(s) to use as a replication cursor. This must be always increasing in the source table and is used to track which rows should be replicated."
+            },
             "database": {
               "type": "string",
               "title": "Database name"
@@ -173,7 +189,16 @@
         },
         "tableParamsSchema": {
           "type": "object",
-          "properties": {}
+          "properties": {
+            "cursor_fields": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "title": "Replication cursor",
+              "description": "Column(s) to use as a replication cursor. This must be always increasing in the source table and is used to track which rows should be replicated."
+            }
+          }
         }
       },
       {
@@ -214,6 +239,14 @@
         "tableParamsSchema": {
           "type": "object",
           "properties": {
+            "cursor_fields": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "title": "Replication cursor",
+              "description": "Column(s) to use as a replication cursor. This must be always increasing in the source table and is used to track which rows should be replicated."
+            },
             "socrata_id": {
               "type": "string",
               "description": "Socrata dataset ID, e.g. xzkq-xp2w"
@@ -261,6 +294,14 @@
         "tableParamsSchema": {
           "type": "object",
           "properties": {
+            "cursor_fields": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "title": "Replication cursor",
+              "description": "Column(s) to use as a replication cursor. This must be always increasing in the source table and is used to track which rows should be replicated."
+            },
             "index": {
               "type": "string",
               "title": "Index name or pattern",
@@ -450,6 +491,14 @@
         "tableParamsSchema": {
           "type": "object",
           "properties": {
+            "cursor_fields": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "title": "Replication cursor",
+              "description": "Column(s) to use as a replication cursor. This must be always increasing in the source table and is used to track which rows should be replicated."
+            },
             "url": {
               "type": "string",
               "description": "HTTP URL to the CSV file",
@@ -625,6 +674,14 @@
         "tableParamsSchema": {
           "type": "object",
           "properties": {
+            "cursor_fields": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "title": "Replication cursor",
+              "description": "Column(s) to use as a replication cursor. This must be always increasing in the source table and is used to track which rows should be replicated."
+            },
             "subquery": {
               "type": "string",
               "title": "Subquery",
@@ -745,7 +802,16 @@
         },
         "tableParamsSchema": {
           "type": "object",
-          "properties": {}
+          "properties": {
+            "cursor_fields": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "title": "Replication cursor",
+              "description": "Column(s) to use as a replication cursor. This must be always increasing in the source table and is used to track which rows should be replicated."
+            }
+          }
         }
       },
       {
@@ -785,7 +851,16 @@
         },
         "tableParamsSchema": {
           "type": "object",
-          "properties": {}
+          "properties": {
+            "cursor_fields": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "title": "Replication cursor",
+              "description": "Column(s) to use as a replication cursor. This must be always increasing in the source table and is used to track which rows should be replicated."
+            }
+          }
         }
       },
       {

@@ -24,8 +24,8 @@ const generateTypes = async () => {
       [plugin.tableParamsSchema, "TableParamsSchema"],
     ];
 
-    let barrelFile = path.join(pluginTargetDir, "index.ts");
-    let barrelExports = [];
+    // let barrelFile = path.join(pluginTargetDir, "index.ts");
+    // let barrelExports = [];
 
     for (let [schema, schemaName] of schemas) {
       let schemaOutFile = path.join(pluginTargetDir, `${schemaName}.ts`);
@@ -36,14 +36,14 @@ const generateTypes = async () => {
         plugin.pluginName
       );
 
-      barrelExports.push(`export * from "./${schemaName}";`);
+      // barrelExports.push(`export * from "./${schemaName}";`);
 
       log("write schema:", fdir(schemaOutFile));
       await writeFile(schemaOutFile, generatedTypescript);
     }
 
-    log("write barrel:", fdir(barrelFile), "\n");
-    await writeFile(barrelFile, barrelExports.join("\n"));
+    // log("write barrel:", fdir(barrelFile), "\n");
+    // await writeFile(barrelFile, barrelExports.join("\n"));
   }
 };
 

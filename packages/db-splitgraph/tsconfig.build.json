@@ -1,6 +1,6 @@
 {
   "extends": "../../tsconfig.build-base.json",
-  "exclude": ["*.test.ts", "build"],
+  "exclude": ["*.test.ts", "build", "*.script.ts", "**/*.script.ts"],
   "include": [
     "*.ts",
     "**/*.ts",
