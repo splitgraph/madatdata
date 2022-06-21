@@ -1,15 +1,29 @@
-import {
-  BaseDb,
-  type Plugin,
-  type ImportDataFunction,
-} from "@madatdata/base-db";
+import { BaseDb, type Plugin } from "@madatdata/base-db";
 
 interface SplitgraphImportPlugin extends Plugin {
-  importData: ImportDataFunction;
+  importData: <
+    SourceOptions = { otherother: string },
+    DestOptions = SplitgraphDestOptions,
+    ResultShape = { success: boolean },
+    ErrorShape = { success: boolean }
+  >(
+    sourceOptions: SourceOptions,
+    destOptions: DestOptions
+  ) => Promise<{ response: ResultShape | null; error: ErrorShape | null }>;
 }
 
-interface ImportCSVPlugin extends Plugin {
-  importData: ImportDataFunction;
+type SplitgraphDestOptions = {
+  tableName: string;
+};
+
+interface ImportCSVPlugin {
+  importData: (
+    sourceOptions: { url: string },
+    destOptions: SplitgraphDestOptions
+  ) => Promise<{
+    response: { success: true } | null;
+    error: { success: false } | null;
+  }>;
 }
 
 // NOTE: In theory this will be auto-generated
@@ -41,14 +55,14 @@ class DbSplitgraph extends BaseDb<SplitgraphImportPluginMap> {
           success: true,
         },
         error: null,
-      }) as ReturnType<SplitgraphImportPluginMap[PluginName]["importData"]>;
+      });
     } else {
       return Promise.resolve({
         response: null,
         error: {
           success: false,
         },
-      }) as ReturnType<SplitgraphImportPluginMap[PluginName]["importData"]>;
+      });
     }
   }
 }
