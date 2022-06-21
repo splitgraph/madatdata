@@ -1,0 +1,2 @@
+plugins/importers/generated/*
+!plugins/importers/generated/.gitkeep

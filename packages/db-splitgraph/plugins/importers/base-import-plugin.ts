@@ -8,8 +8,8 @@ export interface SplitgraphImportPlugin extends Plugin {
   importData: <
     SourceOptions = { otherother: string },
     DestOptions = SplitgraphDestOptions,
-    ResultShape = { success: boolean },
-    ErrorShape = { success: boolean }
+    ResultShape = { success: true },
+    ErrorShape = { success: false }
   >(
     sourceOptions: SourceOptions,
     destOptions: DestOptions

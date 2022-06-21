@@ -3,6 +3,7 @@
   "packageManager": "yarn@3.2.1",
   "private": true,
   "scripts": {
+    "codegen": "yarn workspace @madatdata/db-splitgraph run codegen",
     "typecheck": "yarn tsc --build --verbose tsconfig.json",
     "test": "yarn vitest",
     "build": "yarn tsc-multi",

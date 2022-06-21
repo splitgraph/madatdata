@@ -4,12 +4,21 @@
   "packageManager": "yarn@3.2.0",
   "main": "index.ts",
   "types": "./build/es2020/index.d.ts",
+  "scripts": {
+    "codegen": "yarn run clean-generated-plugins ; yarn run generate-plugins",
+    "clean-generated-plugins": "yarn rimraf plugins/importers/generated/*",
+    "generate-plugins": "yarn run esno ./plugins/generate-plugins.ts",
+    "generate-plugins-debug": "yarn run esno --inspect-brk=127.0.0.1:9229 ./plugins/generate-plugins.ts"
+  },
   "dependencies": {
-    "@madatdata/base-db": "workspace:*"
+    "@madatdata/base-db": "workspace:*",
+    "json-schema-to-typescript": "10.1.5"
   },
   "devDependencies": {
     "@madatdata/test-helpers": "workspace:*",
-    "@types/node": "16.11.38"
+    "@types/node": "16.11.38",
+    "esno": "0.16.3",
+    "rimraf": "3.0.2"
   },
   "peerDependencies": {
     "cross-fetch": "*"
