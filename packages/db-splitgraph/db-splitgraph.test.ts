@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { makeDb } from "./db-splitgraph";
+import { ImportCSVPlugin } from "./plugins/importers/import-csv-plugin";
 
 describe("importData", () => {
   it("returns true for plugin csv", async () => {
@@ -41,5 +42,40 @@ describe("importData", () => {
 
     expect(importResult.response?.success).toEqual(undefined);
     expect(importResult.error?.success).toEqual(false);
+  });
+});
+
+describe("importData - csv", () => {
+  it("returns true for plugin csv", async () => {
+    const transformRequestHeaders = vi.fn((headers) => ({
+      ...headers,
+      foobar: "fizzbuzz",
+    }));
+
+    const db = makeDb({
+      authenticatedCredential: {
+        apiKey: "xxx",
+        apiSecret: "yyy",
+        anonymous: false,
+      },
+      plugins: {
+        csv: new ImportCSVPlugin({
+          graphqlEndpoint: "the endpoint",
+          transformRequestHeaders,
+        }),
+      },
+    });
+
+    await db.importData(
+      "csv",
+      { url: "somesomefoofoo" },
+      { graphqlEndpoint: "gqlendpoint", tableName: "feefifo" }
+    );
+
+    // We specified `transformRequestHeaders` in the constructor, but the Db can
+    // create a new instance of the plugin, e.g. to add auth headers
+    expect(transformRequestHeaders).toHaveBeenCalled();
+
+    // expect
   });
 });

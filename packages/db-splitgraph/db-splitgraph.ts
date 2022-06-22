@@ -7,7 +7,8 @@ import { ImportCSVPlugin } from "./plugins/importers/import-csv-plugin";
 // TODO: It's not ideal for db-splitgraph to depend on base-client
 import { makeAuthHeaders } from "@madatdata/base-client/";
 
-interface DbSplitgraphOptions extends DbOptions<SplitgraphImportPluginMap> {}
+interface DbSplitgraphOptions
+  extends DbOptions<Partial<SplitgraphImportPluginMap>> {}
 
 const makeDefaultPluginMap = (opts: {
   graphqlEndpoint: string;
@@ -52,21 +53,23 @@ class DbSplitgraph extends BaseDb<Partial<SplitgraphImportPluginMap>> {
     pluginName: PluginName,
     ...rest: Parameters<SplitgraphImportPluginMap[PluginName]["importData"]>
   ) {
-    if (pluginName === "csv") {
-      // const plugin = this.plugins["csv"];
+    const [sourceOpts, destOpts] = rest;
 
-      const plugin = new ImportCSVPlugin({
-        graphqlEndpoint: this.graphqlEndpoint,
-        transformRequestHeaders: (reqHeaders) =>
-          this.authenticatedCredential
-            ? {
-                ...reqHeaders,
-                ...makeAuthHeaders(this.authenticatedCredential),
-              }
-            : reqHeaders,
-      }) as SplitgraphImportPluginMap[PluginName];
+    if (pluginName === "csv" && this.plugins["csv"]) {
+      const plugin = this.plugins["csv"];
 
-      return await plugin.importData(rest[0], rest[1]);
+      return await plugin
+        .withOptions({
+          graphqlEndpoint: plugin.graphqlEndpoint ?? this.graphqlEndpoint,
+          transformRequestHeaders: (reqHeaders) =>
+            this.authenticatedCredential
+              ? {
+                  ...reqHeaders,
+                  ...makeAuthHeaders(this.authenticatedCredential),
+                }
+              : reqHeaders,
+        })
+        .importData(sourceOpts, destOpts);
     } else {
       return Promise.resolve({
         response: null,
