@@ -1,11 +1,11 @@
-import type { ImportCSVPlugin } from "./import-csv-plugin";
+import type { ImportCSVPluginInterface } from "./import-csv-plugin";
 import type { SplitgraphImportPlugin } from "./base-import-plugin";
 
 // NOTE: In theory this will be auto-generated
 type DEFAULT_PLUGINS = "mysql" | "postgres";
 
 type SPECIAL_PLUGINS = {
-  csv: ImportCSVPlugin;
+  csv: ImportCSVPluginInterface;
 };
 
 type SpecialPluginMap = {

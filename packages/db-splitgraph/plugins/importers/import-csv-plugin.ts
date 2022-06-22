@@ -1,5 +1,6 @@
 import type { SplitgraphDestOptions } from "./base-import-plugin";
 import { request, gql } from "graphql-request";
+import type { SplitgraphImportPlugin } from "./base-import-plugin";
 
 interface ImportCSVPluginOptions {
   graphqlEndpoint: string;
@@ -10,14 +11,18 @@ interface ImportCSVSourceOptions {
   url: string;
 }
 
-export interface ImportCSVPlugin {
-  importData: (
-    sourceOptions: ImportCSVSourceOptions,
-    destOptions: SplitgraphDestOptions
-  ) => Promise<unknown>;
+export interface ImportCSVPluginInterface {
+  importData: <
+    SourceOptions = ImportCSVSourceOptions,
+    DestOptions = SplitgraphDestOptions,
+    ResultShape = { success: true },
+    ErrorShape = { success: false }
+  >(
+    sourceOptions: SourceOptions,
+    destOptions: DestOptions
+  ) => Promise<{ response: ResultShape | null; error: ErrorShape | null }>;
 }
-
-export class ImportCSV implements ImportCSVPlugin {
+export class ImportCSVPlugin implements ImportCSVPluginInterface {
   private graphqlEndpoint: ImportCSVPluginOptions["graphqlEndpoint"];
   private transformRequestHeaders: ImportCSVPluginOptions["transformRequestHeaders"];
 
@@ -26,15 +31,17 @@ export class ImportCSV implements ImportCSVPlugin {
     this.transformRequestHeaders = opts.transformRequestHeaders;
   }
 
-  async importData(
-    sourceOptions: ImportCSVSourceOptions,
-    destOptions: SplitgraphDestOptions
-  ) {
+  async importData<
+    SourceOptions = ImportCSVSourceOptions,
+    DestOptions = SplitgraphDestOptions,
+    ResultShape = { success: true },
+    ErrorShape = { success: false }
+  >(sourceOptions: SourceOptions, destOptions: DestOptions) {
     if (sourceOptions.url === "foo") {
       return {
         response: {
           success: true,
-        },
+        } as unknown as ResultShape,
         error: null,
       };
     } else {
@@ -42,7 +49,7 @@ export class ImportCSV implements ImportCSVPlugin {
         response: null,
         error: {
           success: false,
-        },
+        } as unknown as ErrorShape,
       };
     }
   }

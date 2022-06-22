@@ -17,27 +17,29 @@ export interface Db<ConcretePluginMap extends PluginMap> {
     destOptions: Parameters<ConcretePluginMap[PluginName]["importData"]>[1]
   ) => Promise<unknown>;
 }
-export interface DbOptions {
+export interface DbOptions<ConcretePluginMap extends PluginMap> {
+  plugins: ConcretePluginMap;
   authenticatedCredential?: AuthenticatedCredential;
   host?: Host;
   database?: Database;
 }
-
 export abstract class BaseDb<ConcretePluginMap extends PluginMap>
   implements Db<ConcretePluginMap>
 {
+  protected plugins: ConcretePluginMap;
   protected authenticatedCredential?: AuthenticatedCredential;
   protected host: Host;
   protected database: Database;
 
-  constructor(opts?: DbOptions) {
+  constructor(opts: DbOptions<ConcretePluginMap>) {
     this.setAuthenticatedCredential(opts?.authenticatedCredential);
     this.host = opts?.host ?? defaultHost;
     this.database = opts?.database ?? defaultDatabase;
+    this.plugins = opts?.plugins ?? {};
   }
 
   private setAuthenticatedCredential(
-    maybeAuthenticatedCredential: DbOptions["authenticatedCredential"]
+    maybeAuthenticatedCredential: DbOptions<ConcretePluginMap>["authenticatedCredential"]
   ) {
     if (typeof maybeAuthenticatedCredential !== "undefined") {
       const parsedCredential = Credential(maybeAuthenticatedCredential);
