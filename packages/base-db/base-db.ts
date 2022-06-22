@@ -13,8 +13,7 @@ import {
 export interface Db<ConcretePluginMap extends PluginMap> {
   importData: <PluginName extends keyof ConcretePluginMap>(
     pluginName: PluginName,
-    sourceOptions: Parameters<ConcretePluginMap[PluginName]["importData"]>[0],
-    destOptions: Parameters<ConcretePluginMap[PluginName]["importData"]>[1]
+    ...rest: Parameters<ConcretePluginMap[PluginName]["importData"]>
   ) => Promise<unknown>;
 }
 export interface DbOptions<ConcretePluginMap extends PluginMap> {
@@ -26,7 +25,7 @@ export interface DbOptions<ConcretePluginMap extends PluginMap> {
 export abstract class BaseDb<ConcretePluginMap extends PluginMap>
   implements Db<ConcretePluginMap>
 {
-  protected plugins: ConcretePluginMap;
+  protected plugins: PluginMap<ConcretePluginMap>;
   protected authenticatedCredential?: AuthenticatedCredential;
   protected host: Host;
   protected database: Database;
@@ -52,7 +51,6 @@ export abstract class BaseDb<ConcretePluginMap extends PluginMap>
 
   abstract importData<PluginName extends keyof ConcretePluginMap>(
     pluginName: PluginName,
-    sourceOptions: Parameters<ConcretePluginMap[PluginName]["importData"]>[0],
-    destOptions: Parameters<ConcretePluginMap[PluginName]["importData"]>[1]
+    ...rest: Parameters<ConcretePluginMap[PluginName]["importData"]>
   ): Promise<unknown>;
 }

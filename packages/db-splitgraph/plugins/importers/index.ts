@@ -1,11 +1,11 @@
-import type { ImportCSVPluginInterface } from "./import-csv-plugin";
-import type { SplitgraphImportPlugin } from "./base-import-plugin";
+import type { ImportCSVPlugin } from "./import-csv-plugin";
+import type { Plugin } from "@madatdata/base-db";
 
 // NOTE: In theory this will be auto-generated
 type DEFAULT_PLUGINS = "mysql" | "postgres";
 
 type SPECIAL_PLUGINS = {
-  csv: ImportCSVPluginInterface;
+  csv: ImportCSVPlugin;
 };
 
 type SpecialPluginMap = {
@@ -13,7 +13,7 @@ type SpecialPluginMap = {
 };
 
 type DefaultPluginMap = {
-  [k in DEFAULT_PLUGINS]: SplitgraphImportPlugin;
+  [k in DEFAULT_PLUGINS]: Plugin;
 };
 
 export type SplitgraphImportPluginMap = DefaultPluginMap & SpecialPluginMap;
