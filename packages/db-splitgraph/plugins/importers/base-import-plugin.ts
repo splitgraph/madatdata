@@ -1,6 +1,7 @@
 import type { Plugin } from "@madatdata/base-db";
 
 export type SplitgraphDestOptions = {
+  graphqlEndpoint: string;
   tableName: string;
 };
 

@@ -55,6 +55,10 @@ export type CredentialOptions =
   | AuthenticatedTokenCredentialOptions
   | AnonymousTokenCredentialOptions;
 
+export type AuthenticatedCredential =
+  | AuthenticatedTokenCredential
+  | KeypairCredential;
+
 export const Credential = <
   InputCredentialOptions extends CredentialOptions,
   TargetCredential = CredentialFromOptions<InputCredentialOptions>

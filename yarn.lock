@@ -86,6 +86,8 @@ __metadata:
 "@madatdata/base-db@workspace:*, @madatdata/base-db@workspace:packages/base-db":
   version: 0.0.0-use.local
   resolution: "@madatdata/base-db@workspace:packages/base-db"
+  dependencies:
+    "@madatdata/base-client": "workspace:*"
   peerDependencies:
     typescript: "*"
   peerDependenciesMeta:
@@ -125,6 +127,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@madatdata/db-splitgraph@workspace:packages/db-splitgraph"
   dependencies:
+    "@madatdata/base-client": "workspace:*"
     "@madatdata/base-db": "workspace:*"
     "@madatdata/test-helpers": "workspace:*"
     "@types/node": 16.11.38

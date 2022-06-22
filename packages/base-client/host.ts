@@ -13,6 +13,7 @@ export interface Host {
 interface BaseUrls {
   sql: string;
   auth: string;
+  gql: string;
 }
 
 export const defaultHost: Host = {
@@ -23,6 +24,7 @@ export const defaultHost: Host = {
     // NOTE: still needs to append ddn name to path
     sql: "https://data.splitgraph.com/sql/query",
     auth: "https://api.splitgraph.com/auth",
+    gql: "https://api.splitgraph.com/gql/cloud/unified/graphql",
   },
   postgres: {
     host: "data.splitgraph.com",

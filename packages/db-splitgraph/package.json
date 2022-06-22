@@ -11,6 +11,7 @@
     "generate-plugins-debug": "yarn run esno --inspect-brk=127.0.0.1:9229 ./plugins/generate-plugins.script.ts"
   },
   "dependencies": {
+    "@madatdata/base-client": "workspace:*",
     "@madatdata/base-db": "workspace:*",
     "graphql": "16.5.0",
     "graphql-request": "4.3.0",

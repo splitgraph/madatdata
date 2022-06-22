@@ -5,12 +5,15 @@ import {
 } from "./credential";
 import { type Host, defaultHost } from "./host";
 import { type Database, defaultDatabase } from "./database";
+export { type Host, defaultHost, type Database, defaultDatabase };
 
-export { type CredentialOptions };
+export { type CredentialOptions, Credential };
 
-// TODO: this is HTTP specific, just exporting here as a shim during refactor so
-// that derived classes don't need to add includes for `base-client/credential`
-export { makeAuthHeaders, makeAuthPgParams } from "./credential";
+export {
+  type AuthenticatedCredential,
+  makeAuthHeaders,
+  makeAuthPgParams,
+} from "./credential";
 export interface ClientOptions {
   credential?: CredentialOptions | null;
   host?: Host | null;
