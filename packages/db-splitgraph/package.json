@@ -8,10 +8,12 @@
     "codegen": "yarn run clean-generated-plugins ; yarn run generate-plugins",
     "clean-generated-plugins": "yarn rimraf plugins/importers/generated/*",
     "generate-plugins": "yarn run esno ./plugins/generate-plugins.script.ts",
-    "generate-plugins-debug": "yarn run esno --inspect-brk=127.0.0.1:9229 ./plugins/generate-plugins.ts"
+    "generate-plugins-debug": "yarn run esno --inspect-brk=127.0.0.1:9229 ./plugins/generate-plugins.script.ts"
   },
   "dependencies": {
     "@madatdata/base-db": "workspace:*",
+    "graphql": "16.5.0",
+    "graphql-request": "4.3.0",
     "json-schema-to-typescript": "10.1.5"
   },
   "devDependencies": {
