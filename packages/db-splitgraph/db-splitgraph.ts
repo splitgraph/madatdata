@@ -9,11 +9,41 @@ import { makeAuthHeaders } from "@madatdata/base-client/";
 
 interface DbSplitgraphOptions extends DbOptions<SplitgraphImportPluginMap> {}
 
-class DbSplitgraph extends BaseDb<SplitgraphImportPluginMap> {
+const makeDefaultPluginMap = (opts: {
+  graphqlEndpoint: string;
+  makeAuthHeaders: () => HeadersInit;
+}) => ({
+  csv: new ImportCSVPlugin({
+    graphqlEndpoint: opts.graphqlEndpoint,
+    transformRequestHeaders: (reqHeaders) =>
+      opts.makeAuthHeaders
+        ? {
+            ...reqHeaders,
+            ...opts.makeAuthHeaders(),
+          }
+        : reqHeaders,
+  }),
+});
+
+class DbSplitgraph extends BaseDb<Partial<SplitgraphImportPluginMap>> {
   private graphqlEndpoint: string;
 
-  constructor(opts: DbSplitgraphOptions) {
-    super(opts);
+  constructor(
+    opts: Omit<DbSplitgraphOptions, "plugins"> &
+      Pick<Partial<DbSplitgraphOptions>, "plugins">
+  ) {
+    super({
+      plugins:
+        opts.plugins ??
+        makeDefaultPluginMap({
+          graphqlEndpoint: "unknown",
+          makeAuthHeaders: () =>
+            this.authenticatedCredential
+              ? makeAuthHeaders(this.authenticatedCredential)
+              : {},
+        }),
+      ...opts,
+    });
 
     this.graphqlEndpoint = this.host.baseUrls.gql;
   }

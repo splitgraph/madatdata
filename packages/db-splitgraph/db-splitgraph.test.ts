@@ -3,12 +3,12 @@ import { makeDb } from "./db-splitgraph";
 
 describe("importData", () => {
   it("returns true for plugin csv", async () => {
-    const db = makeDb();
+    const db = makeDb({});
 
     const importResult = await db.importData(
       "csv",
-      { url: "xxx" },
-      { tableName: "yyyy" }
+      { url: "foo" },
+      { graphqlEndpoint: "foo", tableName: "yyyy" }
     );
 
     expect(importResult.response?.["success"]).toEqual(true);
@@ -21,7 +21,7 @@ describe("importData", () => {
       { yyy: "xxxx" }
     );
 
-    expect(badSourceOpts.response?.success).toEqual(true);
+    expect(badSourceOpts.response?.success).toEqual(undefined);
 
     const badDestOpts = await db.importData(
       "csv",
@@ -30,11 +30,11 @@ describe("importData", () => {
       { yyy: "xxxx" }
     );
 
-    expect(badDestOpts.response?.success).toEqual(true);
+    expect(badDestOpts.response?.success).toEqual(undefined);
   });
 
   it("returns false for unknown plugin", async () => {
-    const db = makeDb();
+    const db = makeDb({});
 
     // @ts-expect-error not a key in SplitgraphPluginMap
     const importResult = await db.importData("unknown-doesnotexist", {}, {});
