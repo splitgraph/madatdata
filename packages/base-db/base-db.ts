@@ -37,7 +37,7 @@ export abstract class BaseDb<ConcretePluginMap extends PluginMap>
     this.plugins = opts?.plugins ?? {};
   }
 
-  private setAuthenticatedCredential(
+  public setAuthenticatedCredential(
     maybeAuthenticatedCredential: DbOptions<ConcretePluginMap>["authenticatedCredential"]
   ) {
     if (typeof maybeAuthenticatedCredential !== "undefined") {

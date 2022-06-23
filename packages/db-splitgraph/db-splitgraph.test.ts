@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
 import { makeDb } from "./db-splitgraph";
 import { ImportCSVPlugin } from "./plugins/importers/import-csv-plugin";
 
@@ -14,21 +14,39 @@ describe("importData", () => {
 
     // @ts-expect-error not a key in SplitgraphPluginMap
     const importResult = await db.importData("unknown-doesnotexist", {}, {});
-
-    // expect(importResult.response?.success).toEqual(undefined);
-    // expect(importResult.error?.success).toEqual(false);
   });
 });
+
+const createDb = () => {
+  const transformRequestHeaders = vi.fn((headers) => ({
+    ...headers,
+    foobar: "fizzbuzz",
+  }));
+
+  return makeDb({
+    authenticatedCredential: {
+      apiKey: "xxx",
+      apiSecret: "yyy",
+      anonymous: false,
+    },
+    plugins: {
+      csv: new ImportCSVPlugin({
+        graphqlEndpoint: defaultHost.baseUrls.gql,
+        transformRequestHeaders,
+      }),
+    },
+  });
+};
 
 describe("importData for ImportCSVPlugin", () => {
   const mswServer = setupServer();
   setupMswServerTestHooks(mswServer);
 
-  // FIXME: should be somewhere else (implementation details of graphql client)
-  it("transforms headers as expected", async () => {
+  beforeEach(() => {
     mswServer.use(
       graphql.query("CSVURLs", (req, res, context) => {
         return res(
+          // FIXME: msw handlers should be factored into a common place
           compose(
             context.data({
               csvUploadDownloadUrls: {
@@ -48,33 +66,16 @@ describe("importData for ImportCSVPlugin", () => {
         );
       })
     );
+  });
 
-    const transformRequestHeaders = vi.fn((headers) => ({
-      ...headers,
-      foobar: "fizzbuzz",
-    }));
-
-    const db = makeDb({
-      authenticatedCredential: {
-        apiKey: "xxx",
-        apiSecret: "yyy",
-        anonymous: false,
-      },
-      plugins: {
-        csv: new ImportCSVPlugin({
-          graphqlEndpoint: defaultHost.baseUrls.gql,
-          transformRequestHeaders,
-        }),
-      },
-    });
-
-    const { response, error, info } = await db.importData(
+  // FIXME: should be somewhere else (implementation details of graphql client)
+  it("transforms headers to add auth credential", async () => {
+    const db = createDb();
+    const { info } = await db.importData(
       "csv",
       { url: "somesomefoofoo" },
       { tableName: "feefifo" }
     );
-
-    expect(info?.status).toEqual(200);
 
     expect({
       "test-echo-foobar": info?.headers.get("test-echo-foobar"),
@@ -87,6 +88,46 @@ describe("importData for ImportCSVPlugin", () => {
         "test-echo-x-api-secret": "yyy",
       }
     `);
+  });
+
+  it("transforms headers using _current_ value of authenticatedCredential", async () => {
+    const db = createDb();
+
+    const { info: oldCredInfo } = await db.importData(
+      "csv",
+      { url: "somesomefoofoo" },
+      { tableName: "feefifo" }
+    );
+
+    expect(oldCredInfo?.headers.get("test-echo-x-api-key")).toEqual("xxx");
+    expect(oldCredInfo?.headers.get("test-echo-x-api-secret")).toEqual("yyy");
+
+    // Ensure it uses the new credential after updating it
+    db.setAuthenticatedCredential({
+      apiKey: "jjj",
+      apiSecret: "ccc",
+      anonymous: false,
+    });
+
+    const { info } = await db.importData(
+      "csv",
+      { url: "somesomefoofoo" },
+      { tableName: "feefifo" }
+    );
+    expect(info?.headers.get("test-echo-x-api-key")).toEqual("jjj");
+    expect(info?.headers.get("test-echo-x-api-secret")).toEqual("ccc");
+  });
+
+  it("returns expected graphql response (will change during tdd)", async () => {
+    const db = createDb();
+
+    const { response, error, info } = await db.importData(
+      "csv",
+      { url: "somesomefoofoo" },
+      { tableName: "feefifo" }
+    );
+
+    expect(info?.status).toEqual(200);
 
     expect({ response, error }).toMatchInlineSnapshot(`
       {
@@ -99,9 +140,5 @@ describe("importData for ImportCSVPlugin", () => {
         },
       }
     `);
-
-    expect(info?.headers.get("test-echo-foobar")).toEqual("fizzbuzz");
-    expect(info?.headers.get("test-echo-x-api-key")).toEqual("xxx");
-    expect(info?.headers.get("test-echo-x-api-secret")).toEqual("yyy");
   });
 });
