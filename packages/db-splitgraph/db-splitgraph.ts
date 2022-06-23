@@ -76,6 +76,7 @@ class DbSplitgraph extends BaseDb<Partial<SplitgraphImportPluginMap>> {
         error: {
           success: false,
         },
+        info: null,
       });
     }
   }
