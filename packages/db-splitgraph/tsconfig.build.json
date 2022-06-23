@@ -11,5 +11,8 @@
     "outDir": "./packages/db-splitgraph/build",
     "rootDir": "."
   },
-  "references": [{ "path": "../base-db/tsconfig.build.json" }]
+  "references": [
+    { "path": "../base-db/tsconfig.build.json" },
+    { "path": "../base-client/tsconfig.build.json" }
+  ]
 }

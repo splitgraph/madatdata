@@ -1,14 +1,7 @@
-import type { DbOptions, Plugin } from "@madatdata/base-db";
+import type { Plugin } from "@madatdata/base-db";
 import type { SplitgraphDestOptions } from "./base-import-plugin";
 
-// TODO: next
-import {
-  type Variables,
-  rawRequest,
-  gql,
-  GraphQLClient,
-} from "graphql-request";
-
+import { type Variables, gql, GraphQLClient } from "graphql-request";
 interface ImportCSVPluginOptions {
   graphqlEndpoint: string;
   transformRequestHeaders?: (requestHeaders: HeadersInit) => HeadersInit;
