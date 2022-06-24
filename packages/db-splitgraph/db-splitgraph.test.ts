@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { makeDb } from "./db-splitgraph";
 import { ImportCSVPlugin } from "./plugins/importers/import-csv-plugin";
 
-import { setupServer } from "msw/node";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
-import { compose, graphql } from "msw";
+import { setupMemo } from "@madatdata/test-helpers/setup-memo";
+import { compose, graphql, rest } from "msw";
 
 import { defaultHost } from "@madatdata/base-client/host";
 
@@ -38,20 +38,34 @@ const createDb = () => {
   });
 };
 
-describe("importData for ImportCSVPlugin", () => {
-  const mswServer = setupServer();
-  setupMswServerTestHooks(mswServer);
+// Useful when writing initial tests against real server (where anon is allowed)
+// const _makeAnonymousDb = () => {
+//   return makeDb({
+//     plugins: {
+//       csv: new ImportCSVPlugin({
+//         graphqlEndpoint: defaultHost.baseUrls.gql,
+//       }),
+//     },
+//   });
+// };
 
-  beforeEach(() => {
-    mswServer.use(
+// FIXME: most of this block is graphql client implementation details
+describe("importData for ImportCSVPlugin", () => {
+  setupMswServerTestHooks();
+  setupMemo();
+
+  beforeEach(({ mswServer, testMemo }) => {
+    const reqId = testMemo?.takeNext();
+
+    mswServer?.use(
       graphql.query("CSVURLs", (req, res, context) => {
         return res(
           // FIXME: msw handlers should be factored into a common place
           compose(
             context.data({
               csvUploadDownloadUrls: {
-                download: "https://data.splitgraph.com:9000/fake-url-download",
-                upload: "https://data.splitgraph.com:9000/fake-url-upload",
+                download: `https://data.splitgraph.com:9000/fake-url-download?key=${reqId}`,
+                upload: `https://data.splitgraph.com:9000/fake-url-upload?key=${reqId}`,
               },
             }),
             context.set(
@@ -64,23 +78,50 @@ describe("importData for ImportCSVPlugin", () => {
             )
           )
         );
-      })
+      }),
+      rest.put(
+        "https://data.splitgraph.com:9000/fake-url-upload",
+        (req, res, context) => {
+          console.log("body:", req.body);
+          const reqKey = req.url.searchParams.get("key");
+
+          if (reqKey) {
+            // testMemo?.findMemo(parseInt(reqKey));
+            testMemo?.set(parseInt(reqKey), req.body);
+          }
+
+          return res(context.status(200));
+        }
+      ),
+      rest.get(
+        "https://data.splitgraph.com:9000/fake-url-download",
+        (req, res, context) => {
+          const reqKey = req.url.searchParams.get("key");
+          if (reqKey) {
+            const uploadedBody = testMemo?.findMemo(parseInt(reqKey));
+            return res(context.body(uploadedBody));
+          }
+        }
+      )
     );
   });
 
-  // FIXME: should be somewhere else (implementation details of graphql client)
   it("transforms headers to add auth credential", async () => {
     const db = createDb();
     const { info } = await db.importData(
       "csv",
-      { url: "somesomefoofoo" },
+      { data: Buffer.from("empty_csv") },
       { tableName: "feefifo" }
     );
 
     expect({
-      "test-echo-foobar": info?.headers.get("test-echo-foobar"),
-      "test-echo-x-api-key": info?.headers.get("test-echo-x-api-key"),
-      "test-echo-x-api-secret": info?.headers.get("test-echo-x-api-secret"),
+      "test-echo-foobar": info?.presigned?.headers.get("test-echo-foobar"),
+      "test-echo-x-api-key": info?.presigned?.headers.get(
+        "test-echo-x-api-key"
+      ),
+      "test-echo-x-api-secret": info?.presigned?.headers.get(
+        "test-echo-x-api-secret"
+      ),
     }).toMatchInlineSnapshot(`
       {
         "test-echo-foobar": "fizzbuzz",
@@ -95,12 +136,16 @@ describe("importData for ImportCSVPlugin", () => {
 
     const { info: oldCredInfo } = await db.importData(
       "csv",
-      { url: "somesomefoofoo" },
+      { data: Buffer.from("empty_csv") },
       { tableName: "feefifo" }
     );
 
-    expect(oldCredInfo?.headers.get("test-echo-x-api-key")).toEqual("xxx");
-    expect(oldCredInfo?.headers.get("test-echo-x-api-secret")).toEqual("yyy");
+    expect(oldCredInfo?.presigned?.headers.get("test-echo-x-api-key")).toEqual(
+      "xxx"
+    );
+    expect(
+      oldCredInfo?.presigned?.headers.get("test-echo-x-api-secret")
+    ).toEqual("yyy");
 
     // Ensure it uses the new credential after updating it
     db.setAuthenticatedCredential({
@@ -111,34 +156,61 @@ describe("importData for ImportCSVPlugin", () => {
 
     const { info } = await db.importData(
       "csv",
-      { url: "somesomefoofoo" },
+      { data: Buffer.from("empty_csv") },
       { tableName: "feefifo" }
     );
-    expect(info?.headers.get("test-echo-x-api-key")).toEqual("jjj");
-    expect(info?.headers.get("test-echo-x-api-secret")).toEqual("ccc");
+    expect(info?.presigned?.headers.get("test-echo-x-api-key")).toEqual("jjj");
+    expect(info?.presigned?.headers.get("test-echo-x-api-secret")).toEqual(
+      "ccc"
+    );
   });
 
-  it("returns expected graphql response (will change during tdd)", async () => {
+  it("returns expected graphql response (will change during tdd)", async ({
+    testMemo,
+  }) => {
     const db = createDb();
 
-    const { response, error, info } = await db.importData(
+    const { response, error } = await db.importData(
       "csv",
-      { url: "somesomefoofoo" },
+      { data: Buffer.from("empty_csv") },
       { tableName: "feefifo" }
     );
-
-    expect(info?.status).toEqual(200);
 
     expect({ response, error }).toMatchInlineSnapshot(`
       {
         "error": null,
         "response": {
-          "csvUploadDownloadUrls": {
-            "download": "https://data.splitgraph.com:9000/fake-url-download",
-            "upload": "https://data.splitgraph.com:9000/fake-url-upload",
-          },
+          "success": true,
+          "uploadedTo": "https://data.splitgraph.com:9000/fake-url-download?key=${testMemo?.last}",
         },
       }
+    `);
+
+    const download = `https://data.splitgraph.com:9000/fake-url-download?key=${testMemo?.last}`;
+
+    const resulting = await fetch(download).then((response) => response.text());
+
+    expect(resulting).toMatchInlineSnapshot('"empty_csv"');
+  });
+
+  it("uploads a file and then serves it back from its keyed URL", async ({
+    testMemo,
+  }) => {
+    const db = createDb();
+
+    await db.importData(
+      "csv",
+      { data: Buffer.from(`name,birthday\r\nFOO_COL_KEY,BAR_COL_VAL`) },
+      { tableName: "irrelevant" }
+    );
+
+    const download = `https://data.splitgraph.com:9000/fake-url-download?key=${testMemo?.last}`;
+
+    const resulting = await fetch(download).then((response) => response.text());
+
+    expect(resulting).toMatchInlineSnapshot(`
+      "name,birthday
+      FOO_COL_KEY,BAR_COL_VAL"
     `);
   });
 });

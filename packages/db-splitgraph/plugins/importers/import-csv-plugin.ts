@@ -7,9 +7,30 @@ interface ImportCSVPluginOptions {
   transformRequestHeaders?: (requestHeaders: HeadersInit) => HeadersInit;
 }
 
-interface ImportCSVSourceOptions {
-  url: string;
+interface ImportCSVBaseOptions {
+  // _type: "import-csv-base";
+  // importType: "csv";
 }
+
+interface ImportCSVFromURLOptions extends ImportCSVBaseOptions {
+  data?: never;
+  url: string;
+
+  presignedUploadURL?: never;
+  presignedDownloadURL?: never;
+}
+
+interface ImportCSVFromDataOptions extends ImportCSVBaseOptions {
+  data: BodyInit;
+  url?: never;
+
+  presignedUploadURL?: string;
+  presignedDownloadURL?: string;
+}
+
+type ImportCSVSourceOptions =
+  | ImportCSVFromURLOptions
+  | ImportCSVFromDataOptions;
 
 type DbInjectedOptions = Partial<ImportCSVPluginOptions>;
 
@@ -17,16 +38,16 @@ export class ImportCSVPlugin implements Plugin {
   public readonly opts: ImportCSVPluginOptions;
   public readonly graphqlEndpoint: ImportCSVPluginOptions["graphqlEndpoint"];
   public readonly graphqlClient: GraphQLClient;
-  public readonly transformRequestHeaders: ImportCSVPluginOptions["transformRequestHeaders"];
+  public readonly transformRequestHeaders: Required<ImportCSVPluginOptions>["transformRequestHeaders"];
 
   constructor(opts: ImportCSVPluginOptions) {
     this.opts = opts;
     this.graphqlEndpoint = opts.graphqlEndpoint;
-    this.transformRequestHeaders = opts.transformRequestHeaders;
+    this.transformRequestHeaders = opts.transformRequestHeaders ?? IdentityFunc;
 
     this.graphqlClient = new GraphQLClient(this.graphqlEndpoint, {
       headers: this.transformRequestHeaders
-        ? () => this.transformRequestHeaders?.({})
+        ? () => this.transformRequestHeaders({})
         : {},
     });
   }
@@ -79,13 +100,12 @@ export class ImportCSVPlugin implements Plugin {
     };
   }
 
-  async importData(
-    _sourceOptions: ImportCSVSourceOptions,
-    _destOptions: SplitgraphDestOptions
-  ) {
+  private async fetchPresignedURL() {
     const { response, error, info } = await this.sendGraphql<{
-      upload: string;
-      download: string;
+      csvUploadDownloadUrls: {
+        upload: string;
+        download: string;
+      };
     }>(
       gql`
         query CSVURLs {
@@ -97,10 +117,133 @@ export class ImportCSVPlugin implements Plugin {
       `
     );
 
-    return {
+    return { response, error, info };
+  }
+
+  /**
+   * NOTE: Splitgraph does not currently support multipart form data for CSV files,
+   * because that requires fetching the presigned token with a multipart parameter,
+   * and besides, there would be little benefit of this in the browser, because
+   * we can already upload from a readable stream, but most browsers do not actually
+   * support streaming uploads, so need to buffer it anyway.
+   */
+  private async uploadCSV(presignedUploadURL: string, payload: BodyInit) {
+    const outboundHeaders = this.transformRequestHeaders({
+      Accept: "application/xml",
+      "Content-Type": "text/csv",
+    }) as unknown as Record<string, string>;
+
+    const { response, error } = await fetch(presignedUploadURL, {
+      method: "PUT",
+      body: payload,
+      mode: "cors",
+      headers: outboundHeaders,
+    })
+      .then((response) =>
+        response.ok
+          ? { response, error: null }
+          : { response, error: { type: "http-error" } }
+      )
+      .catch((error) => ({
+        response: null,
+        error: { type: "network-error", ...error },
+      }));
+
+    return { response, error };
+  }
+
+  private async uploadData(
+    sourceOptions: ImportCSVFromDataOptions,
+    _destOptions: SplitgraphDestOptions
+  ) {
+    const info: {
+      presigned?: typeof presignedInfo;
+      uploadedTo?: string;
+      presignedDownloadURL?: string;
+      presignedUploadURL?: string;
+    } = {};
+
+    const {
       response,
       error,
-      info,
+      info: presignedInfo,
+    } = await this.fetchPresignedURL();
+
+    info.presigned = presignedInfo;
+
+    if (error || !response) {
+      return {
+        response: null,
+        error: error ?? { type: "unknown-error" },
+        info,
+      };
+    }
+
+    const {
+      csvUploadDownloadUrls: {
+        download: presignedDownloadURL,
+        upload: presignedUploadURL,
+      },
+    } = response;
+
+    console.log("Uploading via:", presignedUploadURL);
+    const { response: uploadCSVResponse, error: uploadCSVError } =
+      await this.uploadCSV(presignedUploadURL, sourceOptions.data);
+    console.log("Successfully uploaded to:", presignedDownloadURL);
+
+    info.uploadedTo = presignedDownloadURL;
+    info.presignedDownloadURL = presignedDownloadURL;
+    info.presignedUploadURL = presignedUploadURL;
+
+    if (uploadCSVError || !uploadCSVResponse) {
+      return { response: uploadCSVResponse, error: uploadCSVError, info };
+    }
+
+    return {
+      response: uploadCSVResponse ?? null,
+      error: uploadCSVError
+        ? { type: "upload-error", ...uploadCSVError }
+        : null,
+      info: info as Required<typeof info>,
+    };
+  }
+
+  async importData(
+    sourceOptions: ImportCSVSourceOptions,
+    destOptions: SplitgraphDestOptions
+  ) {
+    const importCtx: any = {};
+
+    if (sourceOptions.data) {
+      const { response, error, info } = await this.uploadData(
+        sourceOptions,
+        destOptions
+      );
+
+      if (error || !response) {
+        return { response, error, info };
+      }
+
+      sourceOptions = (({ data, ...withoutData }) => ({
+        ...withoutData,
+        url: info?.uploadedTo,
+      }))(sourceOptions) as ImportCSVFromURLOptions;
+
+      importCtx.info = { ...info };
+    }
+
+    const url = sourceOptions.url;
+
+    console.log("TODO: Create table from uploaded URL:", url);
+
+    return {
+      response: { success: true, uploadedTo: importCtx.info?.uploadedTo },
+      error: null,
+      info: {
+        ...importCtx.info,
+      },
     };
   }
 }
+
+const IdentityFunc = <T>(x: T) => x;

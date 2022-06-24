@@ -5,7 +5,7 @@ import type { SplitgraphImportPluginMap } from "./plugins/importers";
 import { ImportCSVPlugin } from "./plugins/importers/import-csv-plugin";
 
 // TODO: It's not ideal for db-splitgraph to depend on base-client
-import { makeAuthHeaders } from "@madatdata/base-client/";
+import { makeAuthHeaders } from "@madatdata/base-client";
 
 interface DbSplitgraphOptions
   extends DbOptions<Partial<SplitgraphImportPluginMap>> {}

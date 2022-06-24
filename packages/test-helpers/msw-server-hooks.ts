@@ -1,5 +1,5 @@
-import { afterAll, afterEach, beforeAll } from "vitest";
-import type { SetupServerApi } from "msw/node";
+import { afterAll, afterEach, beforeAll, beforeEach } from "vitest";
+import { setupServer } from "msw/node";
 
 /**
  * Calls the vitest hooks required to set up msw server during the tests and
@@ -7,14 +7,30 @@ import type { SetupServerApi } from "msw/node";
  *
  * @see https://mswjs.io/docs/getting-started/integrate/node
  */
-export const setupMswServerTestHooks = (mswServer: SetupServerApi) => {
-  beforeAll(() => {
-    mswServer.listen();
+export const setupMswServerTestHooks = () => {
+  beforeAll((suiteCtx) => {
+    suiteCtx.mswServer = setupServer();
+    suiteCtx.mswServer.listen();
   });
-  afterEach(() => {
-    mswServer.resetHandlers();
+
+  beforeEach((testCtx, suiteCtx) => {
+    testCtx.mswServer = suiteCtx.mswServer;
   });
-  afterAll(() => {
-    mswServer.close();
+
+  afterEach((testCtx, suiteCtx) => {
+    testCtx.mswServer?.resetHandlers();
+    suiteCtx.mswServer = testCtx.mswServer;
+  });
+  afterAll((suiteCtx) => {
+    suiteCtx.mswServer?.close();
   });
 };
+
+declare module "vitest" {
+  export interface Suite {
+    mswServer?: ReturnType<typeof setupServer>;
+  }
+  export interface TestContext {
+    mswServer?: ReturnType<typeof setupServer>;
+  }
+}
