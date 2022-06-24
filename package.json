@@ -10,6 +10,7 @@
     "clean": "yarn clean.verbose-default 2>&1 >/dev/null || true",
     "check": "yarn format.check && yarn typecheck && yarn test-ci && yarn build",
     "test-ci": "yarn vitest run",
+    "test-mitm": "INSECURE_TLS=1 MITM=http://127.0.0.1:7979 yarn vitest",
     "yeet": "yarn workspace @madatdata/yeet run yeet",
     "format": "yarn run format.base --write --list-different .",
     "format.check": "yarn run format.base --check . || { yarn run format.warn ; }",
@@ -22,6 +23,7 @@
   ],
   "devDependencies": {
     "@types/node": "16.11.38",
+    "global-agent": "3.0.0",
     "jsdom": "19.0.0",
     "msw": "0.42.1",
     "prettier": "2.7.1",
@@ -30,10 +32,10 @@
     "typescript": "4.7.2",
     "vitest": "0.14.1"
   },
-  "dependencies": {
-    "cross-fetch": "3.1.5"
-  },
   "resolutions": {
     "tsc-multi@0.6.1": "patch:tsc-multi@npm:0.6.1#.yarn/patches/tsc-multi-npm-0.6.1-6c7411b6ff.patch"
+  },
+  "dependencies": {
+    "cross-fetch": "3.1.5"
   }
 }
