@@ -480,7 +480,7 @@ Clean artifacts in `dist` (generated from `yarn typecheck`) and
 `packages/*/build` (generated from `yarn build`):
 
 ```
-yarn
+yarn clean
 ```
 
 ### Final check before commit

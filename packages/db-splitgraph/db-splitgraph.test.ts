@@ -38,6 +38,28 @@ const createDb = () => {
   });
 };
 
+const createRealDb = () => {
+  const credential = {
+    // @ts-expect-error https://stackoverflow.com/a/70711231
+    apiKey: import.meta.env.VITE_TEST_DDN_API_KEY,
+    // @ts-expect-error https://stackoverflow.com/a/70711231
+    apiSecret: import.meta.env.VITE_TEST_DDN_API_SECRET,
+  };
+
+  return makeDb({
+    authenticatedCredential: {
+      apiKey: credential.apiKey,
+      apiSecret: credential.apiSecret,
+      anonymous: false,
+    },
+    plugins: {
+      csv: new ImportCSVPlugin({
+        graphqlEndpoint: defaultHost.baseUrls.gql,
+      }),
+    },
+  });
+};
+
 // Useful when writing initial tests against real server (where anon is allowed)
 // const _makeAnonymousDb = () => {
 //   return makeDb({
@@ -50,9 +72,11 @@ const createDb = () => {
 // };
 
 // FIXME: most of this block is graphql client implementation details
-describe("importData for ImportCSVPlugin", () => {
+describe.skip("importData for ImportCSVPlugin", () => {
   setupMswServerTestHooks();
   setupMemo();
+
+  const namespace = "miles";
 
   beforeEach(({ mswServer, testMemo }) => {
     const reqId = testMemo?.takeNext();
@@ -111,7 +135,7 @@ describe("importData for ImportCSVPlugin", () => {
     const { info } = await db.importData(
       "csv",
       { data: Buffer.from("empty_csv") },
-      { tableName: "feefifo" }
+      { tableName: "irrelevant", namespace, repository: "dunno" }
     );
 
     expect({
@@ -137,7 +161,7 @@ describe("importData for ImportCSVPlugin", () => {
     const { info: oldCredInfo } = await db.importData(
       "csv",
       { data: Buffer.from("empty_csv") },
-      { tableName: "feefifo" }
+      { tableName: "irrelevant", namespace, repository: "dunno" }
     );
 
     expect(oldCredInfo?.presigned?.headers.get("test-echo-x-api-key")).toEqual(
@@ -157,7 +181,7 @@ describe("importData for ImportCSVPlugin", () => {
     const { info } = await db.importData(
       "csv",
       { data: Buffer.from("empty_csv") },
-      { tableName: "feefifo" }
+      { tableName: "irrelevant", namespace, repository: "dunno" }
     );
     expect(info?.presigned?.headers.get("test-echo-x-api-key")).toEqual("jjj");
     expect(info?.presigned?.headers.get("test-echo-x-api-secret")).toEqual(
@@ -173,15 +197,14 @@ describe("importData for ImportCSVPlugin", () => {
     const { response, error } = await db.importData(
       "csv",
       { data: Buffer.from("empty_csv") },
-      { tableName: "feefifo" }
+      { tableName: "irrelevant", namespace, repository: "dunno" }
     );
 
     expect({ response, error }).toMatchInlineSnapshot(`
       {
         "error": null,
         "response": {
-          "success": true,
-          "uploadedTo": "https://data.splitgraph.com:9000/fake-url-download?key=${testMemo?.last}",
+          "success": true
         },
       }
     `);
@@ -200,8 +223,8 @@ describe("importData for ImportCSVPlugin", () => {
 
     await db.importData(
       "csv",
-      { data: Buffer.from(`name,birthday\r\nFOO_COL_KEY,BAR_COL_VAL`) },
-      { tableName: "irrelevant" }
+      { data: Buffer.from(`name,candies\r\nBob,5\r\nAlice,6\r\nMallory,0`) },
+      { tableName: "irrelevant", namespace, repository: "dunno" }
     );
 
     const download = `https://data.splitgraph.com:9000/fake-url-download?key=${testMemo?.last}`;
@@ -209,8 +232,79 @@ describe("importData for ImportCSVPlugin", () => {
     const resulting = await fetch(download).then((response) => response.text());
 
     expect(resulting).toMatchInlineSnapshot(`
-      "name,birthday
-      FOO_COL_KEY,BAR_COL_VAL"
+      "name,candies
+      Bob,5
+      Alice,6
+      Mallory,0"
     `);
   });
+});
+
+describe("without msw", () => {
+  const namespace = "miles";
+
+  it("uploads", async () => {
+    const db = createRealDb();
+    await db.fetchAccessToken();
+
+    const { response, error, info } = await db.importData(
+      "csv",
+      { data: Buffer.from(`name,candies\r\nBob,5`) },
+      { tableName: "irrelevant", namespace, repository: "dunno" }
+    );
+
+    console.log("info");
+    console.log(info);
+
+    expect((response as any)?.success).toEqual(true);
+
+    // expect({
+    //   response,
+    //   error,
+    //   info: { jobStatus: info?.jobStatus, jobLog: info?.jobLog },
+    // }).toMatchInlineSnapshot(`
+    //   {
+    //     "error": {
+    //       "pending": false,
+    //       "success": false,
+    //     },
+    //     "info": {
+    //       "jobLog": {
+    //         "url": "https://data.splitgraph.com:9000/ingestion-logs/miles/dunno/de80f38b-9db8-4f39-93a4-96380ca99206?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioclient%2F20220624%2Fus-east%2Fs3%2Faws4_request&X-Amz-Date=20220624T192911Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=e35abc98667d295c20671d95be8dd88616881a7309b224f2b98b57c993f7b752",
+    //       },
+    //       "jobStatus": {
+    //         "finished": "2022-06-24T19:29:11.584484",
+    //         "isManual": true,
+    //         "started": "2022-06-24T19:29:11.45737",
+    //         "status": "FAILURE",
+    //         "taskId": "de80f38b-9db8-4f39-93a4-96380ca99206",
+    //       },
+    //     },
+    //     "response": {
+    //       "success": false,
+    //     },
+    //   }
+    // `);
+
+    // expect({ response, error, info }).toMatchInlineSnapshot();
+
+    // expect(response instanceof Response).toBe(false);
+    // expect((response as any)?.success).toBe(true);
+
+    // console.log(await response?.text());
+    console.error(error);
+
+    // const info.uploadedto;
+
+    // const download = `https://data.splitgraph.com:9000/fake-url-download?key=${testMemo?.last}`;
+
+    // const resulting = await fetch(download).then((response) => response.text());
+
+    // expect(resulting).toMatchInlineSnapshot(`
+    //   "name,candies
+    //   Bob,5
+    //   Alice,6
+    //   Mallory,0"
+    // `);
+  }, 20_000);
 });
