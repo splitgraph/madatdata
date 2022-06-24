@@ -49,6 +49,77 @@ class DbSplitgraph extends BaseDb<Partial<SplitgraphImportPluginMap>> {
     this.graphqlEndpoint = this.host.baseUrls.gql;
   }
 
+  // TODO: doesn't belong here (or does it? maybe credential doesn't belong _there_)
+  async fetchAccessToken() {
+    // TODO: cleanup this proliferating mess (figure out auth...again )
+    const credential = this.authenticatedCredential as {
+      apiKey?: string;
+      apiSecret?: string;
+      token?: string;
+    } | null;
+
+    if (credential === null) {
+      throw new Error(
+        "TODO: fetching anonymous access token not currently supported"
+      );
+    }
+
+    if (credential.token && !credential.apiKey && !credential.apiSecret) {
+      console.warn("Skipping fetchAccessToken, since credential.token exists");
+      return credential as { token: string; anonymous: false };
+    }
+
+    if (!credential.apiKey || !credential.apiSecret) {
+      throw new Error("Missing credential.apiKey or credential.apiSecret");
+    }
+
+    const { response, error } = await fetch(
+      this.host.baseUrls.auth + "/access_token",
+      {
+        method: "POST",
+        mode: "cors",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          api_key: credential.apiKey,
+          api_secret: credential.apiSecret,
+        }),
+      }
+    )
+      .then((response) =>
+        response.ok
+          ? response.json()
+          : Promise.reject({ response, error: { type: "http-error" } })
+      )
+      .then((parsedResponse) => ({
+        response: parsedResponse,
+        error: null,
+      }))
+      .catch((error) => ({
+        response: null,
+        error: {
+          type: "network-error",
+          ...error,
+        },
+      }));
+
+    if (error) {
+      throw error;
+    }
+
+    const { success, access_token: accessToken } = response as {
+      success: boolean;
+      access_token: string;
+    };
+
+    if (!accessToken || !success) {
+      throw new Error("Failed to fetch accessToken");
+    }
+
+    this.setAuthenticatedCredential({ anonymous: false, token: accessToken });
+  }
+
   async importData<PluginName extends keyof SplitgraphImportPluginMap>(
     pluginName: PluginName,
     ...rest: Parameters<SplitgraphImportPluginMap[PluginName]["importData"]>
