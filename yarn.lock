@@ -136,6 +136,7 @@ __metadata:
     graphql-request: 4.3.0
     json-schema-to-typescript: 10.1.5
     rimraf: 3.0.2
+    typescript-retry-decorator: 2.0.5
   peerDependencies:
     cross-fetch: "*"
   peerDependenciesMeta:
@@ -3951,6 +3952,13 @@ __metadata:
   version: 2.6.0
   resolution: "type@npm:2.6.0"
   checksum: 80da01fcc0f6ed5a253dc326530e134000a8f66ea44b6d9687cde2f894f0d0b2486595b0cd040a64f7f79dc3120784236f8c9ef667a8aef03984e049b447cfb4
+  languageName: node
+  linkType: hard
+
+"typescript-retry-decorator@npm:2.0.5":
+  version: 2.0.5
+  resolution: "typescript-retry-decorator@npm:2.0.5"
+  checksum: 0b81079a334c694b49494b08c505bf7d100ceb215e4433857c6c3cae2facfbb66a88905b2051542a12536497a51067e39abaf194c4409972a093b0a6122b8015
   languageName: node
   linkType: hard
 

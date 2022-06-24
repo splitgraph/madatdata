@@ -15,7 +15,8 @@
     "@madatdata/base-db": "workspace:*",
     "graphql": "16.5.0",
     "graphql-request": "4.3.0",
-    "json-schema-to-typescript": "10.1.5"
+    "json-schema-to-typescript": "10.1.5",
+    "typescript-retry-decorator": "2.0.5"
   },
   "devDependencies": {
     "@madatdata/test-helpers": "workspace:*",
