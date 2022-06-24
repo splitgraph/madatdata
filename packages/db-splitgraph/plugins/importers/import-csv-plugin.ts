@@ -186,10 +186,8 @@ export class ImportCSVPlugin implements Plugin {
       },
     } = response;
 
-    console.log("Uploading via:", presignedUploadURL);
     const { response: uploadCSVResponse, error: uploadCSVError } =
       await this.uploadCSV(presignedUploadURL, sourceOptions.data);
-    console.log("Successfully uploaded to:", presignedDownloadURL);
 
     info.uploadedTo = presignedDownloadURL;
     info.presignedDownloadURL = presignedDownloadURL;
@@ -212,7 +210,14 @@ export class ImportCSVPlugin implements Plugin {
     sourceOptions: ImportCSVSourceOptions,
     destOptions: SplitgraphDestOptions
   ) {
-    const importCtx: any = {};
+    // TODO: cleanup this hack with "import ctx" which is only here because
+    // tests want to make assertions on headers of intermediate requests
+    const importCtx: Pick<
+      Unpromise<ReturnType<typeof this.uploadData>>,
+      "info"
+    > = {
+      info: {},
+    };
 
     if (sourceOptions.data) {
       const { response, error, info } = await this.uploadData(
@@ -224,6 +229,7 @@ export class ImportCSVPlugin implements Plugin {
         return { response, error, info };
       }
 
+      // Now that we uploaded data to url, remove the data property and add url property
       sourceOptions = (({ data, ...withoutData }) => ({
         ...withoutData,
         url: info?.uploadedTo,
@@ -247,3 +253,7 @@ export class ImportCSVPlugin implements Plugin {
 }
 
 const IdentityFunc = <T>(x: T) => x;
+
+// TODO: Consider adding `type-fest`: https://github.com/sindresorhus/type-fest
+// which has AsyncReturnValue<T> to replace Unpromise<ReturnType<T>>
+type Unpromise<T extends Promise<any>> = T extends Promise<infer U> ? U : never;
