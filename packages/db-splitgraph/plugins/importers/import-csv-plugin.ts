@@ -5,6 +5,8 @@ import { type Variables, gql, GraphQLClient } from "graphql-request";
 
 import { Retryable, BackOffPolicy } from "typescript-retry-decorator";
 
+import { SplitgraphGraphQLClient } from "../../gql-client/splitgraph-graphql-client";
+
 interface ImportCSVPluginOptions {
   graphqlEndpoint: string;
   transformRequestHeaders?: (requestHeaders: HeadersInit) => HeadersInit;
@@ -58,12 +60,14 @@ export class ImportCSVPlugin implements Plugin {
 
   constructor(opts: ImportCSVPluginOptions) {
     this.opts = opts;
+
     this.graphqlEndpoint = opts.graphqlEndpoint;
     this.transformRequestHeaders = opts.transformRequestHeaders ?? IdentityFunc;
 
-    this.graphqlClient = new GraphQLClient(this.graphqlEndpoint, {
-      headers: () => this.transformRequestHeaders({}),
-    });
+    this.graphqlClient = new SplitgraphGraphQLClient({
+      graphqlEndpoint: this.graphqlEndpoint,
+      transformRequestHeaders: this.transformRequestHeaders,
+    }).graphqlClient;
   }
 
   // TODO: improve it (e.g. allow either mutation or copy), and/or generalize it
@@ -412,6 +416,9 @@ export class ImportCSVPlugin implements Plugin {
     info.presignedDownloadURL = presignedDownloadURL;
     info.presignedUploadURL = presignedUploadURL;
 
+    console.log("info.presignedDownloadURL:", info.presignedDownloadURL);
+    console.log("info.presignedUploadURL:", info.presignedUploadURL);
+
     if (uploadCSVError || !uploadCSVResponse) {
       return { response: uploadCSVResponse, error: uploadCSVError, info };
     }
@@ -459,8 +466,6 @@ export class ImportCSVPlugin implements Plugin {
       throw { type: "retry" };
     }
 
-    console.log("statoos:", jobStatusResponse);
-
     const {
       response: jobLogResponse,
       error: jobLogError,
@@ -474,8 +479,6 @@ export class ImportCSVPlugin implements Plugin {
         info: { jobLog: jobLogInfo, jobStatus: jobStatusInfo },
       };
     }
-
-    console.log("return:", jobStatusResponse, jobLogResponse);
 
     return {
       response: {

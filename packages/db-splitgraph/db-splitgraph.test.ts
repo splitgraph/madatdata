@@ -79,11 +79,7 @@ describe("importData for ImportCSVPlugin", () => {
   const namespace = "miles";
 
   beforeEach((testCtx) => {
-    const {
-      mswServer,
-      useTestMemo,
-      meta: { id: testId },
-    } = testCtx;
+    const { mswServer, useTestMemo } = testCtx;
 
     const bodyMemo = useTestMemo!<string, null | DefaultBodyType>();
 
