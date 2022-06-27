@@ -4,7 +4,7 @@ import { ImportCSVPlugin } from "./plugins/importers/import-csv-plugin";
 
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
 import { setupMemo } from "@madatdata/test-helpers/setup-memo";
-import { compose, graphql, rest } from "msw";
+import { compose, graphql, rest, type DefaultBodyType } from "msw";
 
 import { defaultHost } from "@madatdata/base-client/host";
 
@@ -72,17 +72,25 @@ const createRealDb = () => {
 // };
 
 // FIXME: most of this block is graphql client implementation details
-describe.skip("importData for ImportCSVPlugin", () => {
+describe("importData for ImportCSVPlugin", () => {
   setupMswServerTestHooks();
   setupMemo();
 
   const namespace = "miles";
 
-  beforeEach(({ mswServer, testMemo }) => {
-    const reqId = testMemo?.takeNext();
+  beforeEach((testCtx) => {
+    const {
+      mswServer,
+      useTestMemo,
+      meta: { id: testId },
+    } = testCtx;
+
+    const bodyMemo = useTestMemo!<string, null | DefaultBodyType>();
 
     mswServer?.use(
       graphql.query("CSVURLs", (req, res, context) => {
+        const reqId = bodyMemo.setWithRandomId(null);
+
         return res(
           // FIXME: msw handlers should be factored into a common place
           compose(
@@ -106,12 +114,11 @@ describe.skip("importData for ImportCSVPlugin", () => {
       rest.put(
         "https://data.splitgraph.com:9000/fake-url-upload",
         (req, res, context) => {
-          console.log("body:", req.body);
           const reqKey = req.url.searchParams.get("key");
 
           if (reqKey) {
             // testMemo?.findMemo(parseInt(reqKey));
-            testMemo?.set(parseInt(reqKey), req.body);
+            bodyMemo?.set(reqKey, req.body?.toString());
           }
 
           return res(context.status(200));
@@ -122,11 +129,54 @@ describe.skip("importData for ImportCSVPlugin", () => {
         (req, res, context) => {
           const reqKey = req.url.searchParams.get("key");
           if (reqKey) {
-            const uploadedBody = testMemo?.findMemo(parseInt(reqKey));
+            const uploadedBody = bodyMemo?.get(reqKey);
+
+            // @ts-expect-error Types a bite too wide
             return res(context.body(uploadedBody));
           }
         }
-      )
+      ),
+      graphql.mutation("StartExternalRepositoryLoad", (req, res, context) => {
+        return res(
+          context.data({
+            startExternalRepositoryLoad: {
+              taskId: "fakeuuid-0bc2-4932-baca-39b000d8b111",
+            },
+          })
+        );
+      }),
+      graphql.query<{ jobLogs: { url: string } }, { taskId: string }>(
+        "JobLogsByTaskId",
+        (req, res, context) => {
+          return res(
+            context.data({
+              jobLogs: {
+                url:
+                  "https://data.splitgraph.com:9000/fake-logs-for-task" +
+                  req.variables.taskId,
+              },
+            })
+          );
+        }
+      ),
+      graphql.query("RepositoryIngestionJobStatus", (req, res, context) => {
+        return res(
+          context.data({
+            repositoryIngestionJobStatus: {
+              nodes: [
+                "fakeuuid-0bc2-4932-baca-39b000d8b111",
+                "fake-prev-id",
+              ].map((taskId) => ({
+                taskId,
+                started: "blah",
+                finished: "finito",
+                isManual: true,
+                status: "SUCCESS",
+              })),
+            },
+          })
+        );
+      })
     );
   });
 
@@ -190,8 +240,10 @@ describe.skip("importData for ImportCSVPlugin", () => {
   });
 
   it("returns expected graphql response (will change during tdd)", async ({
-    testMemo,
+    useTestMemo,
   }) => {
+    const testMemo = useTestMemo!();
+
     const db = createDb();
 
     const { response, error } = await db.importData(
@@ -204,12 +256,12 @@ describe.skip("importData for ImportCSVPlugin", () => {
       {
         "error": null,
         "response": {
-          "success": true
+          "success": true,
         },
       }
     `);
 
-    const download = `https://data.splitgraph.com:9000/fake-url-download?key=${testMemo?.last}`;
+    const download = `https://data.splitgraph.com:9000/fake-url-download?key=${testMemo?.lastKey}`;
 
     const resulting = await fetch(download).then((response) => response.text());
 
@@ -217,17 +269,20 @@ describe.skip("importData for ImportCSVPlugin", () => {
   });
 
   it("uploads a file and then serves it back from its keyed URL", async ({
-    testMemo,
+    useTestMemo,
   }) => {
+    const testMemo = useTestMemo!();
     const db = createDb();
 
-    await db.importData(
+    const { info } = await db.importData(
       "csv",
       { data: Buffer.from(`name,candies\r\nBob,5\r\nAlice,6\r\nMallory,0`) },
       { tableName: "irrelevant", namespace, repository: "dunno" }
     );
 
-    const download = `https://data.splitgraph.com:9000/fake-url-download?key=${testMemo?.last}`;
+    const download = `https://data.splitgraph.com:9000/fake-url-download?key=${testMemo?.lastKey}`;
+
+    expect(info?.presignedDownloadURL).toEqual(download);
 
     const resulting = await fetch(download).then((response) => response.text());
 
@@ -240,7 +295,7 @@ describe.skip("importData for ImportCSVPlugin", () => {
   });
 });
 
-describe("without msw", () => {
+describe.skip("without msw", () => {
   const namespace = "miles";
 
   it("uploads", async () => {
@@ -252,9 +307,6 @@ describe("without msw", () => {
       { data: Buffer.from(`name,candies\r\nBob,5`) },
       { tableName: "irrelevant", namespace, repository: "dunno" }
     );
-
-    console.log("info");
-    console.log(info);
 
     expect((response as any)?.success).toEqual(true);
 
@@ -296,7 +348,7 @@ describe("without msw", () => {
 
     // const info.uploadedto;
 
-    // const download = `https://data.splitgraph.com:9000/fake-url-download?key=${testMemo?.last}`;
+    // const download = `https://data.splitgraph.com:9000/fake-url-download?key=${testMemo?.lastKey}`;
 
     // const resulting = await fetch(download).then((response) => response.text());
 
