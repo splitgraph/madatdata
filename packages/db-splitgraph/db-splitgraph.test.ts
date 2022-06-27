@@ -8,6 +8,8 @@ import { compose, graphql, rest, type DefaultBodyType } from "msw";
 
 import { defaultHost } from "@madatdata/base-client/host";
 
+import { faker } from "@faker-js/faker";
+
 describe("importData", () => {
   it("returns false for unknown plugin", async () => {
     const db = makeDb({});
@@ -38,6 +40,7 @@ const createDb = () => {
   });
 };
 
+// @ts-ignore-warning
 const createRealDb = () => {
   const credential = {
     // @ts-expect-error https://stackoverflow.com/a/70711231
@@ -79,9 +82,14 @@ describe("importData for ImportCSVPlugin", () => {
   const namespace = "miles";
 
   beforeEach((testCtx) => {
-    const { mswServer, useTestMemo } = testCtx;
+    const { mswServer, useKeyedMemo } = testCtx;
 
-    const bodyMemo = useTestMemo!<string, null | DefaultBodyType>();
+    const bodyMemo = useKeyedMemo!<string, null | DefaultBodyType>(
+      "uploadedFile"
+    );
+
+    /** map of apiKey:apiSecret -> token */
+    const accessTokenMemo = useKeyedMemo!<string, string>("tokens");
 
     mswServer?.use(
       graphql.query("CSVURLs", (req, res, context) => {
@@ -127,12 +135,54 @@ describe("importData for ImportCSVPlugin", () => {
           if (reqKey) {
             const uploadedBody = bodyMemo?.get(reqKey);
 
-            // @ts-expect-error Types a bite too wide
+            // @ts-expect-error Types a bit too wide
             return res(context.body(uploadedBody));
           }
         }
       ),
-      graphql.mutation("StartExternalRepositoryLoad", (req, res, context) => {
+      rest.post<{ api_key: string; api_secret: string }>(
+        "https://api.splitgraph.com/auth/access_token",
+        (req, res, context) => {
+          const apiKey = req.body.api_key;
+          const apiSecret = req.body.api_secret;
+
+          if (!apiKey || !apiSecret) {
+            return res(context.status(401));
+          }
+
+          const tokenKey = `${apiKey}:${apiSecret}`;
+
+          if (!accessTokenMemo.has(tokenKey)) {
+            accessTokenMemo.set(tokenKey, makeFakeJwt());
+          }
+
+          return res(
+            context.json({
+              access_token: accessTokenMemo.get(tokenKey),
+              success: true,
+            })
+          );
+        }
+      ),
+      graphql.operation((req, res, context) => {
+        const headerToken = req.headers
+          .get("authorization")
+          ?.split("Bearer ")[1];
+
+        const matchingToken = Array.from(accessTokenMemo.entries()).find(
+          ([_apiKeySecret, accessToken]) => {
+            return accessToken === headerToken;
+          }
+        );
+
+        if (!headerToken || !matchingToken) {
+          return res(context.errors([{ message: "Invalid access token" }]));
+        }
+
+        // NOTE: Return void to continue to next resolver, "middleware style"
+        return;
+      }),
+      graphql.mutation("StartExternalRepositoryLoad", (_req, res, context) => {
         return res(
           context.data({
             startExternalRepositoryLoad: {
@@ -155,7 +205,7 @@ describe("importData for ImportCSVPlugin", () => {
           );
         }
       ),
-      graphql.query("RepositoryIngestionJobStatus", (req, res, context) => {
+      graphql.query("RepositoryIngestionJobStatus", (_req, res, context) => {
         return res(
           context.data({
             repositoryIngestionJobStatus: {
@@ -178,6 +228,7 @@ describe("importData for ImportCSVPlugin", () => {
 
   it("transforms headers to add auth credential", async () => {
     const db = createDb();
+    // NOTE: not fetching access token here, just want to check response headers
     const { info } = await db.importData(
       "csv",
       { data: Buffer.from("empty_csv") },
@@ -203,6 +254,8 @@ describe("importData for ImportCSVPlugin", () => {
 
   it("transforms headers using _current_ value of authenticatedCredential", async () => {
     const db = createDb();
+    // await db.fetchAccessToken();
+    // NOTE: not fetching access token here, just want to check response headers
 
     const { info: oldCredInfo } = await db.importData(
       "csv",
@@ -236,11 +289,12 @@ describe("importData for ImportCSVPlugin", () => {
   });
 
   it("returns expected graphql response (will change during tdd)", async ({
-    useTestMemo,
+    useKeyedMemo,
   }) => {
-    const testMemo = useTestMemo!();
+    const testMemo = useKeyedMemo!("uploadedFile");
 
     const db = createDb();
+    await db.fetchAccessToken();
 
     const { response, error } = await db.importData(
       "csv",
@@ -265,10 +319,11 @@ describe("importData for ImportCSVPlugin", () => {
   });
 
   it("uploads a file and then serves it back from its keyed URL", async ({
-    useTestMemo,
+    useKeyedMemo,
   }) => {
-    const testMemo = useTestMemo!();
+    const testMemo = useKeyedMemo!("uploadedFile");
     const db = createDb();
+    await db.fetchAccessToken();
 
     const { info } = await db.importData(
       "csv",
@@ -289,16 +344,14 @@ describe("importData for ImportCSVPlugin", () => {
       Mallory,0"
     `);
   });
-});
-
-describe.skip("without msw", () => {
-  const namespace = "miles";
 
   it("uploads", async () => {
-    const db = createRealDb();
+    const db = createDb();
     await db.fetchAccessToken();
 
-    const { response, error, info } = await db.importData(
+    const namespace = "miles";
+
+    const { response, info } = await db.importData(
       "csv",
       { data: Buffer.from(`name,candies\r\nBob,5`) },
       { tableName: "irrelevant", namespace, repository: "dunno" }
@@ -306,53 +359,97 @@ describe.skip("without msw", () => {
 
     expect((response as any)?.success).toEqual(true);
 
-    // expect({
-    //   response,
-    //   error,
-    //   info: { jobStatus: info?.jobStatus, jobLog: info?.jobLog },
-    // }).toMatchInlineSnapshot(`
-    //   {
-    //     "error": {
-    //       "pending": false,
-    //       "success": false,
+    expect(info?.jobStatus.status).toEqual("SUCCESS");
+
+    // expect([
+    //   info?.jobLog,
+    //   info?.jobStatus,
+    //   info?.presignedDownloadURL,
+    //   info?.presignedUploadURL,
+    //   info?.uploadedTo,
+    // ]).toMatchInlineSnapshot(`
+    //   [
+    //     {
+    //       "url": "https://data.splitgraph.com:9000/fake-logs-for-taskfakeuuid-0bc2-4932-baca-39b000d8b111",
     //     },
-    //     "info": {
-    //       "jobLog": {
-    //         "url": "https://data.splitgraph.com:9000/ingestion-logs/miles/dunno/de80f38b-9db8-4f39-93a4-96380ca99206?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioclient%2F20220624%2Fus-east%2Fs3%2Faws4_request&X-Amz-Date=20220624T192911Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=e35abc98667d295c20671d95be8dd88616881a7309b224f2b98b57c993f7b752",
-    //       },
-    //       "jobStatus": {
-    //         "finished": "2022-06-24T19:29:11.584484",
-    //         "isManual": true,
-    //         "started": "2022-06-24T19:29:11.45737",
-    //         "status": "FAILURE",
-    //         "taskId": "de80f38b-9db8-4f39-93a4-96380ca99206",
-    //       },
+    //     {
+    //       "finished": "finito",
+    //       "isManual": true,
+    //       "started": "blah",
+    //       "status": "SUCCESS",
+    //       "taskId": "fakeuuid-0bc2-4932-baca-39b000d8b111",
     //     },
-    //     "response": {
-    //       "success": false,
-    //     },
-    //   }
+    //     "https://data.splitgraph.com:9000/fake-url-download?key=13392250066024182",
+    //     "https://data.splitgraph.com:9000/fake-url-upload?key=13392250066024182",
+    //     "https://data.splitgraph.com:9000/fake-url-download?key=13392250066024182",
+    //   ]
     // `);
+  });
 
-    // expect({ response, error, info }).toMatchInlineSnapshot();
+  it("returns error with bad access token", async () => {
+    const db = createDb();
+    await db.fetchAccessToken();
 
-    // expect(response instanceof Response).toBe(false);
-    // expect((response as any)?.success).toBe(true);
+    db.setAuthenticatedCredential({ token: "bad-token", anonymous: false });
 
-    // console.log(await response?.text());
-    console.error(error);
+    const namespace = "miles";
 
-    // const info.uploadedto;
+    const { error } = await db.importData(
+      "csv",
+      { data: Buffer.from(`name,candies\r\nBob,5`) },
+      { tableName: "irrelevant", namespace, repository: "dunno" }
+    );
 
-    // const download = `https://data.splitgraph.com:9000/fake-url-download?key=${testMemo?.lastKey}`;
-
-    // const resulting = await fetch(download).then((response) => response.text());
-
-    // expect(resulting).toMatchInlineSnapshot(`
-    //   "name,candies
-    //   Bob,5
-    //   Alice,6
-    //   Mallory,0"
-    // `);
-  }, 20_000);
+    expect(error.response.errors).toMatchInlineSnapshot(`
+      [
+        {
+          "message": "Invalid access token",
+        },
+      ]
+    `);
+  });
 });
+
+// describe.skip("without msw", () => {
+//   const namespace = "miles";
+
+//   it("uploads", async () => {
+//     const db = createRealDb();
+//     await db.fetchAccessToken();
+
+//     const { response, error, info } = await db.importData(
+//       "csv",
+//       { data: Buffer.from(`name,candies\r\nBob,5`) },
+//       { tableName: "irrelevant", namespace, repository: "dunno" }
+//     );
+
+//     expect((response as any)?.success).toEqual(true);
+//   }, 20_000);
+// });
+
+const toBase64 = (input: string) =>
+  Buffer.from(input, "binary").toString("base64");
+
+const makeFakeJwt = () => {
+  return [
+    {
+      alg: "RS256",
+      typ: "JWT",
+    },
+    {
+      nbf: faker.date.recent(1),
+      email_verified: true,
+      email: faker.internet.email(),
+      iat: 1656361766,
+      exp: 1656365366,
+      user_id: "126f8ef3-db1f-4e09-8bcb-3caa9294293e",
+      is_admin: true,
+      grant: "access",
+      username: "miles",
+    },
+  ]
+    .map((o) => JSON.stringify(o))
+    .concat("fakeSignature")
+    .map(toBase64)
+    .join(".");
+};
