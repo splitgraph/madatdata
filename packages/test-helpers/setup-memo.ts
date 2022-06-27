@@ -13,6 +13,10 @@ export const setupMemo = () => {
     return <MapKey, MapVal>(
       ...mapInit: ConstructorParameters<typeof MemoMap<MapKey, MapVal>>
     ) => {
+      if (Array.isArray(memoId)) {
+        memoId = memoId.join(";");
+      }
+
       if (!memos.has(memoId)) {
         memos.set(memoId, new MemoMap<MapKey, MapVal>(...mapInit));
       }
@@ -31,8 +35,6 @@ export const setupMemo = () => {
   afterEach((testCtx) => {
     for (let memoId of memos.keys()) {
       if (typeof memoId === "string" && memoId === testCtx.meta.id) {
-        memos.delete(memoId);
-      } else if (Array.isArray(memoId) && memoId[0] === testCtx.meta.id) {
         memos.delete(memoId);
       }
     }
