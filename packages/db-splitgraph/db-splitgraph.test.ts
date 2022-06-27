@@ -90,6 +90,8 @@ describe("importData for ImportCSVPlugin", () => {
 
     /** map of apiKey:apiSecret -> token */
     const accessTokenMemo = useKeyedMemo!<string, string>("tokens");
+    /** map of taskId -> taskId (just identity right now) */
+    const ingestionTaskIdMemo = useKeyedMemo!<string, string>("tasks");
 
     mswServer?.use(
       graphql.query("CSVURLs", (req, res, context) => {
@@ -183,10 +185,13 @@ describe("importData for ImportCSVPlugin", () => {
         return;
       }),
       graphql.mutation("StartExternalRepositoryLoad", (_req, res, context) => {
+        const taskId = faker.datatype.uuid();
+        ingestionTaskIdMemo.set(taskId, taskId);
+
         return res(
           context.data({
             startExternalRepositoryLoad: {
-              taskId: "fakeuuid-0bc2-4932-baca-39b000d8b111",
+              taskId,
             },
           })
         );
@@ -194,25 +199,59 @@ describe("importData for ImportCSVPlugin", () => {
       graphql.query<{ jobLogs: { url: string } }, { taskId: string }>(
         "JobLogsByTaskId",
         (req, res, context) => {
+          if (!ingestionTaskIdMemo.has(req.variables.taskId)) {
+            return res(
+              context.errors([
+                {
+                  message: "taskId not found",
+                },
+              ])
+            );
+          }
+
           return res(
             context.data({
               jobLogs: {
                 url:
-                  "https://data.splitgraph.com:9000/fake-logs-for-task" +
+                  "https://data.splitgraph.com:9000/fake-logs-for-task?taskId=" +
                   req.variables.taskId,
               },
             })
           );
         }
       ),
-      graphql.query("RepositoryIngestionJobStatus", (_req, res, context) => {
+      rest.get(
+        "https://data.splitgraph.com:9000/fake-logs-for-task",
+        (req, res, context) => {
+          const taskId = req.url.searchParams.get("taskId");
+          if (taskId) {
+            return res(context.body(`logs for: ${taskId}`));
+          }
+        }
+      ),
+      graphql.query<
+        {
+          repositoryIngestionJobStatus: {
+            nodes: {
+              taskId: string;
+              started: string;
+              finished: string;
+              isManual: boolean;
+              // FIXME: it's really TaskStatus (needs export from import-csv-plugin)
+              status: string;
+            }[];
+          };
+        },
+        {
+          namespace: string;
+          repository: string;
+          taskId: string;
+        }
+      >("RepositoryIngestionJobStatus", (req, res, context) => {
         return res(
           context.data({
             repositoryIngestionJobStatus: {
-              nodes: [
-                "fakeuuid-0bc2-4932-baca-39b000d8b111",
-                "fake-prev-id",
-              ].map((taskId) => ({
+              nodes: [req.variables.taskId, "fake-prev-id"].map((taskId) => ({
                 taskId,
                 started: "blah",
                 finished: "finito",
@@ -345,7 +384,7 @@ describe("importData for ImportCSVPlugin", () => {
     `);
   });
 
-  it("uploads", async () => {
+  it("uploads successfully", async () => {
     const db = createDb();
     await db.fetchAccessToken();
 
@@ -360,30 +399,25 @@ describe("importData for ImportCSVPlugin", () => {
     expect((response as any)?.success).toEqual(true);
 
     expect(info?.jobStatus.status).toEqual("SUCCESS");
+  });
 
-    // expect([
-    //   info?.jobLog,
-    //   info?.jobStatus,
-    //   info?.presignedDownloadURL,
-    //   info?.presignedUploadURL,
-    //   info?.uploadedTo,
-    // ]).toMatchInlineSnapshot(`
-    //   [
-    //     {
-    //       "url": "https://data.splitgraph.com:9000/fake-logs-for-taskfakeuuid-0bc2-4932-baca-39b000d8b111",
-    //     },
-    //     {
-    //       "finished": "finito",
-    //       "isManual": true,
-    //       "started": "blah",
-    //       "status": "SUCCESS",
-    //       "taskId": "fakeuuid-0bc2-4932-baca-39b000d8b111",
-    //     },
-    //     "https://data.splitgraph.com:9000/fake-url-download?key=13392250066024182",
-    //     "https://data.splitgraph.com:9000/fake-url-upload?key=13392250066024182",
-    //     "https://data.splitgraph.com:9000/fake-url-download?key=13392250066024182",
-    //   ]
-    // `);
+  it("can fetch jobLog.url for taskId matching jobStatus.taskId", async () => {
+    const db = createDb();
+    await db.fetchAccessToken();
+    const namespace = "anything";
+
+    const { info } = await db.importData(
+      "csv",
+      { data: Buffer.from(`name,candies\r\nBob,5`) },
+      { tableName: "doesntmatter", namespace, repository: "onomatopoeia" }
+    );
+
+    const jobLogRaw = await fetch(info!.jobLog!.url).then((response) =>
+      response.text()
+    );
+    expect(jobLogRaw).toMatchInlineSnapshot(
+      `"logs for: ${info!.jobStatus.taskId}"`
+    );
   });
 
   it("returns error with bad access token", async () => {
@@ -409,23 +443,6 @@ describe("importData for ImportCSVPlugin", () => {
     `);
   });
 });
-
-// describe.skip("without msw", () => {
-//   const namespace = "miles";
-
-//   it("uploads", async () => {
-//     const db = createRealDb();
-//     await db.fetchAccessToken();
-
-//     const { response, error, info } = await db.importData(
-//       "csv",
-//       { data: Buffer.from(`name,candies\r\nBob,5`) },
-//       { tableName: "irrelevant", namespace, repository: "dunno" }
-//     );
-
-//     expect((response as any)?.success).toEqual(true);
-//   }, 20_000);
-// });
 
 const toBase64 = (input: string) =>
   Buffer.from(input, "binary").toString("base64");
