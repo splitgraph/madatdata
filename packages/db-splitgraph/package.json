@@ -19,6 +19,7 @@
     "typescript-retry-decorator": "2.0.5"
   },
   "devDependencies": {
+    "@faker-js/faker": "7.3.0",
     "@madatdata/test-helpers": "workspace:*",
     "@types/node": "16.11.38",
     "esno": "0.16.3",
