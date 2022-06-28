@@ -7,6 +7,18 @@ import { Retryable, BackOffPolicy } from "typescript-retry-decorator";
 
 import { SplitgraphGraphQLClient } from "../../gql-client/splitgraph-graphql-client";
 
+import type { Csv as CsvTableParamsSchema } from "./generated/csv/TableParamsSchema";
+import type { Csv as CsvParamsSchema } from "./generated/csv/ParamsSchema";
+import type { Csv as CsvCredentialsSchema } from "./generated/csv/CredentialsSchema";
+
+interface ImportCSVDestOptions extends SplitgraphDestOptions {
+  params?: CsvParamsSchema;
+  tableName: SplitgraphDestOptions["tableName"];
+  // TODO: support > 1 table
+  tableParams?: CsvTableParamsSchema;
+  credentials?: CsvCredentialsSchema;
+}
+
 interface ImportCSVPluginOptions {
   graphqlEndpoint: string;
   transformRequestHeaders?: (requestHeaders: HeadersInit) => HeadersInit;
@@ -120,7 +132,7 @@ export class ImportCSVPlugin implements Plugin {
 
   private async startLoad(
     sourceOptions: ImportCSVFromURLOptions,
-    destOptions: SplitgraphDestOptions
+    destOptions: ImportCSVDestOptions
   ) {
     return this.sendGraphql<
       {
@@ -176,11 +188,16 @@ export class ImportCSVPlugin implements Plugin {
         params: JSON.stringify({
           url: sourceOptions.url,
           connection_type: "http",
+          ...destOptions.params,
         }),
         tables: [
           {
             name: destOptions.tableName,
-            options: JSON.stringify({ url: sourceOptions.url }),
+            options: JSON.stringify({
+              url: sourceOptions.url,
+              ...destOptions.tableParams,
+            }),
+            // TODO: allow user to specify schema in destOptions
             schema: [],
           },
         ],
@@ -214,7 +231,7 @@ export class ImportCSVPlugin implements Plugin {
     {
       namespace,
       repository,
-    }: Pick<SplitgraphDestOptions, "namespace" | "repository">
+    }: Pick<ImportCSVDestOptions, "namespace" | "repository">
   ) {
     const { response, error, info } = await this.sendGraphql<
       {
@@ -268,7 +285,7 @@ export class ImportCSVPlugin implements Plugin {
     {
       namespace,
       repository,
-    }: Pick<SplitgraphDestOptions, "namespace" | "repository">
+    }: Pick<ImportCSVDestOptions, "namespace" | "repository">
   ) {
     const { response, error, info } = await this.sendGraphql<
       {
@@ -375,7 +392,7 @@ export class ImportCSVPlugin implements Plugin {
 
   private async uploadData(
     sourceOptions: ImportCSVFromDataOptions,
-    _destOptions: SplitgraphDestOptions
+    _destOptions: ImportCSVDestOptions
   ) {
     const info: {
       presigned?: typeof presignedInfo;
@@ -438,7 +455,7 @@ export class ImportCSVPlugin implements Plugin {
     {
       namespace,
       repository,
-    }: Pick<SplitgraphDestOptions, "namespace" | "repository">
+    }: Pick<ImportCSVDestOptions, "namespace" | "repository">
   ) {
     console.log(new Date().toLocaleTimeString(), "waitFor:", taskId);
 
@@ -492,7 +509,7 @@ export class ImportCSVPlugin implements Plugin {
 
   async importData(
     sourceOptions: ImportCSVSourceOptions,
-    destOptions: SplitgraphDestOptions
+    destOptions: ImportCSVDestOptions
   ) {
     // TODO: cleanup this hack with "import ctx" which is only here because
     // tests want to make assertions on headers of intermediate requests

@@ -69,6 +69,27 @@ const createRealDb = () => {
   });
 };
 
+const environmentHasCredential = () => {
+  return (
+    // @ts-expect-error https://stackoverflow.com/a/70711231
+    !!import.meta.env.VITE_TEST_DDN_API_KEY &&
+    // @ts-expect-error https://stackoverflow.com/a/70711231
+    !!import.meta.env.VITE_TEST_DDN_API_SECRET
+  );
+};
+
+const shouldIncludeIntegrationTests = () => {
+  return (
+    environmentHasCredential() &&
+    // @ts-expect-error https://stackoverflow.com/a/70711231
+    !!import.meta.env.VITE_TEST_INTEGRATION
+  );
+};
+
+const shouldSkipIntegrationTests = () => {
+  return !shouldIncludeIntegrationTests();
+};
+
 // Useful when writing initial tests against real server (where anon is allowed)
 // const _makeAnonymousDb = () => {
 //   return makeDb({
@@ -508,6 +529,32 @@ describe("importData for ImportCSVPlugin", () => {
       ]
     `);
   });
+});
+
+describe.skipIf(shouldSkipIntegrationTests())("real DDN", () => {
+  it("uploads with TableParamsSchema semicolon delimiter", async () => {
+    const db = createRealDb();
+    const { username: namespace } = await fetchToken(db);
+
+    const { response, info } = await db.importData(
+      "csv",
+      { data: Buffer.from(`name;candies\r\nBob;5\r\nAlice;10`) },
+      {
+        tableName: "irrelevant",
+        namespace,
+        repository: "dunno",
+        tableParams: {
+          delimiter: ";",
+        },
+      }
+    );
+
+    expect((response as any)?.success).toEqual(true);
+
+    expect(info?.jobStatus.status).toEqual("SUCCESS");
+
+    expect(info?.jobLog?.url.includes(info.jobStatus.taskId)).toBe(true);
+  }, 10_000);
 });
 
 describe("makeFakeJwt and claimsFromJwt", () => {

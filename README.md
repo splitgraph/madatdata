@@ -454,6 +454,23 @@ watch mode, simply run:
 yarn test
 ```
 
+Any test that contacts any "real" resource should only run if `INTEGRATION=1`,
+so create a file `.env.integration.local` to hold any env keys:
+
+```ini
+VITE_TEST_INTEGRATION=1
+VITE_TEST_DDN_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+VITE_TEST_DDN_API_SECRET=yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
+```
+
+Then simply append `--mode integration` flag to any variant of `yarn test` that
+is running `vitest`, which will then load the environment variables from the
+`.env.integration.local` file, if it exsits, and make them available in
+`import.meta.env` (e.g. for use in `skipIf` of integration tests).
+
+Note: The tests are written so that this will _include_ integration tests, but
+it will not _only_ run integration tests.
+
 ### Typecheck
 
 We use `tsc` for typechecking, with the default solution file `tsconfig.json`

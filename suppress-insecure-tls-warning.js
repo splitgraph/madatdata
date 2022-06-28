@@ -52,7 +52,8 @@ function suppress() {
   if (
     process.env.NODE_ENV &&
     process.env.NODE_ENV !== "development" &&
-    process.env.NODE_ENV !== "test"
+    process.env.NODE_ENV !== "test" &&
+    process.env.NODE_ENV !== "integration"
   ) {
     console.error("FATAL: Not suppressing TLS warning, NODE_ENV=", NODE_ENV);
     process.exit(1);
