@@ -1,5 +1,4 @@
-// import { type Variables, gql, GraphQLClient } from "graphql-request";
-import { GraphQLClient } from "graphql-request";
+import { type Variables, GraphQLClient } from "graphql-request";
 
 export interface SplitgraphGQLCLientOptions {
   graphqlEndpoint: string;
@@ -18,6 +17,26 @@ export class SplitgraphGraphQLClient {
     this.graphqlClient = new GraphQLClient(this.graphqlEndpoint, {
       headers: () => this.transformRequestHeaders({}),
     });
+  }
+
+  public async send<T = any, V = Variables>(query: string, variables?: V) {
+    const { response, error, info } = await this.graphqlClient
+      .rawRequest<{
+        upload: string;
+        download: string;
+      }>(query, variables)
+      .then(({ data, headers, status }) => ({
+        response: data as unknown as T,
+        error: null,
+        info: { headers, status },
+      }))
+      .catch((error) => ({ error: { ...error }, response: null, info: null }));
+
+    return {
+      response,
+      error,
+      info,
+    };
   }
 }
 

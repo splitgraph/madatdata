@@ -1,7 +1,7 @@
 import type { Plugin } from "@madatdata/base-db";
 import type { SplitgraphDestOptions } from "./base-import-plugin";
 
-import { type Variables, gql, GraphQLClient } from "graphql-request";
+import { gql } from "graphql-request";
 
 import { Retryable, BackOffPolicy } from "typescript-retry-decorator";
 
@@ -67,7 +67,7 @@ const retryOptions = {
 export class ImportCSVPlugin implements Plugin {
   public readonly opts: ImportCSVPluginOptions;
   public readonly graphqlEndpoint: ImportCSVPluginOptions["graphqlEndpoint"];
-  public readonly graphqlClient: GraphQLClient;
+  public readonly graphqlClient: SplitgraphGraphQLClient;
   public readonly transformRequestHeaders: Required<ImportCSVPluginOptions>["transformRequestHeaders"];
 
   constructor(opts: ImportCSVPluginOptions) {
@@ -79,7 +79,7 @@ export class ImportCSVPlugin implements Plugin {
     this.graphqlClient = new SplitgraphGraphQLClient({
       graphqlEndpoint: this.graphqlEndpoint,
       transformRequestHeaders: this.transformRequestHeaders,
-    }).graphqlClient;
+    });
   }
 
   // TODO: improve it (e.g. allow either mutation or copy), and/or generalize it
@@ -107,34 +107,11 @@ export class ImportCSVPlugin implements Plugin {
     });
   }
 
-  private async sendGraphql<T = any, V = Variables>(
-    query: string,
-    variables?: V
-  ) {
-    const { response, error, info } = await this.graphqlClient
-      .rawRequest<{
-        upload: string;
-        download: string;
-      }>(query, variables)
-      .then(({ data, headers, status }) => ({
-        response: data as unknown as T,
-        error: null,
-        info: { headers, status },
-      }))
-      .catch((error) => ({ error: { ...error }, response: null, info: null }));
-
-    return {
-      response,
-      error,
-      info,
-    };
-  }
-
   private async startLoad(
     sourceOptions: ImportCSVFromURLOptions,
     destOptions: ImportCSVDestOptions
   ) {
-    return this.sendGraphql<
+    return this.graphqlClient.send<
       {
         startExternalRepositoryLoad: {
           taskId: string;
@@ -207,7 +184,7 @@ export class ImportCSVPlugin implements Plugin {
   }
 
   private async fetchPresignedURL() {
-    const { response, error, info } = await this.sendGraphql<{
+    const { response, error, info } = await this.graphqlClient.send<{
       csvUploadDownloadUrls: {
         upload: string;
         download: string;
@@ -233,7 +210,7 @@ export class ImportCSVPlugin implements Plugin {
       repository,
     }: Pick<ImportCSVDestOptions, "namespace" | "repository">
   ) {
-    const { response, error, info } = await this.sendGraphql<
+    const { response, error, info } = await this.graphqlClient.send<
       {
         jobLogs: {
           url: string;
@@ -287,7 +264,7 @@ export class ImportCSVPlugin implements Plugin {
       repository,
     }: Pick<ImportCSVDestOptions, "namespace" | "repository">
   ) {
-    const { response, error, info } = await this.sendGraphql<
+    const { response, error, info } = await this.graphqlClient.send<
       {
         repositoryIngestionJobStatus: {
           nodes: {
