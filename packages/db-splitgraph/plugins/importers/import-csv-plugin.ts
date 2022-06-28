@@ -416,9 +416,6 @@ export class ImportCSVPlugin implements Plugin {
     info.presignedDownloadURL = presignedDownloadURL;
     info.presignedUploadURL = presignedUploadURL;
 
-    console.log("info.presignedDownloadURL:", info.presignedDownloadURL);
-    console.log("info.presignedUploadURL:", info.presignedUploadURL);
-
     if (uploadCSVError || !uploadCSVResponse) {
       return { response: uploadCSVResponse, error: uploadCSVError, info };
     }

@@ -118,6 +118,10 @@ class DbSplitgraph extends BaseDb<Partial<SplitgraphImportPluginMap>> {
     }
 
     this.setAuthenticatedCredential({ anonymous: false, token: accessToken });
+
+    return {
+      token: accessToken,
+    };
   }
 
   async importData<PluginName extends keyof SplitgraphImportPluginMap>(

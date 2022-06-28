@@ -40,6 +40,12 @@ const createDb = () => {
   });
 };
 
+const fetchToken = async (db: ReturnType<typeof createDb>) => {
+  const { username } = claimsFromJWT((await db.fetchAccessToken())?.token);
+
+  return { username };
+};
+
 // @ts-ignore-warning
 const createRealDb = () => {
   const credential = {
@@ -79,8 +85,6 @@ describe("importData for ImportCSVPlugin", () => {
   setupMswServerTestHooks();
   setupMemo();
 
-  const namespace = "miles";
-
   beforeEach((testCtx) => {
     const { mswServer, useKeyedMemo } = testCtx;
 
@@ -89,7 +93,10 @@ describe("importData for ImportCSVPlugin", () => {
     );
 
     /** map of apiKey:apiSecret -> token */
-    const accessTokenMemo = useKeyedMemo!<string, string>("tokens");
+    const accessTokenMemo = useKeyedMemo!<
+      string,
+      { apiKey: string; apiSecret: string; username: string; token: string }
+    >("tokens");
     /** map of taskId -> taskId (just identity right now) */
     const ingestionTaskIdMemo = useKeyedMemo!<string, string>("tasks");
 
@@ -154,13 +161,21 @@ describe("importData for ImportCSVPlugin", () => {
 
           const tokenKey = `${apiKey}:${apiSecret}`;
 
+          const fakeUsername = faker.internet.userName();
+          const fakeToken = makeFakeJwt({ claims: { username: fakeUsername } });
+
           if (!accessTokenMemo.has(tokenKey)) {
-            accessTokenMemo.set(tokenKey, makeFakeJwt());
+            accessTokenMemo.set(tokenKey, {
+              token: fakeToken,
+              apiKey,
+              apiSecret,
+              username: fakeUsername,
+            });
           }
 
           return res(
             context.json({
-              access_token: accessTokenMemo.get(tokenKey),
+              access_token: fakeToken,
               success: true,
             })
           );
@@ -172,9 +187,7 @@ describe("importData for ImportCSVPlugin", () => {
           ?.split("Bearer ")[1];
 
         const matchingToken = Array.from(accessTokenMemo.entries()).find(
-          ([_apiKeySecret, accessToken]) => {
-            return accessToken === headerToken;
-          }
+          ([_apiKeySecret, { token }]) => token === headerToken
         );
 
         if (!headerToken || !matchingToken) {
@@ -184,7 +197,34 @@ describe("importData for ImportCSVPlugin", () => {
         // NOTE: Return void to continue to next resolver, "middleware style"
         return;
       }),
-      graphql.mutation("StartExternalRepositoryLoad", (_req, res, context) => {
+      graphql.mutation<
+        {
+          startExternalRepositoryLoad: {
+            taskId: string;
+          };
+        },
+        {
+          // NOTE: Incomplete, only including variables used in body of handler
+          namespace: string;
+        }
+      >("StartExternalRepositoryLoad", (req, res, context) => {
+        let invalidUsername = namespaceNotUsername(req, res, context);
+        if (invalidUsername) {
+          return invalidUsername;
+        }
+
+        const token = req.headers.get("authorization")?.split("Bearer ")[1];
+        const { username } = claimsFromJWT(token);
+
+        if (username !== req.variables.namespace) {
+          return res(
+            compose(
+              context.status(401),
+              context.errors([{ message: "username does not equal namespace" }])
+            )
+          );
+        }
+
         const taskId = faker.datatype.uuid();
         ingestionTaskIdMemo.set(taskId, taskId);
 
@@ -196,30 +236,35 @@ describe("importData for ImportCSVPlugin", () => {
           })
         );
       }),
-      graphql.query<{ jobLogs: { url: string } }, { taskId: string }>(
-        "JobLogsByTaskId",
-        (req, res, context) => {
-          if (!ingestionTaskIdMemo.has(req.variables.taskId)) {
-            return res(
-              context.errors([
-                {
-                  message: "taskId not found",
-                },
-              ])
-            );
-          }
+      graphql.query<
+        { jobLogs: { url: string } },
+        { taskId: string; namespace: string }
+      >("JobLogsByTaskId", (req, res, context) => {
+        let invalidUsername = namespaceNotUsername(req, res, context);
+        if (invalidUsername) {
+          return invalidUsername;
+        }
 
+        if (!ingestionTaskIdMemo.has(req.variables.taskId)) {
           return res(
-            context.data({
-              jobLogs: {
-                url:
-                  "https://data.splitgraph.com:9000/fake-logs-for-task?taskId=" +
-                  req.variables.taskId,
+            context.errors([
+              {
+                message: "taskId not found",
               },
-            })
+            ])
           );
         }
-      ),
+
+        return res(
+          context.data({
+            jobLogs: {
+              url:
+                "https://data.splitgraph.com:9000/fake-logs-for-task?taskId=" +
+                req.variables.taskId,
+            },
+          })
+        );
+      }),
       rest.get(
         "https://data.splitgraph.com:9000/fake-logs-for-task",
         (req, res, context) => {
@@ -248,6 +293,10 @@ describe("importData for ImportCSVPlugin", () => {
           taskId: string;
         }
       >("RepositoryIngestionJobStatus", (req, res, context) => {
+        let invalidUsername = namespaceNotUsername(req, res, context);
+        if (invalidUsername) {
+          return invalidUsername;
+        }
         return res(
           context.data({
             repositoryIngestionJobStatus: {
@@ -267,11 +316,12 @@ describe("importData for ImportCSVPlugin", () => {
 
   it("transforms headers to add auth credential", async () => {
     const db = createDb();
+
     // NOTE: not fetching access token here, just want to check response headers
     const { info } = await db.importData(
       "csv",
       { data: Buffer.from("empty_csv") },
-      { tableName: "irrelevant", namespace, repository: "dunno" }
+      { tableName: "irrelevant", namespace: "no matter", repository: "dunno" }
     );
 
     expect({
@@ -299,7 +349,7 @@ describe("importData for ImportCSVPlugin", () => {
     const { info: oldCredInfo } = await db.importData(
       "csv",
       { data: Buffer.from("empty_csv") },
-      { tableName: "irrelevant", namespace, repository: "dunno" }
+      { tableName: "irrelevant", namespace: "no matter", repository: "dunno" }
     );
 
     expect(oldCredInfo?.presigned?.headers.get("test-echo-x-api-key")).toEqual(
@@ -319,7 +369,7 @@ describe("importData for ImportCSVPlugin", () => {
     const { info } = await db.importData(
       "csv",
       { data: Buffer.from("empty_csv") },
-      { tableName: "irrelevant", namespace, repository: "dunno" }
+      { tableName: "irrelevant", namespace: "no matter", repository: "dunno" }
     );
     expect(info?.presigned?.headers.get("test-echo-x-api-key")).toEqual("jjj");
     expect(info?.presigned?.headers.get("test-echo-x-api-secret")).toEqual(
@@ -333,7 +383,7 @@ describe("importData for ImportCSVPlugin", () => {
     const testMemo = useKeyedMemo!("uploadedFile");
 
     const db = createDb();
-    await db.fetchAccessToken();
+    const { username: namespace } = await fetchToken(db);
 
     const { response, error } = await db.importData(
       "csv",
@@ -362,7 +412,7 @@ describe("importData for ImportCSVPlugin", () => {
   }) => {
     const testMemo = useKeyedMemo!("uploadedFile");
     const db = createDb();
-    await db.fetchAccessToken();
+    const { username: namespace } = await fetchToken(db);
 
     const { info } = await db.importData(
       "csv",
@@ -386,9 +436,7 @@ describe("importData for ImportCSVPlugin", () => {
 
   it("uploads successfully", async () => {
     const db = createDb();
-    await db.fetchAccessToken();
-
-    const namespace = "miles";
+    const { username: namespace } = await fetchToken(db);
 
     const { response, info } = await db.importData(
       "csv",
@@ -403,8 +451,7 @@ describe("importData for ImportCSVPlugin", () => {
 
   it("can fetch jobLog.url for taskId matching jobStatus.taskId", async () => {
     const db = createDb();
-    await db.fetchAccessToken();
-    const namespace = "anything";
+    const { username: namespace } = await fetchToken(db);
 
     const { info } = await db.importData(
       "csv",
@@ -420,13 +467,32 @@ describe("importData for ImportCSVPlugin", () => {
     );
   });
 
+  it("cannot fetch jobLog.url using a different username", async () => {
+    const db = createDb();
+    await fetchToken(db);
+
+    const namespace = "something-unexpected";
+
+    const { error } = await db.importData(
+      "csv",
+      { data: Buffer.from(`name,candies\r\nBob,5`) },
+      { tableName: "doesntmatter", namespace, repository: "onomatopoeia" }
+    );
+
+    expect(error.response.errors).toMatchInlineSnapshot(`
+      [
+        {
+          "message": "username does not equal namespace",
+        },
+      ]
+    `);
+  });
+
   it("returns error with bad access token", async () => {
     const db = createDb();
-    await db.fetchAccessToken();
+    const { username: namespace } = await fetchToken(db);
 
     db.setAuthenticatedCredential({ token: "bad-token", anonymous: false });
-
-    const namespace = "miles";
 
     const { error } = await db.importData(
       "csv",
@@ -444,29 +510,85 @@ describe("importData for ImportCSVPlugin", () => {
   });
 });
 
-const toBase64 = (input: string) =>
-  Buffer.from(input, "binary").toString("base64");
+describe("makeFakeJwt and claimsFromJwt", () => {
+  it("produce agreeable output", () => {
+    const jwt = makeFakeJwt();
+    expect(claimsFromJWT(jwt)).toMatchInlineSnapshot(`
+      {
+        "grant": "access",
+        "username": "default-username",
+      }
+    `);
+  });
 
-const makeFakeJwt = () => {
+  it("allows overriding claims", () => {
+    const jwt = makeFakeJwt({
+      claims: { username: "foobar", fizzbuzz: "bazfoo" },
+    });
+    expect(claimsFromJWT(jwt)).toMatchInlineSnapshot(`
+      {
+        "fizzbuzz": "bazfoo",
+        "grant": "access",
+        "username": "foobar",
+      }
+    `);
+  });
+});
+
+const toBase64 = (input: string) =>
+  !!globalThis.Buffer
+    ? Buffer.from(input, "binary").toString("base64")
+    : btoa(input);
+
+export const fromBase64 = (input: string) =>
+  !!globalThis.Buffer ? Buffer.from(input, "base64").toString() : atob(input);
+
+const makeFakeJwt = (opts?: { claims?: Record<string, any> }) => {
+  const claims = {
+    grant: "access",
+    username: "default-username",
+    ...opts?.claims,
+  };
+
   return [
     {
       alg: "RS256",
       typ: "JWT",
     },
-    {
-      nbf: faker.date.recent(1),
-      email_verified: true,
-      email: faker.internet.email(),
-      iat: 1656361766,
-      exp: 1656365366,
-      user_id: "126f8ef3-db1f-4e09-8bcb-3caa9294293e",
-      is_admin: true,
-      grant: "access",
-      username: "miles",
-    },
+    claims,
   ]
     .map((o) => JSON.stringify(o))
     .concat("fakeSignature")
     .map(toBase64)
     .join(".");
+};
+
+const claimsFromJWT = (jwt?: string) => {
+  if (!jwt) {
+    return {};
+  }
+
+  const [_header, claims, _signature] = jwt
+    .split(".")
+    .map(fromBase64)
+    .slice(0, -1) // Signature is not parseable JSON
+    .map((o) => JSON.parse(o));
+
+  return claims;
+};
+
+const namespaceNotUsername: Parameters<
+  typeof graphql.operation<any, { namespace: string }>
+>[0] = (req, res, context) => {
+  const token = req.headers.get("authorization")?.split("Bearer ")[1];
+  const { username } = claimsFromJWT(token);
+
+  if (username !== req.variables.namespace) {
+    return res(
+      compose(
+        context.status(401),
+        context.errors([{ message: "username does not equal namespace" }])
+      )
+    );
+  }
 };
