@@ -1,6 +1,18 @@
 hooks:
   afterOneFileWrite:
     - $(yarn workspace @madatdata/root bin prettier) --write
+config:
+  # https://www.graphql-code-generator.com/plugins/typescript-operations
+  strictScalars: true
+  scalars:
+    Datetime: "string"
+    DateTime: "string"
+    JSON: "{ [key: string]: any }"
+    BigInt: "string"
+    Cursor: "string"
+    UUID: "string"
+    UnstructuredObject: "any"
+
 generates:
   ./gql-client/generated/unified-schema.ts:
     schema:
@@ -14,6 +26,10 @@ generates:
       - "./gql-client/generated/unified-schema.graphql"
     config:
       useTypeImports: true
+      # Since this is just queries, and not the schema itself, it's reasonable(?)
+      # to expect that the fields in the query will all be available
+      # (note: more specific overrides available if avoidOptionals is object)
+      avoidOptionals: true
     presetConfig:
       baseTypesPath: "gql-client/generated/unified-schema"
       extension: .generated.ts
