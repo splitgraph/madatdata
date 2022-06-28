@@ -14,6 +14,8 @@ import type { Csv as CsvCredentialsSchema } from "./generated/csv/CredentialsSch
 import type {
   RepositoryIngestionJobStatusQuery,
   RepositoryIngestionJobStatusQueryVariables,
+  StartExternalRepositoryLoadMutation,
+  StartExternalRepositoryLoadMutationVariables,
 } from "./import-csv-plugin.generated";
 
 interface ImportCSVDestOptions extends SplitgraphDestOptions {
@@ -22,6 +24,8 @@ interface ImportCSVDestOptions extends SplitgraphDestOptions {
   // TODO: support > 1 table
   tableParams?: CsvTableParamsSchema;
   credentials?: CsvCredentialsSchema;
+  /* default private */
+  initialPermissions?: StartExternalRepositoryLoadMutationVariables["initialPermissions"];
 }
 
 interface ImportCSVPluginOptions {
@@ -117,34 +121,14 @@ export class ImportCSVPlugin implements Plugin {
     destOptions: ImportCSVDestOptions
   ) {
     return this.graphqlClient.send<
-      {
-        startExternalRepositoryLoad: {
-          taskId: string;
-        };
-      },
-      // TODO: This is painful. Add some graphql codegen with the remote schema.
-      {
-        namespace: string;
-        repository: string;
-        tables?: {
-          name: string;
-          options: JSONString;
-          schema?: { name: string; pgType: string }[];
-        }[];
-        initialPermissions?: {
-          visibility: "PRIVATE" | "PUBLIC";
-        };
-        pluginName?: "csv";
-        params?: JSONString;
-        credentialId?: never;
-        sync?: false;
-      }
+      StartExternalRepositoryLoadMutation,
+      StartExternalRepositoryLoadMutationVariables
     >(
       gql`
         mutation StartExternalRepositoryLoad(
           $namespace: String!
           $repository: String!
-          $tables: [ExternalTableInput!]
+          $tables: [ExternalTableInput!]!
           $initialPermissions: InitialPermissions
           $pluginName: String
           $params: JSON
@@ -166,6 +150,10 @@ export class ImportCSVPlugin implements Plugin {
         }
       `,
       {
+        initialPermissions: destOptions.initialPermissions,
+        // NOTE: Optional params are required for typescript, ignored when sent
+        credentialId: undefined,
+        sync: undefined,
         namespace: destOptions.namespace,
         repository: destOptions.repository,
         params: JSON.stringify({
@@ -567,8 +555,6 @@ const IdentityFunc = <T>(x: T) => x;
 // which has AsyncReturnValue<T> to replace Unpromise<ReturnType<T>>
 type Unpromise<T extends Promise<any>> = T extends Promise<infer U> ? U : never;
 
-type JSONString = string;
-
 enum TaskStatus {
   // Standard Celery statuses
   Pending = "PENDING",
@@ -611,3 +597,6 @@ const taskUnresolved = (ts: TaskStatus) => standbyStatuses.includes(ts);
 
 // const taskHasKnownButUnexpectedStatus = (ts: TaskStatus) =>
 //   unexpectedStatuses.includes(ts);
+
+// type SomeOptional<T, OptionalKeys extends keyof T> = Omit<T, OptionalKeys> &
+//   Pick<Partial<T>, OptionalKeys>;

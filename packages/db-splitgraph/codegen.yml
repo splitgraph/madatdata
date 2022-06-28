@@ -2,17 +2,29 @@ hooks:
   afterOneFileWrite:
     - $(yarn workspace @madatdata/root bin prettier) --write
 config:
-  # https://www.graphql-code-generator.com/plugins/typescript-operations
+  # Refer to plugins `typescript` and `typescript-operations` for most config
+  # Note that docs might be slightly out of date from real options
+  # docs: https://www.graphql-code-generator.com/plugins/typescript
+  # docs: https://www.graphql-code-generator.com/plugins/typescript-operations
+  # code: https://github.com/dotansimha/graphql-code-generator
+  #       (See file `base-documents-visitor.ts` for base config)
   strictScalars: true
   scalars:
     Datetime: "string"
     DateTime: "string"
-    JSON: "{ [key: string]: any }"
+    # FIXME: Splitgraph API has some inconsistent behavior
+    # On upload, we want JSON type to be a string
+    # On parsing query, we want it to be an object?
+    JSON: "string | { [key: string]: any }"
     BigInt: "string"
     Cursor: "string"
     UUID: "string"
     UnstructuredObject: "any"
-
+  # Allow undefined in optional input variables, since some Splitgraph
+  # services treat "null" as a value, including for some optional arugments
+  inputMaybeValue: T | null | undefined
+  # EXPERIMENTAL: Use interfaces, not types (faster typechecking due to TS cache)
+  declarationKind: "interface"
 generates:
   ./gql-client/generated/unified-schema.ts:
     schema:
@@ -20,16 +32,25 @@ generates:
     plugins:
       - typescript
       - typescript-operations
+  # NOTE: single dot key is intentional, otherwise imports will be mapped wrong
   .:
     preset: near-operation-file
     schema:
       - "./gql-client/generated/unified-schema.graphql"
     config:
       useTypeImports: true
-      # Since this is just queries, and not the schema itself, it's reasonable(?)
-      # to expect that the fields in the query will all be available
-      # (note: more specific overrides available if avoidOptionals is object)
-      avoidOptionals: true
+      # NOTE: This config only applies to developer-defined operations, and not
+      # the entire schema, so we can make more assumptions, so long as they only
+      # affect this codebase, and won't override limits defined in the schema.
+      # We can tweak these values if they are too strict (or not strict enough)
+      avoidOptionals:
+        object: true
+        field: true
+        defaultValue: true
+        # We want to _allow_ optionals in input arguments
+        inputValue: false
+      onlyOperationTypes: true
+      preResolveTypes: true
     presetConfig:
       baseTypesPath: "gql-client/generated/unified-schema"
       extension: .generated.ts
