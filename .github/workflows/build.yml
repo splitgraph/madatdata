@@ -14,6 +14,7 @@ jobs:
           cache: "yarn"
       - run: yarn install --immutable
       - run: yarn format.check
+      - run: yarn codegen
       - run: yarn typecheck
       - run: yarn build
       # NOTE: misleading. test doesn't actually depend on build.
