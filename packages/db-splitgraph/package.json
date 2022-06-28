@@ -5,33 +5,38 @@
   "main": "index.ts",
   "types": "./build/es2020/index.d.ts",
   "scripts": {
-    "codegen": "yarn run clean-generated-plugins ; yarn run generate-plugins",
+    "codegen": "yarn codegen-gql && yarn codegen-plugins",
+    "clean": "yarn clean-gql ; yarn clean-generated-plugins",
+    "clean-codegen": "yarn clean ; yarn codegen",
+    "codegen-gql": "yarn codegen-gql-schema && yarn codegen-gql-operations",
+    "codegen-gql-schema": "yarn graphql-codegen --config codegen.schema.yml",
+    "codegen-gql-operations": "yarn graphql-codegen --config codegen.yml",
+    "clean-gql": "yarn rimraf gql-client/generated/*",
+    "codegen-plugins": "yarn generate-plugins",
     "clean-generated-plugins": "yarn rimraf plugins/importers/generated/*",
-    "generate-plugins": "yarn run esno ./plugins/generate-plugins.script.ts",
-    "generate-plugins-debug": "yarn run esno --inspect-brk=127.0.0.1:9229 ./plugins/generate-plugins.script.ts"
+    "generate-plugins": "yarn esno ./plugins/generate-plugins.script.ts",
+    "generate-plugins-debug": "yarn esno --inspect-brk=127.0.0.1:9229 ./plugins/generate-plugins.script.ts"
   },
   "dependencies": {
     "@madatdata/base-client": "workspace:*",
     "@madatdata/base-db": "workspace:*",
     "graphql": "16.5.0",
     "graphql-request": "4.3.0",
-    "json-schema-to-typescript": "10.1.5",
     "typescript-retry-decorator": "2.0.5"
   },
   "devDependencies": {
     "@faker-js/faker": "7.3.0",
+    "@graphql-codegen/cli": "2.6.2",
+    "@graphql-codegen/import-types-preset": "2.1.20",
+    "@graphql-codegen/schema-ast": "2.4.1",
+    "@graphql-codegen/typescript": "2.5.1",
+    "@graphql-codegen/typescript-operations": "2.4.2",
     "@madatdata/test-helpers": "workspace:*",
     "@types/node": "16.11.38",
+    "cross-fetch": "3.1.5",
     "esno": "0.16.3",
+    "json-schema-to-typescript": "10.1.5",
     "rimraf": "3.0.2"
-  },
-  "peerDependencies": {
-    "cross-fetch": "*"
-  },
-  "peerDependenciesMeta": {
-    "cross-fetch": {
-      "optional": true
-    }
   },
   "publishConfig": {
     "access": "public",

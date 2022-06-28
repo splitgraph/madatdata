@@ -1,0 +1,6 @@
+generates:
+  ./gql-client/generated/unified-schema.graphql:
+    schema:
+      - "https://api.splitgraph.com/gql/cloud/unified/graphql"
+    plugins:
+      - schema-ast

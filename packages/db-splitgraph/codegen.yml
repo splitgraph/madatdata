@@ -1,0 +1,19 @@
+generates:
+  ./gql-client/generated/unified-schema.ts:
+    schema:
+      - "./gql-client/generated/unified-schema.graphql"
+    plugins:
+      - typescript
+      - typescript-operations
+  ./gql-client/generated/operations.ts:
+    preset: import-types
+    schema:
+      - "./gql-client/generated/unified-schema.graphql"
+    config:
+      useTypeImports: true
+    presetConfig:
+      typesPath: ./unified-schema
+    plugins:
+      - typescript-operations
+    documents:
+      - "plugins/importers/*.ts"
