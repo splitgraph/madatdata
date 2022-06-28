@@ -11,6 +11,11 @@ import type { Csv as CsvTableParamsSchema } from "./generated/csv/TableParamsSch
 import type { Csv as CsvParamsSchema } from "./generated/csv/ParamsSchema";
 import type { Csv as CsvCredentialsSchema } from "./generated/csv/CredentialsSchema";
 
+import type {
+  RepositoryIngestionJobStatusQuery,
+  RepositoryIngestionJobStatusQueryVariables,
+} from "./import-csv-plugin.generated";
+
 interface ImportCSVDestOptions extends SplitgraphDestOptions {
   params?: CsvParamsSchema;
   tableName: SplitgraphDestOptions["tableName"];
@@ -135,30 +140,31 @@ export class ImportCSVPlugin implements Plugin {
         sync?: false;
       }
     >(
-      `
-      mutation StartExternalRepositoryLoad(
-        $namespace: String!
-        $repository: String!
-        $tables: [ExternalTableInput!]
-        $initialPermissions: InitialPermissions
-        $pluginName: String
-        $params: JSON
-        $credentialId: String
-        $sync: Boolean
-      ) {
-        startExternalRepositoryLoad(
-          namespace: $namespace
-          repository: $repository
-          pluginName: $pluginName
-          params: $params
-          initialPermissions: $initialPermissions
-          tables: $tables
-          credentialId: $credentialId
-          sync: $sync
+      gql`
+        mutation StartExternalRepositoryLoad(
+          $namespace: String!
+          $repository: String!
+          $tables: [ExternalTableInput!]
+          $initialPermissions: InitialPermissions
+          $pluginName: String
+          $params: JSON
+          $credentialId: String
+          $sync: Boolean
         ) {
-          taskId
+          startExternalRepositoryLoad(
+            namespace: $namespace
+            repository: $repository
+            pluginName: $pluginName
+            params: $params
+            initialPermissions: $initialPermissions
+            tables: $tables
+            credentialId: $credentialId
+            sync: $sync
+          ) {
+            taskId
+          }
         }
-      }`,
+      `,
       {
         namespace: destOptions.namespace,
         repository: destOptions.repository,
@@ -265,22 +271,8 @@ export class ImportCSVPlugin implements Plugin {
     }: Pick<ImportCSVDestOptions, "namespace" | "repository">
   ) {
     const { response, error, info } = await this.graphqlClient.send<
-      {
-        repositoryIngestionJobStatus: {
-          nodes: {
-            taskId: string;
-            started: string;
-            finished: string;
-            isManual: boolean;
-            status: TaskStatus;
-          }[];
-        };
-      },
-      {
-        namespace: string;
-        repository: string;
-        taskId: string;
-      }
+      RepositoryIngestionJobStatusQuery,
+      RepositoryIngestionJobStatusQueryVariables
     >(
       // NOTE: Splitgraph GQL API has no resolver for ingestion job by taskId,
       // so we fetch last 10 jobLogs to safely find the one matching taskId,
@@ -308,7 +300,6 @@ export class ImportCSVPlugin implements Plugin {
       {
         namespace,
         repository,
-        taskId,
       }
     );
 
@@ -316,7 +307,8 @@ export class ImportCSVPlugin implements Plugin {
       return { response: null, error, info };
     }
 
-    const matchingJob = response.repositoryIngestionJobStatus.nodes.find(
+    // FIXME(codegen): This ? shouldn't be necessary
+    const matchingJob = response.repositoryIngestionJobStatus?.nodes.find(
       (node) => node.taskId === taskId
     );
 
@@ -453,7 +445,8 @@ export class ImportCSVPlugin implements Plugin {
       };
     } else if (!jobStatusResponse) {
       throw { type: "retry" };
-    } else if (taskUnresolved(jobStatusResponse.status)) {
+      // FIXME(codegen): this shouldn't be nullable
+    } else if (taskUnresolved(jobStatusResponse.status!)) {
       throw { type: "retry" };
     }
 

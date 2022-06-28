@@ -118,8 +118,10 @@ describe("importData for ImportCSVPlugin", () => {
       string,
       { apiKey: string; apiSecret: string; username: string; token: string }
     >("tokens");
-    /** map of taskId -> taskId (just identity right now) */
-    const ingestionTaskIdMemo = useKeyedMemo!<string, string>("tasks");
+    /** map of taskId -> { namespace } to know which to return in status mock */
+    const ingestionTaskIdMemo = useKeyedMemo!<string, { namespace: string }>(
+      "tasks"
+    );
 
     mswServer?.use(
       graphql.query("CSVURLs", (req, res, context) => {
@@ -247,7 +249,7 @@ describe("importData for ImportCSVPlugin", () => {
         }
 
         const taskId = faker.datatype.uuid();
-        ingestionTaskIdMemo.set(taskId, taskId);
+        ingestionTaskIdMemo.set(taskId, { namespace: req.variables.namespace });
 
         return res(
           context.data({
@@ -318,16 +320,22 @@ describe("importData for ImportCSVPlugin", () => {
         if (invalidUsername) {
           return invalidUsername;
         }
+
         return res(
           context.data({
             repositoryIngestionJobStatus: {
-              nodes: [req.variables.taskId, "fake-prev-id"].map((taskId) => ({
-                taskId,
-                started: "blah",
-                finished: "finito",
-                isManual: true,
-                status: "SUCCESS",
-              })),
+              nodes: Array.from(ingestionTaskIdMemo.entries())
+                .filter(
+                  ([_taskId, { namespace }]) =>
+                    namespace === req.variables.namespace
+                )
+                .map(([taskId]) => ({
+                  taskId,
+                  started: "blah",
+                  finished: "finito",
+                  isManual: true,
+                  status: "SUCCESS",
+                })),
             },
           })
         );
