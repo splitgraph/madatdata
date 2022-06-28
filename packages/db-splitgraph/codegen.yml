@@ -1,3 +1,6 @@
+hooks:
+  afterOneFileWrite:
+    - $(yarn workspace @madatdata/root bin prettier) --write
 generates:
   ./gql-client/generated/unified-schema.ts:
     schema:
@@ -5,15 +8,20 @@ generates:
     plugins:
       - typescript
       - typescript-operations
-  ./gql-client/generated/operations.ts:
-    preset: import-types
+  .:
+    preset: near-operation-file
     schema:
       - "./gql-client/generated/unified-schema.graphql"
     config:
       useTypeImports: true
     presetConfig:
-      typesPath: ./unified-schema
+      baseTypesPath: "gql-client/generated/unified-schema"
+      extension: .generated.ts
+      importTypesNamespace: Unified
     plugins:
       - typescript-operations
     documents:
-      - "plugins/importers/*.ts"
+      - "**/**/*.ts"
+      - "!**/**/*.generated.ts"
+      - "!plugins/importers/generated/**/*.ts"
+      - "!gql-client/generated/*"

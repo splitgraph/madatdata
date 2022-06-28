@@ -803,17 +803,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@graphql-codegen/import-types-preset@npm:2.1.20":
-  version: 2.1.20
-  resolution: "@graphql-codegen/import-types-preset@npm:2.1.20"
+"@graphql-codegen/near-operation-file-preset@npm:2.2.14":
+  version: 2.2.14
+  resolution: "@graphql-codegen/near-operation-file-preset@npm:2.2.14"
   dependencies:
     "@graphql-codegen/add": ^3.1.1
     "@graphql-codegen/plugin-helpers": ^2.4.0
     "@graphql-codegen/visitor-plugin-common": 2.9.1
+    "@graphql-tools/utils": ^8.5.2
+    parse-filepath: ^1.0.2
     tslib: ~2.4.0
   peerDependencies:
     graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
-  checksum: ecb2731deaf2892b628aca2ab1705d8417eac199a9c41a388388ef558b896682e6c4dbe2c55883346480dcfff03f2648d8d5f03fd106e0646d155796ed0189f8
+  checksum: 27e57821fa6e81d4d434a71a84e76428df4041c44e82a4bf1c9ded62bb38e8a2b01118008df65faffbd63211a7ad8aacfbd791c0be7c6b01e5de2f3c2d3f0dd0
   languageName: node
   linkType: hard
 
@@ -1322,7 +1324,7 @@ __metadata:
   dependencies:
     "@faker-js/faker": 7.3.0
     "@graphql-codegen/cli": 2.6.2
-    "@graphql-codegen/import-types-preset": 2.1.20
+    "@graphql-codegen/near-operation-file-preset": 2.2.14
     "@graphql-codegen/schema-ast": 2.4.1
     "@graphql-codegen/typescript": 2.5.1
     "@graphql-codegen/typescript-operations": 2.4.2

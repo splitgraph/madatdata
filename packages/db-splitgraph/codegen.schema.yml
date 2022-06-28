@@ -1,3 +1,6 @@
+hooks:
+  afterOneFileWrite:
+    - $(yarn workspace @madatdata/root bin prettier) --write
 generates:
   ./gql-client/generated/unified-schema.graphql:
     schema:

@@ -2,3 +2,4 @@ plugins/importers/generated/*
 !plugins/importers/generated/.gitkeep
 gql-client/generated/*
 !gql-client/generated/.gitkeep
+**/*.generated.ts
