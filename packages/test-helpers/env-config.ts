@@ -16,10 +16,11 @@ const shouldIncludeIntegrationTests = () => {
 };
 
 /**
- * Inspect environment to determine for configuration indicating whether to run
- * integration tests against the real production DDN at Splitgraph.com.
+ * Inspect environment for configuration indicating whether to run integration
+ * tests against the real production DDN at Splitgraph.com.
  *
- * Specifically, return `true` if all of the following variables are non-empty:
+ * Specifically, return `true` (to _skip_ integration tests) in all cases,
+ * except return `false` when all of the following variables are non-empty:
  *
  *  * `VITE_TEST_DDN_API_KEY`
  *  * `VITE_TEST_DDN_API_SECRET`
@@ -41,12 +42,11 @@ const shouldIncludeIntegrationTests = () => {
  * });
  * ```
  *
- *
  * For integration testing in development, one typical workflow is to set these
  * variables in a file called `.env.integration.local`, to match the
  * `.gitignore` pattern of `.env*.local` for files with secrets or local config.
  *
- * Then, run Vitest in the "mode" matching the `*`, e.g. to match `integration`:
+ * Then, run Vitest in the "mode" matching the `*`, e.g. with `integration`:
  *
  * ```bash
  * yarn test --mode integration
@@ -55,7 +55,6 @@ const shouldIncludeIntegrationTests = () => {
  * This will source the environment variables in `.env.integration.local` (and
  * any other `.env.integration.*` files defined according to `dotenv` loading
  * order), thus running Vitest in integration mode.
- *
  *
  * @returns true if environment does not expect integration tests to run
  */

@@ -542,7 +542,7 @@ describe.skipIf(shouldSkipIntegrationTests())("real DDN", () => {
     expect(info?.jobStatus.status).toEqual("SUCCESS");
 
     expect(info?.jobLog?.url.includes(info.jobStatus.taskId)).toBe(true);
-  }, 10_000);
+  }, 20_000);
 });
 describe("makeFakeJwt and claimsFromJwt", () => {
   it("produce agreeable output", () => {
