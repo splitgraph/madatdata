@@ -267,8 +267,8 @@ export class ImportCSVPlugin implements Plugin {
       // although it should almost always be the first (most recent) job.
       gql`
         query RepositoryIngestionJobStatus(
-          $namespace: String
-          $repository: String
+          $namespace: String!
+          $repository: String!
         ) {
           repositoryIngestionJobStatus(
             first: 10
