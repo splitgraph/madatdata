@@ -188,10 +188,17 @@ describe.skipIf(shouldSkipIntegrationTests())("http integration tests", () => {
       credential: null,
     });
 
-    const result = await client.execute<{ "?column?": number }>(
-      "SELECT 1, 2, 3;",
-      { rowMode: "array" }
-    );
+    const result = await client.execute<
+      [once: number, twice: number, thrice: number]
+    >("SELECT 1, 2, 3;", { rowMode: "array" });
+
+    expect(
+      result.response?.rows.map(([first, second, third]) => [
+        first,
+        second,
+        third,
+      ])
+    ).toBeTruthy();
 
     expect(result.response?.rows).toMatchInlineSnapshot(`
       [
@@ -260,3 +267,51 @@ const snapshotResult = (result: any) => {
   delete result.response?.["executionTimeHighRes"];
   return result;
 };
+
+// NOTE: Copied (non-DRY) from postgres test (maybe it should be in base then)
+// NOTE: .skip() because this code is intended for typechecking, not running
+describe.skip("type checking produces expected errors in", async () => {
+  it("client-http.execute function overloading", async () => {
+    const client = makeClient({
+      credential: null,
+    });
+
+    const badObjectType = await client.execute<{ "?column?": number }>(
+      "select 1, 2, 3, 4, 5;",
+      // @ts-expect-error rowMode "array" should error when generic param is not array
+      { rowMode: "array" }
+    );
+
+    const badArrayType = await client.execute<[number, number]>("select 1,2", {
+      // @ts-expect-error rowMode "object" should error when generic param is not object
+      rowMode: "object",
+    });
+
+    // @ts-expect-error array generic param should error when no opts (default rowMode: object)
+    const badArrayTypeNoOptions = await client.execute<[number, number]>(
+      "select 1,2"
+    );
+
+    const goodObjectType = await client.execute<{ apple: number }>(
+      "select 1 as apple;"
+    );
+    goodObjectType.response?.rows.map(({ apple }) => ({ apple }));
+
+    goodObjectType.response?.rows.map(
+      ({
+        apple,
+        // @ts-expect-error Key does not exist on generic param
+        pear,
+      }) => ({ apple })
+    );
+
+    // NOTE: We rely on ts-expect-error to check that types work as expected,
+    // since if there is *no* error, the pragma itself will produce an error. But
+    // a ts-expect-error above an unused variable always "catches" that error,
+    // even if it's not the specific error we were hoping for, so we need to
+    // avoid an unused variable where we check for a different expected error
+
+    // To avoid this, ensure we "use" all variables (none of this code is run)
+    return { badObjectType, badArrayType, badArrayTypeNoOptions };
+  });
+});

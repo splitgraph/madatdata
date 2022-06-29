@@ -1,8 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { makeClient } from "./client-postgres";
 
-// TODO: We're using the real DDN atm, which requires these env vars to exist,
-// and also we don't yet have any method for loading credentials
 const credential = {
   // @ts-expect-error https://stackoverflow.com/a/70711231
   apiKey: import.meta.env.VITE_TEST_DDN_API_KEY,
@@ -32,7 +30,7 @@ describe.skipIf(!hasCredential)("makeClient creates a pg client which", () => {
       {
         "error": null,
         "response": {
-          "rows": Result [
+          "rows": [
             {
               "?column?": 1,
             },
@@ -55,7 +53,7 @@ describe.skipIf(!hasCredential)("makeClient creates a pg client which", () => {
       {
         "error": null,
         "response": {
-          "rows": Result [
+          "rows": [
             {
               "array_2d_col": [
                 [
@@ -103,9 +101,9 @@ describe.skipIf(!hasCredential)("makeClient creates a pg client which", () => {
     `);
   });
 
-  // NOTE: This is an error in how Splitgraph serializes query results to JSON
-  // and needs a deeper fix. It's left here as a canary for when it is fixed.
-  it("can (but shouldn't) select, 1, 2, 3", async () => {
+  // TODO: Throw runtime error if no rowMode: array but result has dupe columns
+  // NOTE: This is avoidable with rowMode: array and typechecking
+  it("can select duplicate column names in object mode, but it's wrong", async () => {
     const client = makeClient({
       credential,
     });
@@ -120,7 +118,7 @@ describe.skipIf(!hasCredential)("makeClient creates a pg client which", () => {
       {
         "error": null,
         "response": {
-          "rows": Result [
+          "rows": [
             {
               "?column?": 4,
             },
@@ -131,24 +129,23 @@ describe.skipIf(!hasCredential)("makeClient creates a pg client which", () => {
     `);
   });
 
-  it("(TODO) can select, 1, 2, 3 in rowMode", async () => {
+  it("can select rows with duplicate column names in array mode", async () => {
     const client = makeClient({
       credential,
     });
 
-    const result = await client.execute<{ "?column?": number }>(
+    const result = await client.execute<[number, number, number, number]>(
       `
-      select 1 as one, 2 as two,3,4;
+      select 1 as one, 2 as two, 3, 4;
     `,
       { rowMode: "array" }
     );
 
-    // TODO: This is not yet implemented correctly
     expect(result).toMatchInlineSnapshot(`
       {
         "error": null,
         "response": {
-          "rows": Result [
+          "rows": [
             [
               1,
               2,
@@ -160,5 +157,81 @@ describe.skipIf(!hasCredential)("makeClient creates a pg client which", () => {
         },
       }
     `);
+
+    const r2 = await client.execute<[number, number, number]>(
+      `
+      select 1, 2, 3;
+    `,
+      { rowMode: "array" }
+    );
+
+    expect(r2.response?.rows[0][0]).toEqual(1);
+    expect(r2.response?.rows[0][1]).toEqual(2);
+    expect(r2.response?.rows[0][2]).toEqual(3);
+
+    expect(
+      // @ts-expect-error index 3 is out of bounds of provided 3-tuple
+      r2.response?.rows[0][3]
+    ).toBeUndefined();
+
+    expect(r2.response).toMatchInlineSnapshot(`
+      {
+        "rows": [
+          [
+            1,
+            2,
+            3,
+          ],
+        ],
+        "success": true,
+      }
+    `);
+  });
+});
+
+// NOTE: .skip() because this code is intended for typechecking, not running
+describe.skip("type checking produces expected errors in", async () => {
+  it("client-postgres.execute function overloading", async () => {
+    const client = makeClient({
+      credential,
+    });
+
+    const badObjectType = await client.execute<{ "?column?": number }>(
+      "select 1, 2, 3, 4, 5;",
+      // @ts-expect-error rowMode "array" should error when generic param is not array
+      { rowMode: "array" }
+    );
+
+    const badArrayType = await client.execute<[number, number]>("select 1,2", {
+      // @ts-expect-error rowMode "object" should error when generic param is not object
+      rowMode: "object",
+    });
+
+    // @ts-expect-error array generic param should error when no opts (default rowMode: object)
+    const badArrayTypeNoOptions = await client.execute<[number, number]>(
+      "select 1,2"
+    );
+
+    const goodObjectType = await client.execute<{ apple: number }>(
+      "select 1 as apple;"
+    );
+    goodObjectType.response?.rows.map(({ apple }) => ({ apple }));
+
+    goodObjectType.response?.rows.map(
+      ({
+        apple,
+        // @ts-expect-error Key does not exist on generic param
+        pear,
+      }) => ({ apple })
+    );
+
+    // NOTE: We rely on ts-expect-error to check that types work as expected,
+    // since if there is *no* error, the pragma itself will produce an error. But
+    // a ts-expect-error above an unused variable always "catches" that error,
+    // even if it's not the specific error we were hoping for, so we need to
+    // avoid an unused variable where we check for a different expected error
+
+    // To avoid this, ensure we "use" all variables (none of this code is run)
+    return { badObjectType, badArrayType, badArrayTypeNoOptions };
   });
 });

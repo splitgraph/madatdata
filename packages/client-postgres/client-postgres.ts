@@ -2,18 +2,16 @@ import {
   BaseClient,
   makeAuthPgParams,
   type QueryError,
-  type QueryResult,
   type ClientOptions,
   type CredentialOptions,
-  type BaseExecOptions,
-  type ValidRowShape,
+  // type UnknownRowShape,
+  type UnknownObjectShape,
+  type ExecutionResultWithArrayShapedRows,
+  type ExecutionResultWithObjectShapedRows,
+  type UnknownArrayShape,
 } from "@madatdata/base-client";
 
 import postgres from "postgres";
-
-interface ExecutePostgresOptions extends BaseExecOptions {
-  someOnlyPostgresOption?: "other";
-}
 
 class SplitgraphPostgresClient<
   InputCredentialOptions extends CredentialOptions
@@ -39,37 +37,65 @@ class SplitgraphPostgresClient<
     };
   }
 
-  async execute<
-    RowShape extends ValidRowShape
-    // QueryRowShape = QueryResult<RowShape>
-    // ArrayRowShape extends RowShape extends Array<unknown>
-    //   ? RowShape
-    //   : never,
-    // ObjectRowShape extends RowShape extends Record<PropertyKey, unknown>
-    //   ? RowShape
-    //   : never
-  >(query: string, executeOptions?: ExecutePostgresOptions) {
+  async execute<RowShape extends UnknownObjectShape>(
+    query: string
+  ): Promise<{
+    response: ExecutionResultWithObjectShapedRows<RowShape> | null;
+    error: QueryError | null;
+  }>;
+
+  async execute<RowShape extends UnknownArrayShape>(
+    query: string,
+    executeOptions: { rowMode: "array" }
+  ): Promise<{
+    response: ExecutionResultWithArrayShapedRows<RowShape> | null;
+    error: QueryError | null;
+  }>;
+
+  async execute<RowShape extends UnknownObjectShape>(
+    query: string,
+    executeOptions: { rowMode: "object" }
+  ): Promise<{
+    response: ExecutionResultWithObjectShapedRows<RowShape> | null;
+    error: QueryError | null;
+  }>;
+
+  async execute(
+    query: string,
+    executeOptions?: { rowMode?: "object" | "array" }
+  ) {
+    // Make a fake tagged template literal (TemplateStringsArray) for postgres
+    // (could use .unsafe(), but it doesn't support .values() as documented)
+    const wrappedQuery = Object.assign([query], {
+      raw: [query],
+    }) as TemplateStringsArray;
+
     try {
-      // Make a fake tagged template literal (TemplateStringsArray) for postgres
-      // (could use .unsafe(), but it doesn't support .values() as documented)
-      const wrappedQuery = Object.assign([query], {
-        raw: [query],
-      }) as TemplateStringsArray;
+      if (executeOptions && executeOptions.rowMode === "array") {
+        let arrayShapedRows = Array.from(
+          await this.connection(wrappedQuery).values()
+        ); /* as AsArrayShape<RowShape>[];*/
 
-      // NOTE: must call .values() _now_, not after instantiation, or else it
-      // will not add the necessary context during interpolation for later reads
-      const rows =
-        executeOptions?.rowMode === "array"
-          ? await this.connection<RowShape[]>(wrappedQuery).values()
-          : await this.connection<RowShape[]>(wrappedQuery);
+        return {
+          response: {
+            success: true,
+            rows: arrayShapedRows,
+          },
+          error: null,
+        };
+      } else {
+        let objectShapedRows = Array.from(
+          await this.connection(wrappedQuery)
+        ); /*as AsObjectShape<RowShape>[];*/
 
-      return {
-        response: {
-          success: true,
-          rows: executeOptions?.rowMode === "array" ? rows : rows,
-        } as QueryResult<RowShape>,
-        error: null,
-      };
+        return {
+          response: {
+            success: true,
+            rows: objectShapedRows,
+          },
+          error: null,
+        };
+      }
     } catch (err: any) {
       return {
         response: null,

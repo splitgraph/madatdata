@@ -2,15 +2,16 @@ import {
   BaseClient,
   makeAuthHeaders,
   type QueryError,
-  type QueryResult,
   type ClientOptions,
   type CredentialOptions,
-  type Response,
-  type ValidRowShape,
+  UnknownRowShape,
+  ExecutionResultWithObjectShapedRows,
+  ExecutionResultWithArrayShapedRows,
+  UnknownArrayShape,
+  UnknownObjectShape,
 } from "@madatdata/base-client";
 
-export interface WebBridgeResponse<RowShape extends ValidRowShape>
-  extends Response<RowShape> {
+export interface WebBridgeResponse<RowShape extends UnknownRowShape> {
   command: string;
   fields: {
     columnID: number;
@@ -31,12 +32,12 @@ export interface WebBridgeResponse<RowShape extends ValidRowShape>
   executionTimeHighRes?: string;
 }
 
-interface ExecuteOptions {
-  /** TODO:
-   * This mode is supported, but it's not reflected in the RowShape type yet.
-   */
-  rowMode?: "array";
-}
+// interface ExecuteOptions {
+//   /** TODO:
+//    * This mode is supported, but it's not reflected in the RowShape type yet.
+//    */
+//   rowMode?: "array";
+// }
 
 class SplitgraphHTTPClient<
   InputCredentialOptions extends CredentialOptions
@@ -58,10 +59,30 @@ class SplitgraphHTTPClient<
     };
   }
 
-  async execute<RowShape extends ValidRowShape>(
+  async execute<RowShape extends UnknownObjectShape>(
+    query: string
+  ): Promise<{
+    response: ExecutionResultWithObjectShapedRows<RowShape> | null;
+    error: QueryError | null;
+  }>;
+
+  async execute<RowShape extends UnknownArrayShape>(
     query: string,
-    execOptions?: ExecuteOptions
-  ) {
+    executeOptions: { rowMode: "array" }
+  ): Promise<{
+    response: ExecutionResultWithArrayShapedRows<RowShape> | null;
+    error: QueryError | null;
+  }>;
+
+  async execute<RowShape extends UnknownObjectShape>(
+    query: string,
+    executeOptions: { rowMode: "object" }
+  ): Promise<{
+    response: ExecutionResultWithObjectShapedRows<RowShape> | null;
+    error: QueryError | null;
+  }>;
+
+  async execute(query: string, execOptions?: { rowMode?: "object" | "array" }) {
     const fetchOptions = {
       ...this.fetchOptions,
       body: JSON.stringify({ sql: query, ...execOptions }),
@@ -69,10 +90,17 @@ class SplitgraphHTTPClient<
 
     const { response, error } = await fetch(this.queryUrl, fetchOptions)
       .then((r) => r.json())
-      .then((rJson) => ({
-        response: rJson as QueryResult<RowShape, WebBridgeResponse<RowShape>>,
-        error: null,
-      }))
+      .then((rJson) =>
+        execOptions?.rowMode === "array"
+          ? {
+              response: rJson as WebBridgeResponse<UnknownArrayShape>,
+              error: null,
+            }
+          : {
+              response: rJson as WebBridgeResponse<UnknownObjectShape>,
+              error: null,
+            }
+      )
       .catch((err) => ({
         response: null,
         error: { success: false, error: err, trace: err.stack } as QueryError,

@@ -20,43 +20,70 @@ export interface ClientOptions {
   database?: Database | null;
 }
 
-export interface Response<RowShape extends ValidRowShape> {
-  rows: RowShape[] | Iterable<RowShape>;
-  success: boolean;
-}
-
-export type QueryResult<
-  RowShape extends ValidRowShape = Record<PropertyKey, unknown>,
-  ExpectedResult extends Response<RowShape> = Response<RowShape>
-> = {
-  [k in keyof ExpectedResult]: ExpectedResult[k];
-} & { success: true };
-
 export interface QueryError {
   success: false;
 }
 
-export type ValidRowShape = Record<PropertyKey, unknown> | Array<unknown>;
+export type UnknownObjectShape = { readonly [column: string]: unknown };
+export type UnknownArrayShape = ReadonlyArray<unknown>;
+export type AnyArrayShape = ReadonlyArray<any>;
 
-export interface Client {
-  // execute: <RowRowShape extends Array<unknown>>(
-  //   query: string,
-  //   executeOptions?: any
-  // ) => Promise<{
-  //   response: QueryResult<RowShape> | null;
-  //   error: QueryError | null;
-  // }>;
-  execute: <RowShape extends ValidRowShape>(
-    query: string,
-    executeOptions?: any
-  ) => Promise<{
-    response: QueryResult<RowShape> | null;
-    error: QueryError | null;
-  }>;
+export type UnknownRowShape = UnknownObjectShape | UnknownArrayShape;
+
+export interface ExecutionResultBase {
+  success: boolean;
 }
 
-export interface BaseExecOptions {
-  rowMode?: "array";
+export interface ExecutionResultWithObjectShapedRows<
+  ObjectRowShape extends UnknownObjectShape
+> extends ExecutionResultBase {
+  rows: ObjectRowShape[];
+}
+
+export interface ExecutionResultWithArrayShapedRows<
+  ArrayRowShape extends UnknownArrayShape
+> extends ExecutionResultBase {
+  rows: ArrayRowShape[];
+}
+
+export type ExecutionResultFromRowShape<RowShape extends UnknownRowShape> =
+  RowShape extends UnknownArrayShape
+    ? ExecutionResultWithArrayShapedRows<RowShape>
+    : RowShape extends UnknownObjectShape
+    ? ExecutionResultWithObjectShapedRows<RowShape>
+    : never;
+
+export interface Client {
+  execute<RowShape extends UnknownObjectShape>(
+    query: string
+  ): Promise<{
+    response: ExecutionResultWithObjectShapedRows<RowShape> | null;
+    error: QueryError | null;
+  }>;
+
+  execute<RowShape extends UnknownArrayShape>(
+    query: string,
+    executeOptions: { rowMode: "array" }
+  ): Promise<{
+    response: ExecutionResultWithArrayShapedRows<RowShape> | null;
+    error: QueryError | null;
+  }>;
+
+  execute<RowShape extends UnknownObjectShape>(
+    query: string,
+    executeOptions: { rowMode: "object" }
+  ): Promise<{
+    response: ExecutionResultWithObjectShapedRows<RowShape> | null;
+    error: QueryError | null;
+  }>;
+
+  execute<RowShape extends UnknownRowShape>(
+    query: string,
+    executeOptions: { rowMode?: "object" | "array" }
+  ): Promise<{
+    response: ExecutionResultFromRowShape<RowShape> | null;
+    error: QueryError | null;
+  }>;
 }
 
 export abstract class BaseClient<
@@ -78,14 +105,19 @@ export abstract class BaseClient<
     this.credential = Credential(newCredential || null);
   }
 
-  abstract execute<
-    RowShape extends ValidRowShape
-    // ExecuteOptionsShape extends BaseExecOptions = BaseExecOptions
-  >(
+  // TODO: how many overloads can we move from implementation to here?
+  // abstract execute<RowShape extends UnknownObjectShape>(
+  //   query: string
+  // ): Promise<{
+  //   response: ExecutionResultWithObjectShapedRows<RowShape> | null;
+  //   error: QueryError | null;
+  // }>;
+
+  abstract execute<RowShape extends UnknownRowShape>(
     query: string,
-    executeOptions?: BaseExecOptions
+    executeOptions?: any & { rowMode?: "object" | "array" }
   ): Promise<{
-    response: QueryResult<RowShape> | null;
+    response: ExecutionResultFromRowShape<RowShape> | null;
     error: QueryError | null;
   }>;
 }
