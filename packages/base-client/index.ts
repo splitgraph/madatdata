@@ -41,7 +41,8 @@ export interface QueryError {
 
 export interface Client {
   execute: <ResultShape extends Record<PropertyKey, unknown>>(
-    query: string
+    query: string,
+    executeOptions?: any
   ) => Promise<{
     response: QueryResult<ResultShape> | null;
     error: QueryError | null;
@@ -68,7 +69,8 @@ export abstract class BaseClient<
   }
 
   abstract execute<ResultShape extends Record<PropertyKey, unknown>>(
-    query: string
+    query: string,
+    executeOptions?: any
   ): Promise<{
     response: QueryResult<ResultShape> | null;
     error: QueryError | null;

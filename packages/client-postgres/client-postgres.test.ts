@@ -102,4 +102,62 @@ describe.skipIf(!hasCredential)("makeClient creates a pg client which", () => {
       }
     `);
   });
+
+  // NOTE: This is an error in how Splitgraph serializes query results to JSON
+  // and needs a deeper fix. It's left here as a canary for when it is fixed.
+  it("can (but shouldn't) select, 1, 2, 3", async () => {
+    const client = makeClient({
+      credential,
+    });
+
+    const result = await client.execute<{ "?column?": number }>(`
+      select 1,2,3,4;
+    `);
+
+    // Note how the result only includes an object with the last column value,
+    // because all columns have the same key name of ?column?
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "error": null,
+        "response": {
+          "rows": Result [
+            {
+              "?column?": 4,
+            },
+          ],
+          "success": true,
+        },
+      }
+    `);
+  });
+
+  it("(TODO) can select, 1, 2, 3 in rowMode", async () => {
+    const client = makeClient({
+      credential,
+    });
+
+    const result = await client.execute<{ "?column?": number }>(
+      `
+      select 1 as one,2 as two,3,4;
+    `,
+      { rowMode: "array" }
+    );
+
+    // TODO: This is not yet implemented correctly
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "error": null,
+        "response": {
+          "rows": [
+            {
+              "?column?": 4,
+              "one": 1,
+              "two": 2,
+            },
+          ],
+          "success": true,
+        },
+      }
+    `);
+  });
 });

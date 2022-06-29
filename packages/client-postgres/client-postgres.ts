@@ -9,6 +9,12 @@ import {
 
 import postgres from "postgres";
 
+// TODO: Same shape in client-http, should probably be moved to base-client
+interface ExecutePostgresOptions {
+  /** WARNING: Not yet implemented, will still return Object type */
+  rowMode?: "array";
+}
+
 class SplitgraphPostgresClient<
   InputCredentialOptions extends CredentialOptions
 > extends BaseClient<InputCredentialOptions> {
@@ -34,15 +40,21 @@ class SplitgraphPostgresClient<
   }
 
   async execute<ResultShape extends Record<PropertyKey, unknown>>(
-    query: string
+    query: string,
+    executeOptions?: ExecutePostgresOptions
   ) {
     try {
+      // TODO: Figure out how to get rowMode to work with .unsafe(), since
+      // calling .values() doesn't seem to work like it would with interpolation
       const rows = await this.connection<ResultShape[]>.unsafe(query);
 
       return {
         response: {
           success: true,
-          rows,
+          rows:
+            executeOptions?.rowMode === "array"
+              ? Array.from(rows.values())
+              : rows,
         } as QueryResult<ResultShape>,
         error: null,
       };

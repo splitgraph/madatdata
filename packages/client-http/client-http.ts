@@ -31,6 +31,13 @@ export interface WebBridgeResponse<
   executionTimeHighRes?: string;
 }
 
+interface ExecuteOptions {
+  /** TODO:
+   * This mode is supported, but it's not reflected in the ResultShape type yet.
+   */
+  rowMode?: "array";
+}
+
 class SplitgraphHTTPClient<
   InputCredentialOptions extends CredentialOptions
 > extends BaseClient<InputCredentialOptions> {
@@ -52,11 +59,12 @@ class SplitgraphHTTPClient<
   }
 
   async execute<ResultShape extends Record<PropertyKey, unknown>>(
-    query: string
+    query: string,
+    execOptions?: ExecuteOptions
   ) {
     const fetchOptions = {
       ...this.fetchOptions,
-      body: JSON.stringify({ sql: query }),
+      body: JSON.stringify({ sql: query, ...execOptions }),
     };
 
     const { response, error } = await fetch(this.queryUrl, fetchOptions)
