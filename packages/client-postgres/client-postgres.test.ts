@@ -138,7 +138,7 @@ describe.skipIf(!hasCredential)("makeClient creates a pg client which", () => {
 
     const result = await client.execute<{ "?column?": number }>(
       `
-      select 1 as one,2 as two,3,4;
+      select 1 as one, 2 as two,3,4;
     `,
       { rowMode: "array" }
     );
@@ -148,12 +148,13 @@ describe.skipIf(!hasCredential)("makeClient creates a pg client which", () => {
       {
         "error": null,
         "response": {
-          "rows": [
-            {
-              "?column?": 4,
-              "one": 1,
-              "two": 2,
-            },
+          "rows": Result [
+            [
+              1,
+              2,
+              3,
+              4,
+            ],
           ],
           "success": true,
         },

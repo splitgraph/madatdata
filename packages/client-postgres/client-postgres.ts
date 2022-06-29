@@ -9,9 +9,8 @@ import {
 
 import postgres from "postgres";
 
-// TODO: Same shape in client-http, should probably be moved to base-client
 interface ExecutePostgresOptions {
-  /** WARNING: Not yet implemented, will still return Object type */
+  /** TODO: Feature works, but TypeScript will not enforce array ResultShape */
   rowMode?: "array";
 }
 
@@ -44,17 +43,23 @@ class SplitgraphPostgresClient<
     executeOptions?: ExecutePostgresOptions
   ) {
     try {
-      // TODO: Figure out how to get rowMode to work with .unsafe(), since
-      // calling .values() doesn't seem to work like it would with interpolation
-      const rows = await this.connection<ResultShape[]>.unsafe(query);
+      // Make a fake template template string array to pass to Postgres
+      // we could use .unsafe(), but this doesn't support .values()
+      const wrappedQuery = Object.assign([query], {
+        raw: [query],
+      }) as TemplateStringsArray;
+
+      // NOTE: must call .values() _now_, not after instantiation, or else it
+      // will not add the necessary context during interpolation for later reads
+      const rows =
+        executeOptions?.rowMode === "array"
+          ? await this.connection<ResultShape[]>(wrappedQuery).values()
+          : await this.connection<ResultShape[]>(wrappedQuery);
 
       return {
         response: {
           success: true,
-          rows:
-            executeOptions?.rowMode === "array"
-              ? Array.from(rows.values())
-              : rows,
+          rows,
         } as QueryResult<ResultShape>,
         error: null,
       };
@@ -71,3 +76,25 @@ export const makeClient = (args: ClientOptions) => {
   const client = new SplitgraphPostgresClient(args);
   return client;
 };
+
+// TEMPORARY: add .values() to typings by copying unreleased bugfix from commit:
+// https://github.com/porsager/postgres/commit/ac1bca41004c7923b877c26f2ffc3039b70b4432
+declare module "postgres" {
+  type ValuesRowList<T extends readonly any[]> =
+    T[number][keyof T[number]][][] &
+      postgres.ResultQueryMeta<T["length"], keyof T[number]>;
+
+  interface PendingValuesQuery<TRow extends readonly postgres.MaybeRow[]>
+    extends Promise<ValuesRowList<TRow>>,
+      postgres.PendingQueryModifiers<TRow[number][keyof TRow[number]][][]> {
+    describe(): postgres.PendingDescribeQuery;
+  }
+
+  interface PendingQuery<TRow extends readonly postgres.MaybeRow[]>
+    extends Promise<postgres.RowList<TRow>>,
+      postgres.PendingQueryModifiers<TRow> {
+    describe(): postgres.PendingDescribeQuery;
+    values(): PendingValuesQuery<TRow>;
+    raw(): postgres.PendingRawQuery<TRow>;
+  }
+}
