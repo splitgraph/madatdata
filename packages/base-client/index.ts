@@ -20,17 +20,14 @@ export interface ClientOptions {
   database?: Database | null;
 }
 
-export interface Response<ResultShape extends Record<PropertyKey, unknown>> {
-  rows: ResultShape[] | Iterable<ResultShape>;
+export interface Response<RowShape extends ValidRowShape> {
+  rows: RowShape[] | Iterable<RowShape>;
   success: boolean;
 }
 
 export type QueryResult<
-  ResultShape extends Record<PropertyKey, unknown> = Record<
-    PropertyKey,
-    unknown
-  >,
-  ExpectedResult extends Response<ResultShape> = Response<ResultShape>
+  RowShape extends ValidRowShape = Record<PropertyKey, unknown>,
+  ExpectedResult extends Response<RowShape> = Response<RowShape>
 > = {
   [k in keyof ExpectedResult]: ExpectedResult[k];
 } & { success: true };
@@ -39,14 +36,27 @@ export interface QueryError {
   success: false;
 }
 
+export type ValidRowShape = Record<PropertyKey, unknown> | Array<unknown>;
+
 export interface Client {
-  execute: <ResultShape extends Record<PropertyKey, unknown>>(
+  // execute: <RowRowShape extends Array<unknown>>(
+  //   query: string,
+  //   executeOptions?: any
+  // ) => Promise<{
+  //   response: QueryResult<RowShape> | null;
+  //   error: QueryError | null;
+  // }>;
+  execute: <RowShape extends ValidRowShape>(
     query: string,
     executeOptions?: any
   ) => Promise<{
-    response: QueryResult<ResultShape> | null;
+    response: QueryResult<RowShape> | null;
     error: QueryError | null;
   }>;
+}
+
+export interface BaseExecOptions {
+  rowMode?: "array";
 }
 
 export abstract class BaseClient<
@@ -68,11 +78,14 @@ export abstract class BaseClient<
     this.credential = Credential(newCredential || null);
   }
 
-  abstract execute<ResultShape extends Record<PropertyKey, unknown>>(
+  abstract execute<
+    RowShape extends ValidRowShape
+    // ExecuteOptionsShape extends BaseExecOptions = BaseExecOptions
+  >(
     query: string,
-    executeOptions?: any
+    executeOptions?: BaseExecOptions
   ): Promise<{
-    response: QueryResult<ResultShape> | null;
+    response: QueryResult<RowShape> | null;
     error: QueryError | null;
   }>;
 }

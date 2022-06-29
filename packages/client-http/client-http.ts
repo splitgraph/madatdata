@@ -6,11 +6,11 @@ import {
   type ClientOptions,
   type CredentialOptions,
   type Response,
+  type ValidRowShape,
 } from "@madatdata/base-client";
 
-export interface WebBridgeResponse<
-  ResultShape extends Record<PropertyKey, unknown>
-> extends Response<ResultShape> {
+export interface WebBridgeResponse<RowShape extends ValidRowShape>
+  extends Response<RowShape> {
   command: string;
   fields: {
     columnID: number;
@@ -23,7 +23,7 @@ export interface WebBridgeResponse<
     tableID: number;
   }[];
   rowCount: 1;
-  rows: ResultShape[];
+  rows: RowShape[];
   success: true;
   /** FIXME: optional to allow deleting it for inline snapshots */
   executionTime?: string;
@@ -33,7 +33,7 @@ export interface WebBridgeResponse<
 
 interface ExecuteOptions {
   /** TODO:
-   * This mode is supported, but it's not reflected in the ResultShape type yet.
+   * This mode is supported, but it's not reflected in the RowShape type yet.
    */
   rowMode?: "array";
 }
@@ -58,7 +58,7 @@ class SplitgraphHTTPClient<
     };
   }
 
-  async execute<ResultShape extends Record<PropertyKey, unknown>>(
+  async execute<RowShape extends ValidRowShape>(
     query: string,
     execOptions?: ExecuteOptions
   ) {
@@ -70,10 +70,7 @@ class SplitgraphHTTPClient<
     const { response, error } = await fetch(this.queryUrl, fetchOptions)
       .then((r) => r.json())
       .then((rJson) => ({
-        response: rJson as QueryResult<
-          ResultShape,
-          WebBridgeResponse<ResultShape>
-        >,
+        response: rJson as QueryResult<RowShape, WebBridgeResponse<RowShape>>,
         error: null,
       }))
       .catch((err) => ({

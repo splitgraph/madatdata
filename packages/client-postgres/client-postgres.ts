@@ -5,13 +5,14 @@ import {
   type QueryResult,
   type ClientOptions,
   type CredentialOptions,
+  type BaseExecOptions,
+  type ValidRowShape,
 } from "@madatdata/base-client";
 
 import postgres from "postgres";
 
-interface ExecutePostgresOptions {
-  /** TODO: Feature works, but TypeScript will not enforce array ResultShape */
-  rowMode?: "array";
+interface ExecutePostgresOptions extends BaseExecOptions {
+  someOnlyPostgresOption?: "other";
 }
 
 class SplitgraphPostgresClient<
@@ -38,13 +39,19 @@ class SplitgraphPostgresClient<
     };
   }
 
-  async execute<ResultShape extends Record<PropertyKey, unknown>>(
-    query: string,
-    executeOptions?: ExecutePostgresOptions
-  ) {
+  async execute<
+    RowShape extends ValidRowShape
+    // QueryRowShape = QueryResult<RowShape>
+    // ArrayRowShape extends RowShape extends Array<unknown>
+    //   ? RowShape
+    //   : never,
+    // ObjectRowShape extends RowShape extends Record<PropertyKey, unknown>
+    //   ? RowShape
+    //   : never
+  >(query: string, executeOptions?: ExecutePostgresOptions) {
     try {
-      // Make a fake template template string array to pass to Postgres
-      // we could use .unsafe(), but this doesn't support .values()
+      // Make a fake tagged template literal (TemplateStringsArray) for postgres
+      // (could use .unsafe(), but it doesn't support .values() as documented)
       const wrappedQuery = Object.assign([query], {
         raw: [query],
       }) as TemplateStringsArray;
@@ -53,14 +60,14 @@ class SplitgraphPostgresClient<
       // will not add the necessary context during interpolation for later reads
       const rows =
         executeOptions?.rowMode === "array"
-          ? await this.connection<ResultShape[]>(wrappedQuery).values()
-          : await this.connection<ResultShape[]>(wrappedQuery);
+          ? await this.connection<RowShape[]>(wrappedQuery).values()
+          : await this.connection<RowShape[]>(wrappedQuery);
 
       return {
         response: {
           success: true,
-          rows,
-        } as QueryResult<ResultShape>,
+          rows: executeOptions?.rowMode === "array" ? rows : rows,
+        } as QueryResult<RowShape>,
         error: null,
       };
     } catch (err: any) {
