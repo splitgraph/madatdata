@@ -4,6 +4,7 @@ hooks:
 generates:
   ./gql-client/generated/unified-schema.graphql:
     schema:
-      - "https://api.splitgraph.com/gql/cloud/unified/graphql"
+      - unified:
+          loader: ./fetch-graphql-schema
     plugins:
       - schema-ast

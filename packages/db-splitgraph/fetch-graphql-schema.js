@@ -1,7 +1,6 @@
-import "cross-fetch/dist/node-polyfill.js";
-import { getIntrospectionQuery, buildClientSchema } from "graphql";
+require("cross-fetch/dist/node-polyfill.js");
+const { getIntrospectionQuery, buildClientSchema } = require("graphql");
 
-// NOTE: Not currently being used by codegen
 const fetchSchema = async () => {
   const introspectionQuery = getIntrospectionQuery();
   const { data } = await fetch(
@@ -20,4 +19,4 @@ const fetchSchema = async () => {
   return buildClientSchema(data);
 };
 
-export default fetchSchema;
+module.exports = fetchSchema;
