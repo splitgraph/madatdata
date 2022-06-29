@@ -49,8 +49,13 @@ generates:
         defaultValue: true
         # We want to _allow_ optionals in input arguments
         inputValue: false
+      # This should be a no-op (no target files have schemas). Keep for safety
       onlyOperationTypes: true
-      preResolveTypes: true
+      # Ensure we use Pick<> on the actual interface from the base schema, and
+      # not its primitives. This fixes weird issues, like nullable Connections.
+      preResolveTypes: false
+      # Avoid needless intersection with { __typename: Query } on every Query
+      skipTypeNameForRoot: true
     presetConfig:
       baseTypesPath: "gql-client/generated/unified-schema"
       extension: .generated.ts
