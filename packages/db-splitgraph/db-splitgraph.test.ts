@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { makeDb } from "./db-splitgraph";
 import { ImportCSVPlugin } from "./plugins/importers/import-csv-plugin";
 
+import { shouldSkipIntegrationTests } from "@madatdata/test-helpers/env-config";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
 import { setupMemo } from "@madatdata/test-helpers/setup-memo";
 import { compose, graphql, rest, type DefaultBodyType } from "msw";
@@ -67,27 +68,6 @@ const createRealDb = () => {
       }),
     },
   });
-};
-
-const environmentHasCredential = () => {
-  return (
-    // @ts-expect-error https://stackoverflow.com/a/70711231
-    !!import.meta.env.VITE_TEST_DDN_API_KEY &&
-    // @ts-expect-error https://stackoverflow.com/a/70711231
-    !!import.meta.env.VITE_TEST_DDN_API_SECRET
-  );
-};
-
-const shouldIncludeIntegrationTests = () => {
-  return (
-    environmentHasCredential() &&
-    // @ts-expect-error https://stackoverflow.com/a/70711231
-    !!import.meta.env.VITE_TEST_INTEGRATION
-  );
-};
-
-const shouldSkipIntegrationTests = () => {
-  return !shouldIncludeIntegrationTests();
 };
 
 // Useful when writing initial tests against real server (where anon is allowed)
@@ -564,7 +544,6 @@ describe.skipIf(shouldSkipIntegrationTests())("real DDN", () => {
     expect(info?.jobLog?.url.includes(info.jobStatus.taskId)).toBe(true);
   }, 10_000);
 });
-
 describe("makeFakeJwt and claimsFromJwt", () => {
   it("produce agreeable output", () => {
     const jwt = makeFakeJwt();

@@ -471,6 +471,22 @@ is running `vitest`, which will then load the environment variables from the
 Note: The tests are written so that this will _include_ integration tests, but
 it will not _only_ run integration tests.
 
+### Run tests (other examples)
+
+Run integration tests with filters `client-http` and `client-postgres`, which
+will match tests in files `client-http.test.ts` and `client-postgres.test.ts`
+
+```bash
+yarn test --mode integration client-http client-postgres
+```
+
+Run integration tests with `test-mitm` to proxy to (default) `localhost:7979`,
+where a separate process like `mitmproxy` can intercept outbound requests:
+
+```bash
+yarn test-mitm --mode integration
+```
+
 ### Typecheck
 
 We use `tsc` for typechecking, with the default solution file `tsconfig.json`
