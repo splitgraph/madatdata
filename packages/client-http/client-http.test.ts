@@ -270,6 +270,7 @@ const snapshotResult = (result: any) => {
 
 // NOTE: Copied (non-DRY) from postgres test (maybe it should be in base then)
 // NOTE: .skip() because this code is intended for typechecking, not running
+// (it is _slightly_ different since http-client wraps the result)
 describe.skip("type checking produces expected errors in", async () => {
   it("client-http.execute function overloading", async () => {
     const client = makeClient({
@@ -297,6 +298,10 @@ describe.skip("type checking produces expected errors in", async () => {
     );
     goodObjectType.response?.rows.map(({ apple }) => ({ apple }));
 
+    const goodRowType = await client.execute<[number, number]>("select 1, 2;", {
+      rowMode: "array",
+    });
+
     goodObjectType.response?.rows.map(
       ({
         apple,
@@ -305,6 +310,24 @@ describe.skip("type checking produces expected errors in", async () => {
       }) => ({ apple })
     );
 
+    await client.execute<{ pear: "green" }>("something", { rowMode: "object" });
+    await client.execute<[number, number]>("something", { rowMode: "array" });
+
+    await client.execute<
+      // @ts-expect-error should error on array shape when rowMode option omitted
+      [number, number]
+    >("something");
+
+    await client.execute<[number, number]>("something", {
+      // @ts-expect-error should error on array shape when rowMode is object
+      rowMode: "object",
+    });
+
+    await client.execute<{ apple: "magenta" }>("something", {
+      // @ts-expect-error should error on object shape when rowMode is array
+      rowMode: "array",
+    });
+
     // NOTE: We rely on ts-expect-error to check that types work as expected,
     // since if there is *no* error, the pragma itself will produce an error. But
     // a ts-expect-error above an unused variable always "catches" that error,
@@ -312,6 +335,6 @@ describe.skip("type checking produces expected errors in", async () => {
     // avoid an unused variable where we check for a different expected error
 
     // To avoid this, ensure we "use" all variables (none of this code is run)
-    return { badObjectType, badArrayType, badArrayTypeNoOptions };
+    return { badObjectType, badArrayType, badArrayTypeNoOptions, goodRowType };
   });
 });

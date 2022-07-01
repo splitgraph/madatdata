@@ -37,13 +37,6 @@ class SplitgraphPostgresClient<
     };
   }
 
-  async execute<RowShape extends UnknownObjectShape>(
-    query: string
-  ): Promise<{
-    response: ExecutionResultWithObjectShapedRows<RowShape> | null;
-    error: QueryError | null;
-  }>;
-
   async execute<RowShape extends UnknownArrayShape>(
     query: string,
     executeOptions: { rowMode: "array" }
@@ -54,7 +47,7 @@ class SplitgraphPostgresClient<
 
   async execute<RowShape extends UnknownObjectShape>(
     query: string,
-    executeOptions: { rowMode: "object" }
+    executeOptions?: { rowMode: "object" }
   ): Promise<{
     response: ExecutionResultWithObjectShapedRows<RowShape> | null;
     error: QueryError | null;
@@ -74,7 +67,7 @@ class SplitgraphPostgresClient<
       if (executeOptions && executeOptions.rowMode === "array") {
         let arrayShapedRows = Array.from(
           await this.connection(wrappedQuery).values()
-        ); /* as AsArrayShape<RowShape>[];*/
+        );
 
         return {
           response: {
@@ -84,9 +77,7 @@ class SplitgraphPostgresClient<
           error: null,
         };
       } else {
-        let objectShapedRows = Array.from(
-          await this.connection(wrappedQuery)
-        ); /*as AsObjectShape<RowShape>[];*/
+        let objectShapedRows = Array.from(await this.connection(wrappedQuery));
 
         return {
           response: {

@@ -32,13 +32,6 @@ export interface WebBridgeResponse<RowShape extends UnknownRowShape> {
   executionTimeHighRes?: string;
 }
 
-// interface ExecuteOptions {
-//   /** TODO:
-//    * This mode is supported, but it's not reflected in the RowShape type yet.
-//    */
-//   rowMode?: "array";
-// }
-
 class SplitgraphHTTPClient<
   InputCredentialOptions extends CredentialOptions
 > extends BaseClient<InputCredentialOptions> {
@@ -59,13 +52,6 @@ class SplitgraphHTTPClient<
     };
   }
 
-  async execute<RowShape extends UnknownObjectShape>(
-    query: string
-  ): Promise<{
-    response: ExecutionResultWithObjectShapedRows<RowShape> | null;
-    error: QueryError | null;
-  }>;
-
   async execute<RowShape extends UnknownArrayShape>(
     query: string,
     executeOptions: { rowMode: "array" }
@@ -76,7 +62,7 @@ class SplitgraphHTTPClient<
 
   async execute<RowShape extends UnknownObjectShape>(
     query: string,
-    executeOptions: { rowMode: "object" }
+    executeOptions?: { rowMode: "object" }
   ): Promise<{
     response: ExecutionResultWithObjectShapedRows<RowShape> | null;
     error: QueryError | null;

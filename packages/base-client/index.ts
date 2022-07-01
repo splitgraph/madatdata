@@ -54,13 +54,6 @@ export type ExecutionResultFromRowShape<RowShape extends UnknownRowShape> =
     : never;
 
 export interface Client {
-  execute<RowShape extends UnknownObjectShape>(
-    query: string
-  ): Promise<{
-    response: ExecutionResultWithObjectShapedRows<RowShape> | null;
-    error: QueryError | null;
-  }>;
-
   execute<RowShape extends UnknownArrayShape>(
     query: string,
     executeOptions: { rowMode: "array" }
@@ -71,7 +64,7 @@ export interface Client {
 
   execute<RowShape extends UnknownObjectShape>(
     query: string,
-    executeOptions: { rowMode: "object" }
+    executeOptions?: { rowMode: "object" }
   ): Promise<{
     response: ExecutionResultWithObjectShapedRows<RowShape> | null;
     error: QueryError | null;
@@ -106,13 +99,6 @@ export abstract class BaseClient<
   }
 
   // TODO: how many overloads can we move from implementation to here?
-  // abstract execute<RowShape extends UnknownObjectShape>(
-  //   query: string
-  // ): Promise<{
-  //   response: ExecutionResultWithObjectShapedRows<RowShape> | null;
-  //   error: QueryError | null;
-  // }>;
-
   abstract execute<RowShape extends UnknownRowShape>(
     query: string,
     executeOptions?: any & { rowMode?: "object" | "array" }

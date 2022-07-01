@@ -225,6 +225,24 @@ describe.skip("type checking produces expected errors in", async () => {
       }) => ({ apple })
     );
 
+    await client.execute<{ pear: "green" }>("something", { rowMode: "object" });
+    await client.execute<[number, number]>("something", { rowMode: "array" });
+
+    await client.execute<
+      // @ts-expect-error should error on array shape when rowMode option omitted
+      [number, number]
+    >("something");
+
+    await client.execute<[number, number]>("something", {
+      // @ts-expect-error should error on array shape when rowMode is object
+      rowMode: "object",
+    });
+
+    await client.execute<{ apple: "magenta" }>("something", {
+      // @ts-expect-error should error on object shape when rowMode is array
+      rowMode: "array",
+    });
+
     // NOTE: We rely on ts-expect-error to check that types work as expected,
     // since if there is *no* error, the pragma itself will produce an error. But
     // a ts-expect-error above an unused variable always "catches" that error,
