@@ -1,5 +1,4 @@
-import { parseFirst, Statement } from "pgsql-ast-parser";
-// https://github.com/oguimbal/pgsql-ast-parser
+import { parseSql } from "./parser";
 
 const query = `
 SELECT
@@ -20,10 +19,6 @@ SELECT
 WHERE RANK <= 3;
 `;
 
-const ast: Statement = parseFirst(query);
-
-// console.log("the ast is...", ast);
+const ast = parseSql(query);
 
 console.log(JSON.stringify(ast, null, 2));
-
-// console.log("done or something lol");

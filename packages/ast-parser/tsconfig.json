@@ -1,4 +1,5 @@
 {
   "extends": "../../tsconfig.base-noncomposite-esno.json",
-  "include": ["*.ts", "**/*.ts"]
+  "include": ["*.ts", "**/*.ts"],
+  "references": [{ "path": "../test-helpers/tsconfig.json" }]
 }
