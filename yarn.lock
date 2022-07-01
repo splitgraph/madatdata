@@ -1260,10 +1260,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@madatdata/ast-parser@workspace:packages/ast-parser"
   dependencies:
+    "@madatdata/test-helpers": "workspace:*"
     "@types/node": 16.11.38
     chalk: 5.0.1
     esno: 0.16.3
-    pgsql-ast-parser: 10.2.0
+    pgsql-ast-parser: 10.5.2
+    web-streams-polyfill: 3.2.1
   languageName: unknown
   linkType: soft
 
@@ -6031,13 +6033,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pgsql-ast-parser@npm:10.2.0":
-  version: 10.2.0
-  resolution: "pgsql-ast-parser@npm:10.2.0"
+"pgsql-ast-parser@npm:10.5.2":
+  version: 10.5.2
+  resolution: "pgsql-ast-parser@npm:10.5.2"
   dependencies:
     moo: ^0.5.1
     nearley: ^2.19.5
-  checksum: 3041f1f24004eea8ed1d42c9a6a7e4d87b2651077e8273a85de219b25257a81f05593d649b6acf2f0499d1aa99545c1da5283c9da173a4ffd4ee8768c3cd284c
+  checksum: 8810ee1593fc5ada2c4243fda4f67a3935f2d6fe3a22aadf3d7eaef80b9e45dce636af4851e0d5cd4bcab047b45a0a0d72e215e8839736694b1f3217dd0b3df7
   languageName: node
   linkType: hard
 
@@ -7459,17 +7461,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"web-streams-polyfill@npm:3.2.1, web-streams-polyfill@npm:^3.2.0":
+  version: 3.2.1
+  resolution: "web-streams-polyfill@npm:3.2.1"
+  checksum: b119c78574b6d65935e35098c2afdcd752b84268e18746606af149e3c424e15621b6f1ff0b42b2676dc012fc4f0d313f964b41a4b5031e525faa03997457da02
+  languageName: node
+  linkType: hard
+
 "web-streams-polyfill@npm:4.0.0-beta.1":
   version: 4.0.0-beta.1
   resolution: "web-streams-polyfill@npm:4.0.0-beta.1"
   checksum: 94c21d3aba1c26e5942bb210ffd60c6990cbc750d34bdf548ed93ed845f0a6eac89cdae1dd0195afaba15fbcf4aaca9e397ee40fa4d1f2c191d04d43717bd065
-  languageName: node
-  linkType: hard
-
-"web-streams-polyfill@npm:^3.2.0":
-  version: 3.2.1
-  resolution: "web-streams-polyfill@npm:3.2.1"
-  checksum: b119c78574b6d65935e35098c2afdcd752b84268e18746606af149e3c424e15621b6f1ff0b42b2676dc012fc4f0d313f964b41a4b5031e525faa03997457da02
   languageName: node
   linkType: hard
 
