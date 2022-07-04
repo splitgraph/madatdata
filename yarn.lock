@@ -1318,6 +1318,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@madatdata/core@workspace:packages/core":
+  version: 0.0.0-use.local
+  resolution: "@madatdata/core@workspace:packages/core"
+  dependencies:
+    "@madatdata/base-client": "workspace:*"
+    "@madatdata/base-db": "workspace:*"
+    "@madatdata/test-helpers": "workspace:*"
+    "@types/node": 16.11.38
+    cross-fetch: 3.1.5
+  languageName: unknown
+  linkType: soft
+
 "@madatdata/db-splitgraph@workspace:packages/db-splitgraph":
   version: 0.0.0-use.local
   resolution: "@madatdata/db-splitgraph@workspace:packages/db-splitgraph"

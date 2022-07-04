@@ -5,6 +5,7 @@
   "include": [],
   "exclude": ["node_modules", ".*", "public", "dist", "build"],
   "references": [
+    { "path": "./packages/core" },
     { "path": "./packages/ast-parser" },
     { "path": "./packages/base-client" },
     { "path": "./packages/base-db" },

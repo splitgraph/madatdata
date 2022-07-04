@@ -20,6 +20,10 @@ export default defineConfig({
         find: "@madatdata/db-splitgraph",
         replacement: join(currentDirectoryPath, "packages", "db-splitgraph"),
       },
+      {
+        find: "@madatdata/core",
+        replacement: join(currentDirectoryPath, "packages", "core"),
+      },
     ],
   },
   test: {

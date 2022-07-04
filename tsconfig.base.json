@@ -35,8 +35,11 @@
       "@madatdata/yeet/*": ["./packages/yeet/*"],
       "@madatdata/ast-parser/*": ["./packages/ast-parser/*"],
       "@madatdata/base-client/*": ["./packages/base-client/*"],
+      "@madatdata/base-db/*": ["./packages/base-db/*"],
       "@madatdata/client-http/*": ["./packages/client-http/*"],
       "@madatdata/client-postgres/*": ["./packages/client-postgres/*"],
+      "@madatdata/core/*": ["./packages/core/*"],
+      "@madatdata/db-splitgraph/*": ["./packages/db-splitgraph/*"],
       "@madatdata/test-helpers/*": ["./packages/test-helpers/*"]
     }
   }
