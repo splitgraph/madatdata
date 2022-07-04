@@ -69,9 +69,16 @@ class SplitgraphHTTPClient<
   }>;
 
   async execute(query: string, execOptions?: { rowMode?: "object" | "array" }) {
+    // HACKY: atm, splitgraph API does not accept "object" as valid param
+    // so remove it from execOptions (hacky because ideal is `...execOptions`)
+    const httpExecOptions =
+      execOptions?.rowMode === "object"
+        ? (({ rowMode, ...rest }) => rest)(execOptions)
+        : execOptions;
+
     const fetchOptions = {
       ...this.fetchOptions,
-      body: JSON.stringify({ sql: query, ...execOptions }),
+      body: JSON.stringify({ sql: query, ...httpExecOptions }),
     };
 
     const { response, error } = await fetch(this.queryUrl, fetchOptions)
