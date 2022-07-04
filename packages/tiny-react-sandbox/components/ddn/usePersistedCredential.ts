@@ -1,4 +1,3 @@
-// import * as React from "react";
 import { useCallback, useLayoutEffect, useState } from "react";
 const localStorageKey = "madatdata.credential";
 

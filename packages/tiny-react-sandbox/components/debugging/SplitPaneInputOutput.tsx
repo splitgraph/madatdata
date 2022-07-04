@@ -1,4 +1,4 @@
-import * as React from "react";
+import { useRef, useCallback, useState, useEffect, forwardRef } from "react";
 
 export const SplitPaneInputOutput = ({
   makeOutput,
@@ -42,9 +42,9 @@ const useOutputPane = <UnknownOutput extends unknown>({
   fetchOutput?: (inputValue?: string) => Promise<UnknownOutput>;
   renderOutputToString: (res: UnknownOutput) => string;
 }) => {
-  const ref = React.useRef<HTMLTextAreaElement | null>(null);
+  const ref = useRef<HTMLTextAreaElement | null>(null);
 
-  const onChangeInput = React.useCallback(
+  const onChangeInput = useCallback(
     (inputValue: string | undefined) => {
       if (!ref.current) {
         return;
@@ -58,7 +58,7 @@ const useOutputPane = <UnknownOutput extends unknown>({
     [ref]
   );
 
-  const onSubmitInput = React.useCallback(
+  const onSubmitInput = useCallback(
     (inputValue: string | undefined) => {
       if (!ref.current) {
         return;
@@ -95,10 +95,10 @@ const useInputPane = ({
   onChangeInput: (currentValue: string | undefined) => void;
   onSubmitInput?: (currentValue: string | undefined) => void;
 }) => {
-  const ref = React.useRef<HTMLTextAreaElement | null>(null);
-  const [curValue, setValue] = React.useState(ref.current?.value);
+  const ref = useRef<HTMLTextAreaElement | null>(null);
+  const [curValue, setValue] = useState(ref.current?.value);
 
-  const onChange = React.useCallback(
+  const onChange = useCallback(
     function (this: HTMLTextAreaElement, ev: KeyboardEvent) {
       if (onSubmitInput && wasCmdEnter(ev)) {
         console.log("cmd+enter: Skip onChange in favor of onSubmitInput");
@@ -109,7 +109,7 @@ const useInputPane = ({
     [setValue]
   );
 
-  const onMaybeSubmit = React.useCallback(
+  const onMaybeSubmit = useCallback(
     function (this: HTMLTextAreaElement, ev: KeyboardEvent) {
       if (wasCmdEnter(ev)) {
         onSubmitInput?.(this.value);
@@ -118,7 +118,7 @@ const useInputPane = ({
     [setValue]
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!ref.current) {
       return;
     }
@@ -144,7 +144,7 @@ const useInputPane = ({
   };
 };
 
-const InputPane = React.forwardRef<HTMLTextAreaElement | null>(
+const InputPane = forwardRef<HTMLTextAreaElement | null>(
   (props: { defaultValue?: string }, ref) => {
     const { defaultValue = "" } = props;
     return (
@@ -160,7 +160,7 @@ const InputPane = React.forwardRef<HTMLTextAreaElement | null>(
   }
 );
 
-const OutputPane = React.forwardRef<
+const OutputPane = forwardRef<
   HTMLTextAreaElement | null,
   React.HTMLProps<HTMLTextAreaElement>
 >((props, ref) => {

@@ -26,6 +26,7 @@ esbuild
         console.log(error ? error : "...");
       },
     },
+    inject: ["./react-shim.mjs"],
   })
   .catch(() => process.exit(1));
 

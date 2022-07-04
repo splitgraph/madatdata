@@ -1,4 +1,3 @@
-import * as React from "react";
 import { useState, useCallback, useRef } from "react";
 import type { ReactNode } from "react";
 import { usePersistedCredential } from "./usePersistedCredential";

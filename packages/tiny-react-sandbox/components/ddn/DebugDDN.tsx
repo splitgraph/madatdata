@@ -1,4 +1,4 @@
-import * as React from "react";
+import { useEffect } from "react";
 import { SplitPaneInputOutput } from "../debugging/SplitPaneInputOutput";
 
 import { AuthWidget } from "./AuthWidget";
@@ -11,7 +11,7 @@ const client = makeClient({});
 export const DebugDDN = () => {
   const { credential, loading } = usePersistedCredential();
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!loading) {
       if (credential?.apiKey && credential?.apiSecret) {
         client.setCredential({
