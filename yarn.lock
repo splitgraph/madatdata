@@ -1318,7 +1318,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@madatdata/core@workspace:packages/core":
+"@madatdata/core@workspace:*, @madatdata/core@workspace:packages/core":
   version: 0.0.0-use.local
   resolution: "@madatdata/core@workspace:packages/core"
   dependencies:
@@ -1353,6 +1353,20 @@ __metadata:
     json-schema-to-typescript: 10.1.5
     rimraf: 3.0.2
     typescript-retry-decorator: 2.0.5
+  languageName: unknown
+  linkType: soft
+
+"@madatdata/react@workspace:packages/react":
+  version: 0.0.0-use.local
+  resolution: "@madatdata/react@workspace:packages/react"
+  dependencies:
+    "@madatdata/core": "workspace:*"
+    "@madatdata/test-helpers": "workspace:*"
+    "@types/node": 16.11.38
+    cross-fetch: 3.1.5
+    react: 17.0.2
+  peerDependencies:
+    react: ">=17.0.0"
   languageName: unknown
   linkType: soft
 
@@ -5742,7 +5756,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"object-assign@npm:^4.0.1, object-assign@npm:^4.1.0":
+"object-assign@npm:^4.0.1, object-assign@npm:^4.1.0, object-assign@npm:^4.1.1":
   version: 4.1.1
   resolution: "object-assign@npm:4.1.1"
   checksum: fcc6e4ea8c7fe48abfbb552578b1c53e0d194086e2e6bbbf59e0a536381a292f39943c6e9628af05b5528aa5e3318bb30d6b2e53cadaf5b8fe9e12c4b69af23f
@@ -6227,6 +6241,16 @@ __metadata:
   peerDependencies:
     react: ^18.1.0
   checksum: bb0d48eeb0b297c79c2a03978baa29f5b3ff7ba3d070b21e34c9af1a6e7fdf0ca8b8d73e41f9214d91ad40eeb6d1f3559f884cbbc338713374a51320637c23df
+  languageName: node
+  linkType: hard
+
+"react@npm:17.0.2":
+  version: 17.0.2
+  resolution: "react@npm:17.0.2"
+  dependencies:
+    loose-envify: ^1.1.0
+    object-assign: ^4.1.1
+  checksum: b254cc17ce3011788330f7bbf383ab653c6848902d7936a87b09d835d091e3f295f7e9dd1597c6daac5dc80f90e778c8230218ba8ad599f74adcc11e33b9d61b
   languageName: node
   linkType: hard
 

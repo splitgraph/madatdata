@@ -12,6 +12,7 @@
     { "path": "./packages/client-http" },
     { "path": "./packages/client-postgres" },
     { "path": "./packages/db-splitgraph" },
+    { "path": "./packages/react" },
     { "path": "./packages/tiny-react-sandbox" },
     { "path": "./packages/yeet" }
   ]

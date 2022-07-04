@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.build-base.json",
+  "include": ["*.{ts,tsx}", "**/*.{ts,tsx}"],
+  "exclude": ["*.test.{ts,tsx}", "build"],
+  "compilerOptions": {
+    "outDir": "./packages/core/build",
+    "rootDir": "."
+  },
+  "references": [{ "path": "../core/tsconfig.build.json" }]
+}

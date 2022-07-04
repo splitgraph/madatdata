@@ -10,6 +10,7 @@
     { "path": "./packages/base-db/tsconfig.build.json" },
     { "path": "./packages/client-http/tsconfig.build.json" },
     { "path": "./packages/client-postgres/tsconfig.build.json" },
-    { "path": "./packages/db-splitgraph/tsconfig.build.json" }
+    { "path": "./packages/db-splitgraph/tsconfig.build.json" },
+    { "path": "./packages/react/tsconfig.build.json" }
   ]
 }

@@ -24,6 +24,10 @@ export default defineConfig({
         find: "@madatdata/core",
         replacement: join(currentDirectoryPath, "packages", "core"),
       },
+      {
+        find: "@madatdata/react",
+        replacement: join(currentDirectoryPath, "packages", "react"),
+      },
     ],
   },
   test: {
