@@ -11,6 +11,7 @@ import {
 } from "@madatdata/base-client";
 
 export interface Db<ConcretePluginMap extends PluginMap> {
+  plugins: PluginMap<ConcretePluginMap>;
   importData: <PluginName extends keyof ConcretePluginMap>(
     pluginName: PluginName,
     ...rest: Parameters<ConcretePluginMap[PluginName]["importData"]>
@@ -25,7 +26,7 @@ export interface DbOptions<ConcretePluginMap extends PluginMap> {
 export abstract class BaseDb<ConcretePluginMap extends PluginMap>
   implements Db<ConcretePluginMap>
 {
-  protected plugins: PluginMap<ConcretePluginMap>;
+  public plugins: PluginMap<ConcretePluginMap>;
   protected authenticatedCredential?: AuthenticatedCredential;
   protected host: Host;
   protected database: Database;

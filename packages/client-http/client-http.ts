@@ -32,7 +32,7 @@ export interface WebBridgeResponse<RowShape extends UnknownRowShape> {
   executionTimeHighRes?: string;
 }
 
-class SplitgraphHTTPClient<
+export class SqlHTTPClient<
   InputCredentialOptions extends CredentialOptions
 > extends BaseClient<InputCredentialOptions> {
   private queryUrl: string;
@@ -107,6 +107,6 @@ class SplitgraphHTTPClient<
 }
 
 export const makeClient = (args: ClientOptions) => {
-  const client = new SplitgraphHTTPClient(args);
+  const client = new SqlHTTPClient(args);
   return client;
 };

@@ -5,7 +5,7 @@ import type { SplitgraphImportPluginMap } from "./plugins/importers";
 import { ImportCSVPlugin } from "./plugins/importers/import-csv-plugin";
 
 // TODO: It's not ideal for db-splitgraph to depend on base-client
-import { makeAuthHeaders } from "@madatdata/base-client";
+import { makeAuthHeaders, defaultHost } from "@madatdata/base-client";
 
 interface DbSplitgraphOptions
   extends DbOptions<Partial<SplitgraphImportPluginMap>> {}
@@ -26,7 +26,7 @@ const makeDefaultPluginMap = (opts: {
   }),
 });
 
-class DbSplitgraph extends BaseDb<Partial<SplitgraphImportPluginMap>> {
+export class DbSplitgraph extends BaseDb<Partial<SplitgraphImportPluginMap>> {
   private graphqlEndpoint: string;
 
   constructor(
@@ -34,16 +34,16 @@ class DbSplitgraph extends BaseDb<Partial<SplitgraphImportPluginMap>> {
       Pick<Partial<DbSplitgraphOptions>, "plugins">
   ) {
     super({
+      ...opts,
       plugins:
         opts.plugins ??
         makeDefaultPluginMap({
-          graphqlEndpoint: "unknown",
+          graphqlEndpoint: (opts.host ?? defaultHost).baseUrls.gql,
           makeAuthHeaders: () =>
             this.authenticatedCredential
               ? makeAuthHeaders(this.authenticatedCredential)
               : {},
         }),
-      ...opts,
     });
 
     this.graphqlEndpoint = this.host.baseUrls.gql;

@@ -1291,7 +1291,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@madatdata/client-http@workspace:packages/client-http":
+"@madatdata/client-http@workspace:*, @madatdata/client-http@workspace:packages/client-http":
   version: 0.0.0-use.local
   resolution: "@madatdata/client-http@workspace:packages/client-http"
   dependencies:
@@ -1324,13 +1324,15 @@ __metadata:
   dependencies:
     "@madatdata/base-client": "workspace:*"
     "@madatdata/base-db": "workspace:*"
+    "@madatdata/client-http": "workspace:*"
+    "@madatdata/db-splitgraph": "workspace:*"
     "@madatdata/test-helpers": "workspace:*"
     "@types/node": 16.11.38
     cross-fetch: 3.1.5
   languageName: unknown
   linkType: soft
 
-"@madatdata/db-splitgraph@workspace:packages/db-splitgraph":
+"@madatdata/db-splitgraph@workspace:*, @madatdata/db-splitgraph@workspace:packages/db-splitgraph":
   version: 0.0.0-use.local
   resolution: "@madatdata/db-splitgraph@workspace:packages/db-splitgraph"
   dependencies:
