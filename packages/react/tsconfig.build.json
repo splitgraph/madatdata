@@ -1,10 +1,16 @@
 {
   "extends": "../../tsconfig.build-base.json",
-  "include": ["*.{ts,tsx}", "**/*.{ts,tsx}"],
-  "exclude": ["*.test.{ts,tsx}", "build"],
+  "include": ["*.ts", "*.tsx", "**/*.ts", "**/*.tsx"],
+  "exclude": ["build", "*.test.ts", "*.test.tsx"],
   "compilerOptions": {
-    "outDir": "./packages/core/build",
+    "outDir": "./packages/react/build",
     "rootDir": "."
   },
-  "references": [{ "path": "../core/tsconfig.build.json" }]
+  "references": [
+    { "path": "../core/tsconfig.build.json" },
+    // TODO: export from core/base instead
+    { "path": "../base-client/tsconfig.build.json" },
+    // TODO: not necessary (since it's accessed via export from core)
+    { "path": "../client-http/tsconfig.build.json" }
+  ]
 }

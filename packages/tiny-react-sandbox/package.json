@@ -5,11 +5,13 @@
     "dev": "node dev.mjs"
   },
   "dependencies": {
-    "react": "18.1.0",
-    "react-dom": "18.1.0"
+    "@madatdata/client-http": "workspace:*",
+    "@madatdata/react": "workspace:*",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
   },
   "devDependencies": {
-    "@types/react": "18.0.11",
+    "@types/react": "18.0.14",
     "@types/react-dom": "18.0.5",
     "esbuild": "0.14.42"
   }

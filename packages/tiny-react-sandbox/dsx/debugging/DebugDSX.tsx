@@ -1,4 +1,4 @@
-import { SqlProvider, useSql } from "../DSX";
+import { SqlProvider, useSql } from "@madatdata/react";
 
 const DSXQuery = () => {
   const { loading, error, response } = useSql<{ origin_airport: string }>(

@@ -2,5 +2,5 @@
   "extends": "../../tsconfig.base.json",
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["www/dist"],
-  "references": [{ "path": "../client-http" }]
+  "references": [{ "path": "../client-http" }, { "path": "../react" }]
 }

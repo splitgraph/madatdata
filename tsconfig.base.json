@@ -40,7 +40,8 @@
       "@madatdata/client-postgres/*": ["./packages/client-postgres/*"],
       "@madatdata/core/*": ["./packages/core/*"],
       "@madatdata/db-splitgraph/*": ["./packages/db-splitgraph/*"],
-      "@madatdata/test-helpers/*": ["./packages/test-helpers/*"]
+      "@madatdata/test-helpers/*": ["./packages/test-helpers/*"],
+      "@madatdata/react/*": ["./packages/react/*"]
     }
   }
 }
