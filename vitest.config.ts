@@ -1,11 +1,16 @@
 import { defineConfig } from "vitest/config";
 import { fileURLToPath } from "url";
 import { join, dirname } from "path";
+import react from "@vitejs/plugin-react";
 
 const currentDirectoryPath = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  plugins: [],
+  plugins: [
+    react({
+      include: "packages/react/**.{ts,tsx}",
+    }),
+  ],
   resolve: {
     alias: [
       {
