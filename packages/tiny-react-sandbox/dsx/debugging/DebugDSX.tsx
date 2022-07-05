@@ -29,7 +29,7 @@ const DSXQuery = () => {
 
 export const DebugDSX = () => {
   return (
-    <SqlProvider clientOptions={{ credential: null }}>
+    <SqlProvider options={{ credential: null }}>
       <DSXQuery />
     </SqlProvider>
   );

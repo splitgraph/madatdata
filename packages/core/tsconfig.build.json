@@ -8,6 +8,8 @@
   },
   "references": [
     { "path": "../base-db/tsconfig.build.json" },
-    { "path": "../base-client/tsconfig.build.json" }
+    { "path": "../base-client/tsconfig.build.json" },
+    { "path": "../db-splitgraph/tsconfig.build.json" },
+    { "path": "../client-http/tsconfig.build.json" }
   ]
 }

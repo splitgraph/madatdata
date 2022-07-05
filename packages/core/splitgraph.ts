@@ -10,6 +10,10 @@ export { makeDb as makeSplitgraphDb };
 export { defaultDatabase as defaultSplitgraphDatabase };
 export { defaultHost as defaultSplitgraphHost };
 
+export type SplitgraphDataContext = ReturnType<
+  typeof makeSplitgraphHTTPContext
+>;
+
 export const makeSplitgraphHTTPContext = (
   opts?: {
     client?: Parameters<typeof makeClient>[0];

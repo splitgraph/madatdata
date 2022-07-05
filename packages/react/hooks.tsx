@@ -10,7 +10,8 @@ import {
 } from "react";
 
 import type {
-  Client,
+  // Client,
+  // DataContext,
   ExecutionResultFromRowShape,
   ExecutionResultWithArrayShapedRows,
   ExecutionResultWithObjectShapedRows,
@@ -18,9 +19,12 @@ import type {
   UnknownArrayShape,
   UnknownObjectShape,
   UnknownRowShape,
-} from "@madatdata/base-client";
+} from "@madatdata/core";
 
-import { makeClient } from "@madatdata/client-http/client-http";
+import {
+  makeSplitgraphHTTPContext,
+  SplitgraphDataContext,
+} from "@madatdata/core/splitgraph";
 
 // export const useSqlStore = () => {
 //   const sqlStore = useSyncExternalStore(
@@ -30,22 +34,28 @@ import { makeClient } from "@madatdata/client-http/client-http";
 //   return sqlStore;
 // };
 
-const DSXContext = createContext<{ client: Client | null }>({ client: null });
+export const makeDefaultAnonymousContext = () => {
+  const defaultAnonymousContext = makeSplitgraphHTTPContext({
+    credential: null,
+  });
+
+  return defaultAnonymousContext;
+};
+
+const DSXContext = createContext<SplitgraphDataContext>(
+  makeSplitgraphHTTPContext()
+);
 
 export const SqlProvider = ({
   children,
-  clientOptions,
-}: PropsWithChildren<{ clientOptions: Parameters<typeof makeClient>[0] }>) => {
-  const stableClient = useMemo(() => makeClient(clientOptions), []);
+  options,
+}: PropsWithChildren<{
+  options: Parameters<typeof makeSplitgraphHTTPContext>[0];
+}>) => {
+  const stableContext = useMemo(() => makeSplitgraphHTTPContext(options), []);
 
   return (
-    <DSXContext.Provider
-      value={{
-        client: stableClient,
-      }}
-    >
-      {children}
-    </DSXContext.Provider>
+    <DSXContext.Provider value={stableContext}>{children}</DSXContext.Provider>
   );
 };
 

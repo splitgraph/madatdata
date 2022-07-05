@@ -4,13 +4,8 @@
   "exclude": ["build", "*.test.ts", "*.test.tsx"],
   "compilerOptions": {
     "outDir": "./packages/react/build",
-    "rootDir": "."
+    "rootDir": ".",
+    "jsx": "react-native"
   },
-  "references": [
-    { "path": "../core/tsconfig.build.json" },
-    // TODO: export from core/base instead
-    { "path": "../base-client/tsconfig.build.json" },
-    // TODO: not necessary (since it's accessed via export from core)
-    { "path": "../client-http/tsconfig.build.json" }
-  ]
+  "references": [{ "path": "../core/tsconfig.build.json" }]
 }

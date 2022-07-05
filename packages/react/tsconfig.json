@@ -4,10 +4,6 @@
   "exclude": ["build"],
   "references": [
     { "path": "../test-helpers" },
-    { "path": "../core/tsconfig.json" },
-    // TODO: export from core/base instead
-    { "path": "../base-client/tsconfig.json" },
-    // TODO: not necessary (since it's accessed via export from core)
-    { "path": "../client-http/tsconfig.json" }
+    { "path": "../core/tsconfig.json" }
   ]
 }
