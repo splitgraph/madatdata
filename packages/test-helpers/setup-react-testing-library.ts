@@ -2,6 +2,7 @@ import type { PropsWithChildren } from "react";
 import { render } from "@testing-library/react";
 import { afterEach } from "vitest";
 import { cleanup } from "@testing-library/react";
+
 export const setupReactTestingLibrary = () => {
   afterEach(cleanup);
 };
