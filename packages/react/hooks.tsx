@@ -42,7 +42,7 @@ export const makeDefaultAnonymousContext = () => {
   return defaultAnonymousContext;
 };
 
-const DSXContext = createContext<SplitgraphDataContext>(
+export const DSXContext = createContext<SplitgraphDataContext>(
   makeSplitgraphHTTPContext()
 );
 

@@ -5,7 +5,7 @@
   "compilerOptions": {
     "outDir": "./packages/react/build",
     "rootDir": ".",
-    "jsx": "react-native"
+    "jsx": "react-jsx"
   },
   "references": [{ "path": "../core/tsconfig.build.json" }]
 }
