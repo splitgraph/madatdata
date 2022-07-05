@@ -9,7 +9,7 @@
     "build": "yarn tsc-multi",
     "clean": "yarn clean.verbose-default 2>&1 >/dev/null || true",
     "check": "yarn format.check && yarn codegen && yarn typecheck && yarn test-ci && yarn build",
-    "test-ci": "yarn vitest run",
+    "test-ci": "yarn vitest run --coverage",
     "test-mitm": "INSECURE_TLS=1 MITM=http://127.0.0.1:7979 yarn vitest",
     "yeet": "yarn workspace @madatdata/yeet run yeet",
     "format": "yarn run format.base --write --list-different .",
@@ -24,6 +24,7 @@
   "devDependencies": {
     "@types/node": "16.11.38",
     "@vitejs/plugin-react": "^1.3.2",
+    "c8": "7.11.3",
     "global-agent": "3.0.0",
     "jsdom": "19.0.0",
     "msw": "0.42.1",
