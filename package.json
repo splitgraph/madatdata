@@ -28,7 +28,7 @@
   },
   "scripts": {
     "codegen": "yarn workspace @madatdata/db-splitgraph codegen-fresh",
-    "typecheck": "yarn tsc --build --verbose tsconfig.json",
+    "typecheck": "wireit",
     "test": "yarn vitest",
     "build": "yarn tsc-multi",
     "clean": "yarn clean.verbose-default 2>&1 >/dev/null || true",
@@ -41,5 +41,10 @@
     "format.base": "yarn prettier --config .prettierrc --ignore-path .prettierignore --ignore-unknown",
     "format.warn": "echo ; echo \"Formatting issues found. To apply changes, run yarn format\" ; exit 1 ;",
     "clean.verbose-default": "yarn rimraf dist packages/*/build/* || true"
+  },
+  "wireit": {
+    "typecheck": {
+      "command": "yarn tsc --build --verbose tsconfig.json"
+    }
   }
 }
