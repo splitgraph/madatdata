@@ -2,22 +2,6 @@
   "name": "@madatdata/root",
   "packageManager": "yarn@3.2.1",
   "private": true,
-  "scripts": {
-    "codegen": "yarn workspace @madatdata/db-splitgraph codegen-fresh",
-    "typecheck": "yarn tsc --build --verbose tsconfig.json",
-    "test": "yarn vitest",
-    "build": "yarn tsc-multi",
-    "clean": "yarn clean.verbose-default 2>&1 >/dev/null || true",
-    "check": "yarn format.check && yarn codegen && yarn typecheck && yarn test-ci && yarn build",
-    "test-ci": "yarn vitest run --coverage",
-    "test-mitm": "INSECURE_TLS=1 MITM=http://127.0.0.1:7979 yarn vitest",
-    "yeet": "yarn workspace @madatdata/yeet run yeet",
-    "format": "yarn run format.base --write --list-different .",
-    "format.check": "yarn run format.base --check . || { yarn run format.warn ; }",
-    "format.base": "yarn prettier --config .prettierrc --ignore-path .prettierignore --ignore-unknown",
-    "format.warn": "echo ; echo \"Formatting issues found. To apply changes, run yarn format\" ; exit 1 ;",
-    "clean.verbose-default": "yarn rimraf dist packages/*/build/* || true"
-  },
   "workspaces": [
     "packages/*"
   ],
@@ -41,5 +25,21 @@
   },
   "dependencies": {
     "cross-fetch": "3.1.5"
+  },
+  "scripts": {
+    "codegen": "yarn workspace @madatdata/db-splitgraph codegen-fresh",
+    "typecheck": "yarn tsc --build --verbose tsconfig.json",
+    "test": "yarn vitest",
+    "build": "yarn tsc-multi",
+    "clean": "yarn clean.verbose-default 2>&1 >/dev/null || true",
+    "check": "yarn format.check && yarn codegen && yarn typecheck && yarn test-ci && yarn build",
+    "test-ci": "yarn vitest run --coverage",
+    "test-mitm": "INSECURE_TLS=1 MITM=http://127.0.0.1:7979 yarn vitest",
+    "yeet": "yarn workspace @madatdata/yeet run yeet",
+    "format": "yarn run format.base --write --list-different .",
+    "format.check": "yarn run format.base --check . || { yarn run format.warn ; }",
+    "format.base": "yarn prettier --config .prettierrc --ignore-path .prettierignore --ignore-unknown",
+    "format.warn": "echo ; echo \"Formatting issues found. To apply changes, run yarn format\" ; exit 1 ;",
+    "clean.verbose-default": "yarn rimraf dist packages/*/build/* || true"
   }
 }
