@@ -27,10 +27,10 @@
     "cross-fetch": "3.1.5"
   },
   "scripts": {
-    "codegen": "yarn workspace @madatdata/db-splitgraph codegen-fresh",
+    "codegen": "wireit",
     "typecheck": "wireit",
     "test": "yarn vitest",
-    "build": "yarn tsc-multi",
+    "build": "wireit",
     "clean": "yarn clean.verbose-default 2>&1 >/dev/null || true",
     "check": "yarn format.check && yarn codegen && yarn typecheck && yarn test-ci && yarn build",
     "test-ci": "yarn vitest run --coverage",
@@ -43,8 +43,47 @@
     "clean.verbose-default": "yarn rimraf dist packages/*/build/* || true"
   },
   "wireit": {
+    "build": {
+      "//": "NOTE: declare output but not input, to always force a clean build",
+      "command": "yarn tsc-multi --verbose",
+      "clean": true,
+      "output": [
+        "packages/**/build"
+      ],
+      "packageLocks": [
+        "yarn.lock"
+      ],
+      "dependencies": [
+        "typecheck"
+      ]
+    },
     "typecheck": {
-      "command": "yarn tsc --build --verbose tsconfig.json"
+      "//": "NOTE: let tsc handle incremental builds (don't declare wireit files/output)",
+      "command": "yarn tsc --build --verbose --pretty tsconfig.json",
+      "dependencies": [
+        "codegen"
+      ]
+    },
+    "codegen": {
+      "//": "TODO: move this into db-splitgraph package.json",
+      "command": "yarn workspace @madatdata/db-splitgraph codegen-fresh",
+      "packageLocks": [
+        "yarn.lock"
+      ],
+      "output": [
+        "packages/db-splitgraph/plugins/importers/generated",
+        "packages/db-splitgraph/gql-client/generated",
+        "packages/db-splitgraph/gql-client/**/*.generated.ts"
+      ],
+      "files": [
+        "packages/db-splitgraph/codegen.yml",
+        "packages/db-splitgraph/codegen.schema.yml",
+        "packages/db-splitgraph/package.json",
+        "packages/db-splitgraph/**/*.ts",
+        "!packages/db-splitgraph/**/*.generated.ts",
+        "!packages/db-splitgraph/plugins/importers/generated",
+        "!packages/db-splitgraph/gql-client/generated"
+      ]
     }
   }
 }
