@@ -4,19 +4,6 @@
   "packageManager": "yarn@3.2.0",
   "main": "index.ts",
   "types": "./build/es2020/index.d.ts",
-  "scripts": {
-    "dev": "yarn codegen-gql --watch",
-    "dev-fresh": "yarn clean ; yarn codegen && yarn codegen-gql --watch",
-    "clean": "yarn clean-codegen-gql ; yarn clean-generated-plugins",
-    "codegen": "yarn codegen-fetch-schema && yarn codegen-gql && yarn run generate-plugins",
-    "codegen-fresh": "yarn clean ; yarn codegen",
-    "codegen-fetch-schema": "DEBUG=1 VERBOSE=1 yarn graphql-codegen --config codegen.schema.yml",
-    "codegen-gql": "DEBUG=1 VERBOSE=1 yarn graphql-codegen --config codegen.yml",
-    "clean-codegen-gql": "yarn rimraf gql-client/generated/* **/*.generated.ts",
-    "generate-plugins": "yarn esno ./plugins/generate-plugins.script.ts",
-    "generate-plugins-debug": "yarn esno --inspect-brk=127.0.0.1:9229 ./plugins/generate-plugins.script.ts",
-    "clean-generated-plugins": "yarn rimraf plugins/importers/generated/*"
-  },
   "dependencies": {
     "@madatdata/base-client": "workspace:*",
     "@madatdata/base-db": "workspace:*",
@@ -42,5 +29,67 @@
     "access": "public",
     "main": "./build/es2020-commonjs/index.cjs",
     "module": "./build/es2020/index.mjs"
+  },
+  "scripts": {
+    "dev": "yarn codegen-gql --watch",
+    "generate-graphql": "wireit",
+    "fetch-remote-graphql-schema": "wireit",
+    "dev-fresh": "yarn clean ; yarn codegen && yarn codegen-gql --watch",
+    "not-clean": "yarn clean-codegen-gql ; yarn clean-generated-plugins",
+    "codegen-DEPRECATED-TODO": "yarn codegen-fetch-schema && yarn codegen-gql && yarn run generate-plugins",
+    "codegen-fresh": "yarn clean ; yarn codegen",
+    "codegen-fetch-schema": "DEBUG=1 VERBOSE=1 yarn graphql-codegen --config codegen.schema.yml",
+    "codegen-gql": "DEBUG=1 VERBOSE=1 yarn graphql-codegen --config codegen.yml",
+    "clean-codegen-gql": "echo IN-CLEAN-CODEGEN-GQL ; yarn rimraf gql-client/generated/* **/*.generated.ts",
+    "generate-plugins": "wireit",
+    "generate-plugins-debug": "yarn esno --inspect-brk=127.0.0.1:9229 ./plugins/generate-plugins.script.ts",
+    "clean-generated-plugins": "echo IN-CLEAN-GENERATED-PLUGINS ; yarn rimraf plugins/importers/generated/*"
+  },
+  "wireit": {
+    "generate-plugins": {
+      "dependencies": [
+        "generate-graphql"
+      ],
+      "command": "yarn esno ./plugins/generate-plugins.script.ts",
+      "files": [
+        "plugins/generate-plugins.script.ts"
+      ],
+      "output": [
+        "plugins/importers/generated"
+      ],
+      "packageLocks": [
+        "yarn.lock"
+      ]
+    },
+    "generate-graphql": {
+      "command": "DEBUG=1 VERBOSE=1 yarn graphql-codegen --config codegen.yml",
+      "files": [
+        "gql-client/generated/unified-schema.graphql",
+        "codegen.yml",
+        "**/*.ts",
+        "!**/*.generated.ts",
+        "!plugins/importers/generated/**/*.ts",
+        "!gql-client/generated/*",
+        "!build",
+        "!.wireit"
+      ],
+      "packageLocks": [
+        "yarn.lock"
+      ],
+      "output": [
+        "**/*.generated.ts",
+        "gql-client/generated/*.ts",
+        "!build",
+        "!.wireit"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "fetch-remote-graphql-schema": {
+      "//": "this command should be manually run, so don't depend on anything",
+      "command": "DEBUG=1 VERBOSE=1 yarn graphql-codegen --config codegen.schema.yml",
+      "output": [],
+      "packageLocks": [],
+      "files": []
+    }
   }
 }

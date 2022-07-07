@@ -31,7 +31,7 @@
     "typecheck": "wireit",
     "test": "yarn vitest",
     "build": "wireit",
-    "clean": "yarn clean.verbose-default 2>&1 >/dev/null || true",
+    "not-clean": "yarn clean.verbose-default 2>&1 >/dev/null || true",
     "check": "yarn format.check && yarn codegen && yarn typecheck && yarn test-ci && yarn build",
     "test-ci": "yarn vitest run --coverage",
     "test-mitm": "INSECURE_TLS=1 MITM=http://127.0.0.1:7979 yarn vitest",
@@ -40,7 +40,7 @@
     "format.check": "yarn run format.base --check . || { yarn run format.warn ; }",
     "format.base": "yarn prettier --config .prettierrc --ignore-path .prettierignore --ignore-unknown",
     "format.warn": "echo ; echo \"Formatting issues found. To apply changes, run yarn format\" ; exit 1 ;",
-    "clean.verbose-default": "yarn rimraf dist packages/*/build/* || true"
+    "clean.verbose-default": "yarn rimraf dist packages/*/build/* packages/*/.wireit || true"
   },
   "wireit": {
     "build": {
@@ -65,25 +65,12 @@
       ]
     },
     "codegen": {
-      "//": "TODO: move this into db-splitgraph package.json",
-      "command": "yarn workspace @madatdata/db-splitgraph codegen-fresh",
-      "packageLocks": [
-        "yarn.lock"
+      "command": "echo codegen-shim",
+      "dependencies": [
+        "./packages/db-splitgraph:generate-plugins"
       ],
-      "output": [
-        "packages/db-splitgraph/plugins/importers/generated",
-        "packages/db-splitgraph/gql-client/generated",
-        "packages/db-splitgraph/gql-client/**/*.generated.ts"
-      ],
-      "files": [
-        "packages/db-splitgraph/codegen.yml",
-        "packages/db-splitgraph/codegen.schema.yml",
-        "packages/db-splitgraph/package.json",
-        "packages/db-splitgraph/**/*.ts",
-        "!packages/db-splitgraph/**/*.generated.ts",
-        "!packages/db-splitgraph/plugins/importers/generated",
-        "!packages/db-splitgraph/gql-client/generated"
-      ]
+      "output": [],
+      "files": []
     }
   }
 }

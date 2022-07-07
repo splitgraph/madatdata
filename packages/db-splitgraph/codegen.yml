@@ -1,6 +1,6 @@
-hooks:
-  afterOneFileWrite:
-    - $(yarn workspace @madatdata/root bin prettier) --write
+# hooks:
+#   afterOneFileWrite:
+#     - $(yarn workspace @madatdata/root bin prettier) --write
 config:
   # Refer to plugins `typescript` and `typescript-operations` for most config
   # Note that docs might be slightly out of date from real options
