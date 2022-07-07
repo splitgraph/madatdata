@@ -44,31 +44,31 @@
   },
   "wireit": {
     "build": {
-      "//": "NOTE: declare output but not input, to always force a clean build",
+      "dependencies": [
+        "typecheck"
+      ],
       "command": "yarn tsc-multi --verbose",
       "clean": true,
+      "//": "NOTE: declare output but not input, to always force a clean build",
       "output": [
         "packages/**/build"
       ],
       "packageLocks": [
         "yarn.lock"
-      ],
-      "dependencies": [
-        "typecheck"
       ]
     },
     "typecheck": {
-      "//": "NOTE: let tsc handle incremental builds (don't declare wireit files/output)",
-      "command": "yarn tsc --build --verbose --pretty tsconfig.json",
       "dependencies": [
         "codegen"
-      ]
+      ],
+      "command": "yarn tsc --build --verbose --pretty tsconfig.json",
+      "//": "NOTE: let tsc handle incremental builds (don't declare wireit files/output)"
     },
     "codegen": {
-      "command": "echo codegen-shim",
       "dependencies": [
-        "./packages/db-splitgraph:generate-plugins"
+        "./packages/db-splitgraph:generate-code"
       ],
+      "command": "echo codegen-shim",
       "output": [],
       "files": []
     }

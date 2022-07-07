@@ -14,6 +14,6 @@ jobs:
           cache: "yarn"
       - run: yarn install --immutable
       - run: yarn format.check
-      - run: yarn build --verbose
+      - run: yarn build
       # NOTE: misleading. test doesn't actually depend on build.
       - run: yarn test-ci

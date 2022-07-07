@@ -42,10 +42,17 @@
     "codegen-gql": "DEBUG=1 VERBOSE=1 yarn graphql-codegen --config codegen.yml",
     "clean-codegen-gql": "echo IN-CLEAN-CODEGEN-GQL ; yarn rimraf gql-client/generated/* **/*.generated.ts",
     "generate-plugins": "wireit",
+    "generate-code": "wireit",
     "generate-plugins-debug": "yarn esno --inspect-brk=127.0.0.1:9229 ./plugins/generate-plugins.script.ts",
     "clean-generated-plugins": "echo IN-CLEAN-GENERATED-PLUGINS ; yarn rimraf plugins/importers/generated/*"
   },
   "wireit": {
+    "generate-code": {
+      "dependencies": [
+        "generate-plugins",
+        "generate-graphql"
+      ]
+    },
     "generate-plugins": {
       "dependencies": [
         "generate-graphql"
@@ -62,6 +69,9 @@
       ]
     },
     "generate-graphql": {
+      "dependencies": [
+        "fetch-remote-graphql-schema"
+      ],
       "command": "DEBUG=1 VERBOSE=1 yarn graphql-codegen --config codegen.yml",
       "files": [
         "gql-client/generated/unified-schema.graphql",
@@ -85,7 +95,7 @@
       "clean": "if-file-deleted"
     },
     "fetch-remote-graphql-schema": {
-      "//": "this command should be manually run, so don't depend on anything",
+      "//": "this command should be run once or out of band, so no dependencies",
       "command": "DEBUG=1 VERBOSE=1 yarn graphql-codegen --config codegen.schema.yml",
       "output": [],
       "packageLocks": [],
