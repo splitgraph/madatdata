@@ -3,7 +3,6 @@
   "extends": "./tsconfig.base.json",
   "files": [],
   "include": [],
-  "exclude": ["node_modules", ".*", "public", "dist", "build"],
   "references": [
     { "path": "./packages/core" },
     { "path": "./packages/ast-parser" },
