@@ -1,0 +1,8 @@
+releases:
+  "@madatdata/base-client": patch
+  "@madatdata/base-db": patch
+  "@madatdata/client-http": patch
+  "@madatdata/client-postgres": patch
+  "@madatdata/core": patch
+  "@madatdata/db-splitgraph": patch
+  "@madatdata/react": patch
