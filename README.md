@@ -531,6 +531,44 @@ yarn check
 yarn up -E -i '*'
 ```
 
+## Publish
+
+Running `yarn version-all` or `yarn publish-all` will run the corresponding
+`yarn version` or `yarn publish` command within each workspace where it is
+defined, in topological order. Therefore, to indicate a workspace is
+publishable, make sure the `package.json` includes `scripts.version` and
+`scripts.publish`.
+
+Create deferred patch changes (if necessary) in topological order:
+
+```
+yarn version-all patch -d
+```
+
+Apply the version changes (remove `--dry-run` when ready):
+
+```
+yarn version apply --all --dry-run
+```
+
+Publish the changes
+
+```
+yarn publish-all --otp <your otp>
+```
+
+Note: If `publish-all` takes more than 30 seconds, the OTP could expire. It's
+currently unknown what will happen in this case, but it could break this script,
+in which case dropping the `--otp` might be sufficient for it to prompt on each.
+
+# Appendix
+
+## Alternative Names
+
+- Madatdata
+- DSX
+- DDX
+
 [src-base-client]: ./packages/base-client/index.ts
 [src-client-http]: ./packages/client-http/client-http.ts
 [src-client-postgres]: ./packages/client-postgres/client-postgres.ts
@@ -555,11 +593,3 @@ yarn up -E -i '*'
 [tsc-multi]: https://github.com/tommy351/tsc-multi
 [in-anger]:
   https://english.stackexchange.com/questions/30939/is-used-in-anger-a-britishism-for-something
-
-# Appendix
-
-## Alternative Names
-
-- Madatdata
-- DSX
-- DDX
