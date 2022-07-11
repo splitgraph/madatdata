@@ -21,6 +21,7 @@
     "module": "./build/es2020/index.mjs"
   },
   "scripts": {
-    "version": "yarn version"
+    "version": "yarn version",
+    "publish": "yarn npm publish"
   }
 }
