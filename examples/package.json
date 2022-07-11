@@ -2,8 +2,9 @@
   "workspaces": [
     "*"
   ],
-  "packageManager": "yarn@3.2.1",
   "installConfig": {
     "hoistingLimits": "workspaces"
-  }
+  },
+  "private": true,
+  "packageManager": "yarn@3.2.1"
 }
