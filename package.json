@@ -40,7 +40,9 @@
     "format.check": "yarn run format.base --check . || { yarn run format.warn ; }",
     "format.base": "yarn prettier --config .prettierrc --ignore-path .prettierignore --ignore-unknown",
     "format.warn": "echo ; echo \"Formatting issues found. To apply changes, run yarn format\" ; exit 1 ;",
-    "clean.verbose-default": "yarn rimraf dist packages/*/build/* packages/*/.wireit || true"
+    "clean.verbose-default": "yarn rimraf dist packages/*/build/* packages/*/.wireit || true",
+    "version-patch-all": "yarn workspaces foreach -Atv run version patch",
+    "version-patch-all-deferred": "yarn version-patch-all -d"
   },
   "wireit": {
     "build": {

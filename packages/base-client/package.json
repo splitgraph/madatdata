@@ -16,5 +16,8 @@
     "access": "public",
     "main": "./build/es2020-commonjs/index.cjs",
     "module": "./build/es2020/index.mjs"
+  },
+  "scripts": {
+    "version": "yarn version"
   }
 }

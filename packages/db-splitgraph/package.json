@@ -44,7 +44,8 @@
     "generate-plugins": "wireit",
     "generate-code": "wireit",
     "generate-plugins-debug": "yarn esno --inspect-brk=127.0.0.1:9229 ./plugins/generate-plugins.script.ts",
-    "clean-generated-plugins": "echo IN-CLEAN-GENERATED-PLUGINS ; yarn rimraf plugins/importers/generated/*"
+    "clean-generated-plugins": "echo IN-CLEAN-GENERATED-PLUGINS ; yarn rimraf plugins/importers/generated/*",
+    "version": "yarn version"
   },
   "wireit": {
     "generate-code": {
