@@ -1170,7 +1170,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@graphql-tools/url-loader@npm:7.12.1, @graphql-tools/url-loader@npm:^7.12.1":
+"@graphql-tools/url-loader@npm:7.12.1, @graphql-tools/url-loader@npm:^7.12.1, @graphql-tools/url-loader@npm:^7.9.7":
   version: 7.12.1
   resolution: "@graphql-tools/url-loader@npm:7.12.1"
   dependencies:
@@ -1192,31 +1192,6 @@ __metadata:
   peerDependencies:
     graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
   checksum: 8b49650f08a175f006519d9c771cd20e0d8462e5c07c58e3e9acad76b56fca22a74cb452898d83535f5113030fe37d453d37554a4ece09d6baceb029788d545e
-  languageName: node
-  linkType: hard
-
-"@graphql-tools/url-loader@npm:^7.9.7":
-  version: 7.11.0
-  resolution: "@graphql-tools/url-loader@npm:7.11.0"
-  dependencies:
-    "@graphql-tools/delegate": 8.8.0
-    "@graphql-tools/utils": 8.8.0
-    "@graphql-tools/wrap": 8.5.0
-    "@n1ru4l/graphql-live-query": ^0.9.0
-    "@types/ws": ^8.0.0
-    cross-undici-fetch: ^0.4.0
-    dset: ^3.1.2
-    extract-files: ^11.0.0
-    graphql-ws: ^5.4.1
-    isomorphic-ws: ^4.0.1
-    meros: ^1.1.4
-    sync-fetch: ^0.4.0
-    tslib: ^2.4.0
-    value-or-promise: ^1.0.11
-    ws: ^8.3.0
-  peerDependencies:
-    graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
-  checksum: 2c96fd55d324c31d10aa93c0ed1e08709b9f7579a0482dedaa431353c1a76241e7c0e13fea0887998723d5eedfe394c15f5d4da8613e0db08fdac65602b5218b
   languageName: node
   linkType: hard
 
@@ -2765,21 +2740,6 @@ __metadata:
     shebang-command: ^2.0.0
     which: ^2.0.1
   checksum: 671cc7c7288c3a8406f3c69a3ae2fc85555c04169e9d611def9a675635472614f1c0ed0ef80955d5b6d4e724f6ced67f0ad1bb006c2ea643488fcfef994d7f52
-  languageName: node
-  linkType: hard
-
-"cross-undici-fetch@npm:^0.4.0":
-  version: 0.4.8
-  resolution: "cross-undici-fetch@npm:0.4.8"
-  dependencies:
-    abort-controller: ^3.0.0
-    busboy: ^1.6.0
-    form-data-encoder: ^1.7.1
-    formdata-node: ^4.3.1
-    node-fetch: ^2.6.7
-    undici: ^5.1.0
-    web-streams-polyfill: ^3.2.0
-  checksum: 7645fde1423af37ea2e3d97d913abefaf460eb3031055f495944a410a284dac6a75bec2c6767ca2503513c1687eeca27edae4ee63532bc58c1f8a9f52860c68e
   languageName: node
   linkType: hard
 
@@ -4389,7 +4349,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"is-core-module@npm:^2.8.1, is-core-module@npm:^2.9.0":
+"is-core-module@npm:^2.9.0":
   version: 2.9.0
   resolution: "is-core-module@npm:2.9.0"
   dependencies:
@@ -4527,15 +4487,6 @@ __metadata:
     node-fetch: ^2.6.1
     whatwg-fetch: ^3.4.1
   checksum: e5ab79a56ce5af6ddd21265f59312ad9a4bc5a72cebc98b54797b42cb30441d5c5f8d17c5cd84a99e18101c8af6f90c081ecb8d12fd79e332be1778d58486d75
-  languageName: node
-  linkType: hard
-
-"isomorphic-ws@npm:^4.0.1":
-  version: 4.0.1
-  resolution: "isomorphic-ws@npm:4.0.1"
-  peerDependencies:
-    ws: "*"
-  checksum: d7190eadefdc28bdb93d67b5f0c603385aaf87724fa2974abb382ac1ec9756ed2cfb27065cbe76122879c2d452e2982bc4314317f3d6c737ddda6c047328771a
   languageName: node
   linkType: hard
 
@@ -6045,20 +5996,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"resolve@npm:^1.22.0":
-  version: 1.22.0
-  resolution: "resolve@npm:1.22.0"
-  dependencies:
-    is-core-module: ^2.8.1
-    path-parse: ^1.0.7
-    supports-preserve-symlinks-flag: ^1.0.0
-  bin:
-    resolve: bin/resolve
-  checksum: a2d14cc437b3a23996f8c7367eee5c7cf8149c586b07ca2ae00e96581ce59455555a1190be9aa92154785cf9f2042646c200d0e00e0bbd2b8a995a93a0ed3e4e
-  languageName: node
-  linkType: hard
-
-"resolve@npm:^1.22.1":
+"resolve@npm:^1.22.0, resolve@npm:^1.22.1":
   version: 1.22.1
   resolution: "resolve@npm:1.22.1"
   dependencies:
@@ -6071,20 +6009,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"resolve@patch:resolve@^1.22.0#~builtin<compat/resolve>":
-  version: 1.22.0
-  resolution: "resolve@patch:resolve@npm%3A1.22.0#~builtin<compat/resolve>::version=1.22.0&hash=07638b"
-  dependencies:
-    is-core-module: ^2.8.1
-    path-parse: ^1.0.7
-    supports-preserve-symlinks-flag: ^1.0.0
-  bin:
-    resolve: bin/resolve
-  checksum: c79ecaea36c872ee4a79e3db0d3d4160b593f2ca16e031d8283735acd01715a203607e9ded3f91f68899c2937fa0d49390cddbe0fb2852629212f3cda283f4a7
-  languageName: node
-  linkType: hard
-
-"resolve@patch:resolve@^1.22.1#~builtin<compat/resolve>":
+"resolve@patch:resolve@^1.22.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.22.1#~builtin<compat/resolve>":
   version: 1.22.1
   resolution: "resolve@patch:resolve@npm%3A1.22.1#~builtin<compat/resolve>::version=1.22.1&hash=07638b"
   dependencies:
@@ -6942,7 +6867,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici@npm:5.5.1, undici@npm:^5.1.0":
+"undici@npm:5.5.1":
   version: 5.5.1
   resolution: "undici@npm:5.5.1"
   checksum: c041c9093df7ec683479a9555581206a7c7bebfc1ed6e8669920e55618461fc4ce08938e2fbf8ef7d692c2813c44392b5ed25c58396ee4a72ffd1f1f953712c9
