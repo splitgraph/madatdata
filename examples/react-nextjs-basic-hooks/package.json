@@ -1,9 +1,9 @@
 {
   "private": true,
   "scripts": {
-    "dev": "next",
-    "build": "next build",
-    "start": "next start"
+    "dev": "yarn next",
+    "build": "yarn next build",
+    "start": "yarn next start"
   },
   "dependencies": {
     "@madatdata/react": "latest",
