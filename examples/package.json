@@ -1,0 +1,10 @@
+{
+  "name": "examples",
+  "workspaces": [
+    "*"
+  ],
+  "packageManager": "yarn@3.2.1",
+  "installConfig": {
+    "hoistingLimits": "workspaces"
+  }
+}
