@@ -8,6 +8,11 @@
   "private": true,
   "packageManager": "yarn@3.2.1",
   "scripts": {
-    "with-verdaccio": "VERDACCIO=http://localhost:4873 yarn"
+    "with-verdaccio": "VERDACCIO=http://localhost:4873 yarn",
+    "clean-install-madatdata": "yarn md.clear-cache",
+    "md.clear-cache": "rimraf '.yarn/cache/@madatdata*'"
+  },
+  "devDependencies": {
+    "rimraf": "3.0.2"
   }
 }
