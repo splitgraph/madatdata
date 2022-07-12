@@ -1,3 +1,5 @@
 export * from "@madatdata/base-client";
 export * from "@madatdata/base-db";
-export * from "./data-context";
+export type { DataContext } from "./data-context";
+
+declare module "@madatdata/core/splitgraph";
