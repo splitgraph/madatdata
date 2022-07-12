@@ -24,7 +24,7 @@ import type {
 import {
   makeSplitgraphHTTPContext,
   SplitgraphDataContext,
-} from "@madatdata/core/splitgraph";
+} from "@madatdata/core";
 
 // export const useSqlStore = () => {
 //   const sqlStore = useSyncExternalStore(
