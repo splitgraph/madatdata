@@ -6,5 +6,8 @@
     "hoistingLimits": "dependencies"
   },
   "private": true,
-  "packageManager": "yarn@3.2.1"
+  "packageManager": "yarn@3.2.1",
+  "scripts": {
+    "with-verdaccio": "VERDACCIO=http://localhost:4873 yarn"
+  }
 }
