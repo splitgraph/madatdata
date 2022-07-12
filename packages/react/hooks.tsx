@@ -141,5 +141,7 @@ export const HelloButton = () => {
     [setState, state]
   );
 
+  console.log("v1");
+
   return <button onClick={toggle}>{state}</button>;
 };
