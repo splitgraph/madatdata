@@ -47,9 +47,11 @@ LIMIT 100;`
 
 const SplitgraphSampleQuery = () => {
   // Uses splitgraph.com by default (anon access supported for public data)
-  <SqlProvider options={{ credential: null }}>
-    <ExampleComponentUsingSQL />
-  </SqlProvider>;
+  return (
+    <SqlProvider options={{ credential: null }}>
+      <ExampleComponentUsingSQL />
+    </SqlProvider>
+  );
 };
 
 export default SplitgraphSampleQuery;

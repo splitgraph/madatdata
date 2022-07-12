@@ -13,7 +13,7 @@ __metadata:
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: c89633793952bc81f793299fcd0e4f4f6a2335b8172fe1ef236bbc74bf92d25f9a3d39b87c104c1f24bceb39e2a528007457d1e6f653bc518e422def3dbcd984
+  checksum: 89031d582adbd4c0a4320dd04b869421e45964326df5570454c4a88d77f55de638fbe6052e031d82a04a8cf774cdfb42e5f42e2629e2b55e7c314c04b1f36f1c
   languageName: node
   linkType: hard
 
@@ -27,7 +27,7 @@ __metadata:
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: b0d8246bd13f24053bc6b82137f06497a3803e75683617d3f726ee17ad5efa022d5e7cff8e435eed309c9b8307ff3e890e206b40a4b5f6036a839518ef06b5d1
+  checksum: 7b2e77cf7469ba1e94350d95c6fafe4f6c5e42ee37464897dd237621d761085aeae9bd31e4fd3d3c9050ef635d4bce4280aa4b747bd133de34f117f84bcb251f
   languageName: node
   linkType: hard
 
@@ -41,7 +41,7 @@ __metadata:
   peerDependenciesMeta:
     cross-fetch:
       optional: true
-  checksum: da3e9dc751c908b85502a2ed9639f29509d747f06442fb717116643ce14e9de1d64a5cc831a63ccf8e2013ff6061d49dca651ef8fac4d2242d6ed38f30df13fb
+  checksum: d0aa8b30fe53cdfc96b95fde875f8dc8322fa7ffc62450b189a6d99b8dbcbfa4765cdcb53c1257d9f4a02b7c01232ee17045d86bb1337535d19b16e1849873d5
   languageName: node
   linkType: hard
 
@@ -53,7 +53,7 @@ __metadata:
     "@madatdata/base-db": 0.0.5
     "@madatdata/client-http": 0.0.5
     "@madatdata/db-splitgraph": 0.0.5
-  checksum: 98bd66d078cdb507a8d4537962eeec81ec132417a76c26ae186469668e95ac7945dbdc60fb9bb8f4459ef18690d4f70910a3b2e5c052d3a3cdf6c9e9d7f03f39
+  checksum: 3c5c701ed823442e020f69100994d97b6dcac11ab1da219cae41c44ce7aa2d3bc5f2dce921413146852466d10c26d08d9c86fcb0e45f41c414761e8609f66d14
   languageName: node
   linkType: hard
 
@@ -66,7 +66,7 @@ __metadata:
     graphql: 16.5.0
     graphql-request: 4.3.0
     typescript-retry-decorator: 2.0.5
-  checksum: 1d015f1293fee75fdb506e3819e8dc036e791983a67c98efd298d79cabe79920ace23395b8c5cfda13659c79b3b151b6b5f1203641d1c079db9484336cc636af
+  checksum: cbd77a641d90a387999613782b3d81917167159f1598fda539cc37773c96d71ca973065aa8f52fdc4927b243bdaa92e31ff3976d26a98bd8bcf51b632a4a36df
   languageName: node
   linkType: hard
 
@@ -78,7 +78,7 @@ __metadata:
   peerDependencies:
     react: ">=17 || >=18"
     react-dom: ">=17 || >=18"
-  checksum: c99ebd6c0d8a9081c7197470ad68bf01dd77f0468294d490c20b1259a4b9c5c63e8fb535369df36492f2ba80ae22a9c6c71a82ee32d956146ecdfee812c17378
+  checksum: f673690e158a2c631c5f15c7a3b3c4dc80d5885777cddbe89c9ca40ef13b6252db35c479d7b5de47fb2de9aa91bbc8d91b321d7758e2e80b71e5782a1393000e
   languageName: node
   linkType: hard
 
