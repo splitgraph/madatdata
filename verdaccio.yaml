@@ -70,12 +70,12 @@ uplinks:
 # https://verdaccio.org/docs/protect-your-dependencies/
 # https://verdaccio.org/docs/configuration#packages
 packages:
-  "@*/*":
+  "@madatdata/*":
     # scoped packages
     access: $all
-    publish: $authenticated
-    unpublish: $authenticated
-    proxy: npmjs
+    publish: $all
+    unpublish: $all
+    proxy: localhost
 
   "**":
     # allow all users (including non-authenticated users) to read and
