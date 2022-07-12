@@ -9,10 +9,17 @@
   "packageManager": "yarn@3.2.1",
   "scripts": {
     "with-verdaccio": "VERDACCIO=http://localhost:4873 yarn",
-    "clean-install-madatdata": "yarn md.clear-cache",
-    "md.clear-cache": "rimraf '.yarn/cache/@madatdata*'"
+    "clean-install-madatdata": "yarn md.clear ; yarn with-verdaccio install",
+    "md.clear": "yarn md.clear-cache ; yarn md.clear-nm ; yarn md.prune-nm-state",
+    "md.clear-cache": "yarn md.clear-local-cache ; yarn md.clear-global-cache",
+    "md.clear-local-cache": "yarn rimraf '.yarn/cache/@madatdata*'",
+    "md.clear-global-cache": "yarn rimraf \"$(yarn config get globalFolder)\"'/cache/@madatdata*'",
+    "md.clear-nm": "yarn rimraf '**/node_modules/@madatdata'",
+    "//": "note: md.prune-nm-state removes all @madatdata entries from node_modules/.yarn-state",
+    "md.prune-nm-state": "yarn replace '\"@madatdata\\/.*@.*\":\\n\\s+locations:\\n\\s+-\\s\".*\"\\n\\s' '' node_modules/.yarn-state.yml"
   },
   "devDependencies": {
+    "replace": "1.2.1",
     "rimraf": "3.0.2"
   }
 }

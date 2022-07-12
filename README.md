@@ -602,7 +602,9 @@ Clean publish and sync extensions:
 
 ```bash
 yarn build
-yarn rimraf '.verdaccio/storage/*' '.verdaccio/storage/.*' && touch .verdaccio/storage/.gitkeep
+
+yarn verdaccio.reset
+
 yarn with-verdaccio publish-all --tolerate-republish
 
 cd examples
