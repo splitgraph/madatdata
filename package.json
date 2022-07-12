@@ -44,7 +44,8 @@
     "clean.verbose-default": "yarn rimraf dist packages/*/build/* packages/*/.wireit || true",
     "version-all": "yarn workspaces foreach -Atv run version",
     "version-all-patch": "yarn version-all patch -d",
-    "publish-all": "yarn workspaces foreach -Atv run publish"
+    "publish-all": "yarn workspaces foreach -Atv run publish",
+    "with-verdaccio": "VERDACCIO=http://localhost:4873 yarn"
   },
   "wireit": {
     "build": {

@@ -561,6 +561,41 @@ Note: If `publish-all` takes more than 30 seconds, the OTP could expire. It's
 currently unknown what will happen in this case, but it could break this script,
 in which case dropping the `--otp` might be sufficient for it to prompt on each.
 
+## Verdaccio
+
+Start it
+
+```
+yarn verdaccio --config ./verdaccio.yaml
+```
+
+Login for first time. Choose any username/password. The credential will be
+persisted to `.verdaccio/htpasswd` for authenticating subsequent login attempts.
+
+```
+yarn npm login --publish
+```
+
+Reset it (clear the storage)
+
+```
+yarn rimraf '.verdaccio/storage/*' '!.verdaccio/storage/.gitkeep'
+```
+
+Publish to it. You probably want `--tolerate-republish`, if you're iterating on
+a local package registry for some reason an don't want to keep bumping the
+version. No scripts in this repository include publish flags by default, so you
+will need to provide it:
+
+```
+yarn with-verdaccio publish-all --tolerate-republish
+```
+
+Note: Prefix any `yarn` command with `yarn with-verdaccio` to run it with the
+environment variable `VERDACCIO=http://localhost:4873`, which gets interpolated
+into the necessary config settings in `.yarnrc.yml`, and otherwise defaults to
+`https://registry.yarnpkg.com`.
+
 # Appendix
 
 ## Alternative Names
