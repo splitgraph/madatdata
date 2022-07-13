@@ -8,15 +8,20 @@
   "private": true,
   "packageManager": "yarn@3.2.1",
   "scripts": {
-    "with-verdaccio": "VERDACCIO=http://localhost:4873 yarn",
-    "clean-install-madatdata": "yarn md.clear ; yarn with-verdaccio install",
-    "md.clear": "yarn md.clear-cache ; yarn md.clear-nm ; yarn md.prune-nm-state",
+    "verdaccio.pull": "yarn md.clear ; VERDACCIO=http://localhost:4873 yarn install",
+    "with-verdaccio": "yarn verdaccio.check && VERDACCIO=http://localhost:4873 yarn",
+    "// md.clear": "Note: md.clear-lock breaks future yarn commands other than install, so must be called last",
+    "md.clear": "yarn md.clear-cache ; yarn md.clear-nm ; yarn md.prune-nm-state ; yarn md.clear-lock ; ",
+    "md.clear-lock": "yarn replace '\"@madatdata\\/.*@.*\":\\n(\\s+.*\\n)+?\\n' '' yarn.lock",
     "md.clear-cache": "yarn md.clear-local-cache ; yarn md.clear-global-cache",
     "md.clear-local-cache": "yarn rimraf '.yarn/cache/@madatdata*'",
     "md.clear-global-cache": "yarn rimraf \"$(yarn config get globalFolder)\"'/cache/@madatdata*'",
     "md.clear-nm": "yarn rimraf '**/node_modules/@madatdata'",
-    "//": "note: md.prune-nm-state removes all @madatdata entries from node_modules/.yarn-state",
-    "md.prune-nm-state": "yarn replace '\"@madatdata\\/.*@.*\":\\n\\s+locations:\\n\\s+-\\s\".*\"\\n\\s' '' node_modules/.yarn-state.yml"
+    "// md.prune-nm-state": "Remove all @madatdata entries from node_modules/.yarn-state",
+    "md.prune-nm-state": "yarn replace '\"@madatdata\\/.*@.*\":\\n\\s+locations:\\n\\s+-\\s\".*\"\\n\\s' '' node_modules/.yarn-state.yml",
+    "// Aliases for commands in root of repository": "#",
+    "verdaccio.check": "( cd .. && yarn verdaccio.check )",
+    "verdaccio.start": "( cd .. && yarn verdaccio.start )"
   },
   "devDependencies": {
     "replace": "1.2.1",

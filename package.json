@@ -48,7 +48,7 @@
     "with-verdaccio": "yarn verdaccio.check && VERDACCIO=http://localhost:4873 yarn",
     "verdaccio.start": "yarn verdaccio --config ./verdaccio.yaml",
     "verdaccio.reset": "yarn rimraf '.verdaccio/storage/{.*,*}' && touch .verdaccio/storage/.gitkeep",
-    "verdaccio.check": "curl -sqf http://localhost:4873 || ( yarn verdaccio.warn ; exit 1 ; )",
+    "verdaccio.check": "curl -Isqf http://localhost:4873 || ( yarn verdaccio.warn ; exit 1 ; )",
     "verdaccio.warn": "echo 'Error: Verdaccio not running at localhost:4873. To start: `yarn verdaccio.start`'"
   },
   "wireit": {
