@@ -24,9 +24,13 @@ function experimentalPlugin() {
     load(id) {
       if (id.startsWith("\0" + virtualModulePrefix)) {
         return `
+console.log("here");
+console.log(import.meta);
 const id = \`${escapeBacktick(id.slice(1))}\`;
 export const dataContext = {
-  id: id
+  id: id,
+  metaUrl: import.meta.url,
+  importMeta: JSON.parse(JSON.stringify(import.meta, null, 2))
 };
 `;
       }

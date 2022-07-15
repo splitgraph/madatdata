@@ -6,6 +6,8 @@ import "./App.css";
 // https://github.com/microsoft/TypeScript/issues/38638
 import { dataContext } from "sql:arbitrary-name-for-some-context";
 
+console.log("dataContext:", dataContext);
+
 function App() {
   const [count, setCount] = useState(0);
 
