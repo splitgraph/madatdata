@@ -21,7 +21,8 @@
     "md.prune-nm-state": "yarn replace '\"@madatdata\\/.*@.*\":\\n\\s+locations:\\n\\s+-\\s\".*\"\\n\\s' '' node_modules/.yarn-state.yml",
     "// Aliases for commands in root of repository": "#",
     "verdaccio.check": "( cd .. && yarn verdaccio.check )",
-    "verdaccio.start": "( cd .. && yarn verdaccio.start )"
+    "verdaccio.start": "( cd .. && yarn verdaccio.start )",
+    "nuke": "yarn rimraf '**/node_modules/{.*,*}'"
   },
   "devDependencies": {
     "replace": "1.2.1",

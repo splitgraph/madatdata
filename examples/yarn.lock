@@ -439,7 +439,7 @@ __metadata:
   peerDependencies:
     react: ">=17 || >=18"
     react-dom: ">=17 || >=18"
-  checksum: c5cc42a46415617097b0ea19e9e909163f3bf3b96db817cf59554c3f2652446fa902a2ff256dfb0a4b8aef973f16d54f0758c4a90cbebf05037b18247190cab3
+  checksum: f673690e158a2c631c5f15c7a3b3c4dc80d5885777cddbe89c9ca40ef13b6252db35c479d7b5de47fb2de9aa91bbc8d91b321d7758e2e80b71e5782a1393000e
   languageName: node
   linkType: hard
 
@@ -578,9 +578,9 @@ __metadata:
   linkType: hard
 
 "@types/node@npm:^18.0.0":
-  version: 18.0.3
-  resolution: "@types/node@npm:18.0.3"
-  checksum: 5dec59fbbc1186c808b53df1ca717dad034dbd6a901c75f5b052c845618b531b05f27217122c6254db99529a68618e4cfc534ae3dbf4e88754e9e572df80defa
+  version: 18.0.4
+  resolution: "@types/node@npm:18.0.4"
+  checksum: 981284fd57941f233f0e77038087c122f56e3c2b4fc4e090dfc7f0a93abfc526d5ccdd59eb3ef551d713245cf3943e37c7b957f12ba699209341a447c39fab59
   languageName: node
   linkType: hard
 
@@ -794,14 +794,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"caniuse-lite@npm:^1.0.30001332":
-  version: 1.0.30001364
-  resolution: "caniuse-lite@npm:1.0.30001364"
-  checksum: 4765640fcc28acfd6f51742f2b315792df09648d3590fedcd1051cb5a5201c70df315aaff9bf29ad41bd1176926ce25d8b3b597c4f5bf6361c1f6c3d29250b15
-  languageName: node
-  linkType: hard
-
-"caniuse-lite@npm:^1.0.30001366":
+"caniuse-lite@npm:^1.0.30001332, caniuse-lite@npm:^1.0.30001366":
   version: 1.0.30001366
   resolution: "caniuse-lite@npm:1.0.30001366"
   checksum: eeb878e0be4090a4247dd3de5392ff1a864d086e5401790c7c81697918ce6ce3dac75956a21f9404b5ac770bfdabdb18619d0f920dc2295f3211ee893355f697
@@ -2478,6 +2471,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "vite-react-typescript-starter@workspace:vite-lit-react-ts-sql-query"
   dependencies:
+    "@madatdata/react": latest
     "@types/react": ^18.0.15
     "@types/react-dom": ^18.0.6
     "@vitejs/plugin-react": ^2.0.0
