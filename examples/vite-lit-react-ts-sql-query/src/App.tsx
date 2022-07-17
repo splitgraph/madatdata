@@ -4,12 +4,27 @@ import "./App.css";
 
 // https://github.com/hannoeru/vite-plugin-pages/blob/main/client.d.ts
 // https://github.com/microsoft/TypeScript/issues/38638
-import { dataContext } from "sql:arbitrary-name-for-some-context";
-
-console.log("dataContext:", dataContext);
+import { dataContext /*getDataContext*/ } from "sql:some-basic-import";
+import {
+  dataContext as qParamDataContext /*getDataContext*/,
+} from "sql:some-basic-import?x=1";
 
 function App() {
   const [count, setCount] = useState(0);
+
+  console.log("dataContext:", dataContext);
+
+  console.log("qParamDataContext", qParamDataContext);
+
+  import("sql:some-async-context")
+    .then(({ dataContext: lazyLoadedDataContext, getDataContext }) => {
+      console.log("lazyLoadedDataContext:", lazyLoadedDataContext);
+
+      console.log("reallyLazyLoadedDataContext:", getDataContext());
+    })
+    .catch((err) => {
+      console.error("import error:", err);
+    });
 
   return (
     <div className="App">
