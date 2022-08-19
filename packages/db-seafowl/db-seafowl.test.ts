@@ -47,4 +47,17 @@ describe.skipIf(shouldSkipSeafowlTests())("seafowl stub test", () => {
 
     expect((response as any)?.success).toEqual(true);
   });
+
+  it("can fingerprint with sha256 by default", async () => {
+    const db = createDb();
+
+    const fingerprint = await db.fingerprintQuery("select 1");
+
+    expect(fingerprint).toMatchInlineSnapshot(`
+      {
+        "fingerprint": "822ae07d4783158bc1912bb623e5107cc9002d519e1143a9c200ed6ee18b6d0f",
+        "normalized": "select 1",
+      }
+    `);
+  });
 });

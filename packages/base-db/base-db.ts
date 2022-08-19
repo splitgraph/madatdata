@@ -1,4 +1,5 @@
 import type { PluginMap } from "./plugin-bindings";
+import { webcrypto } from "node:crypto";
 
 // TODO: These are not related to client, should be exported from "core"?
 import {
@@ -68,9 +69,9 @@ export abstract class BaseDb<ConcretePluginMap extends PluginMap>
     // In node, we need to use the import from the ambient node: module
     // In vitest, really JSDOM, it's a bit of a mix between the two (window is available?)
     // NOTE: Need to test how this will work in a browser bundle which we don't even have yet
-    const subtle = await (async () => {
+    const subtle = (() => {
       if (typeof window === "undefined" || !window.crypto) {
-        const { webcrypto } = await import("node:crypto");
+        // TODO: put dynamic imports back here
         return webcrypto.subtle;
       } else {
         return window.crypto.subtle;
