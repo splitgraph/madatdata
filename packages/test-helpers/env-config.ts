@@ -61,3 +61,7 @@ const shouldIncludeIntegrationTests = () => {
 export const shouldSkipIntegrationTests = () => {
   return !shouldIncludeIntegrationTests();
 };
+
+export const shouldSkipSeafowlTests = () => {
+  return false;
+};

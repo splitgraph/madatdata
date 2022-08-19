@@ -27,6 +27,8 @@ export interface Plugin {
     sourceOptions: any,
     destOptions: any
   ) => Promise<{ response: any | null; error: any | null; info?: any | null }>;
+
+  withOptions: (injectOpts: unknown) => Plugin;
 }
 
 // export type PluginMap = Map<string, Plugin>;

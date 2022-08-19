@@ -1,0 +1,10 @@
+{
+  "//": "Default tsconfig for client, intended for typechecking only",
+  "extends": "../../tsconfig.base.json",
+  "include": ["*.ts", "**/*.ts", "**/**/*.ts"],
+  "references": [
+    { "path": "../test-helpers" },
+    { "path": "../base-db/tsconfig.json" },
+    { "path": "../base-client/tsconfig.json" }
+  ]
+}

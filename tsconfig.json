@@ -10,6 +10,7 @@
     { "path": "./packages/base-db" },
     { "path": "./packages/client-http" },
     { "path": "./packages/client-postgres" },
+    { "path": "./packages/db-seafowl" },
     { "path": "./packages/db-splitgraph" },
     { "path": "./packages/react" },
     { "path": "./packages/tiny-react-sandbox" },
