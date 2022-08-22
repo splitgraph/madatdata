@@ -63,7 +63,10 @@ describe("makeSeafowlHTTPContext", () => {
               "ssl": false,
             },
           },
-          "queryUrl": "http://127.0.0.1:8080/q/seafowl",
+          "strategies": {
+            "makeFetchOptions": [Function],
+            "makeQueryURL": [Function],
+          },
         },
         "db": DbSeafowl {
           "database": {
@@ -111,7 +114,10 @@ describe.skipIf(shouldSkipSeafowlTests())("can query local seafowl", () => {
       {
         "error": null,
         "response": [
-          undefined,
+          {
+            "Int64(1)": 1,
+            "Int64(2)": 2,
+          },
         ],
       }
     `);

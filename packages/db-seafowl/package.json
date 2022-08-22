@@ -6,7 +6,8 @@
   "types": "./build/es2020/index.d.ts",
   "dependencies": {
     "@madatdata/base-client": "workspace:*",
-    "@madatdata/base-db": "workspace:*"
+    "@madatdata/base-db": "workspace:*",
+    "@madatdata/client-http": "workspace:*"
   },
   "devDependencies": {
     "@madatdata/test-helpers": "workspace:*",

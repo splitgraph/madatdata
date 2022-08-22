@@ -63,7 +63,7 @@ export abstract class BaseDb<ConcretePluginMap extends PluginMap>
     makeClientForProtocol: (
       wrappedOptions: ImplementationSpecificClientOptions & ClientOptions
     ) => Client,
-    clientOptions: ImplementationSpecificClientOptions
+    clientOptions: ImplementationSpecificClientOptions & ClientOptions
   ) {
     return makeClientForProtocol({
       database: this.database,

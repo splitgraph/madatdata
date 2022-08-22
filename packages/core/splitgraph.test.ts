@@ -6,7 +6,7 @@ import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hook
 describe("makeSplitgraphHTTPContext", () => {
   setupMswServerTestHooks();
 
-  it("initializes as expected", () => {
+  it("initializes as expected", async () => {
     const ctx = makeSplitgraphHTTPContext({
       authenticatedCredential: {
         apiKey: "xxx",
@@ -18,7 +18,7 @@ describe("makeSplitgraphHTTPContext", () => {
     expect(ctx.client).toBeTruthy();
     expect(ctx.db).toBeTruthy();
 
-    expect(ctx).toMatchInlineSnapshot(`
+    expect({ client: ctx.client, db: ctx.db }).toMatchInlineSnapshot(`
       {
         "client": SqlHTTPClient {
           "bodyMode": "json",
@@ -45,7 +45,10 @@ describe("makeSplitgraphHTTPContext", () => {
               "ssl": true,
             },
           },
-          "queryUrl": "https://data.splitgraph.com/sql/query/ddn",
+          "strategies": {
+            "makeFetchOptions": [Function],
+            "makeQueryURL": [Function],
+          },
         },
         "db": DbSplitgraph {
           "authenticatedCredential": {

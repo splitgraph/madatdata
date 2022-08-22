@@ -50,6 +50,11 @@ export type CredentialFromOptions<Opt extends BaseCredentialOptions> =
     ? AuthenticatedTokenCredential
     : AnonymousTokenCredential;
 
+export type UnknownCredential =
+  | KeypairCredential
+  | AnonymousTokenCredential
+  | AuthenticatedTokenCredential;
+
 export type CredentialOptions =
   | KeypairCredentialOptions
   | AuthenticatedTokenCredentialOptions
@@ -95,7 +100,7 @@ export const Credential = <
   }
 };
 
-// todo: move to somewhere non-http specific
+// todo: move to somewhere non-http (and non-splitgraph) specific
 export const makeAuthHeaders = (cred: BaseCredentialOptions): HeadersInit => {
   if (isTokenCredential(cred)) {
     return isAnonymousTokenCredential(cred)

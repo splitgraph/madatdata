@@ -11,6 +11,10 @@ import {
   makeAuthHeaders,
 } from "@madatdata/base-client";
 
+// FIXME: we _should_ only be depending on types from this pacakge - should
+// they be in a separate package from the actual http-client?
+import type { Strategies } from "@madatdata/client-http";
+
 interface DbSeafowlOptions extends DbOptions<Partial<SeafowlImportPluginMap>> {}
 
 const makeDefaultPluginMap = (opts: {
@@ -49,11 +53,33 @@ export class DbSeafowl extends BaseDb<Partial<SeafowlImportPluginMap>> {
     makeClientForProtocol: (wrappedOptions: ClientOptions) => Client,
     clientOptions: ClientOptions
   ) {
-    // FIXME: smelly (hidden dependency on http-client)
-    return super.makeClient<{ bodyMode: "jsonl" }>(makeClientForProtocol, {
-      ...clientOptions,
-      bodyMode: "jsonl",
-    });
+    // FIXME: do we need to depend on all of client-http just for `strategies` type?
+    return super.makeClient<{ bodyMode: "jsonl"; strategies: Strategies }>(
+      makeClientForProtocol,
+      {
+        ...clientOptions,
+        bodyMode: "jsonl",
+        strategies: {
+          makeFetchOptions: ({ credential: _credential, query }) => {
+            return {
+              method: "GET",
+              headers: {
+                "X-Seafowl-Query": this.normalizeQueryForHTTPHeader(query),
+                "Content-Type": "application/json",
+              },
+            };
+          },
+          makeQueryURL: async ({ host, query }) => {
+            if (!query) {
+              return host.baseUrls.sql;
+            }
+
+            const { fingerprint } = await this.fingerprintQuery(query ?? "");
+            return host.baseUrls.sql + "/" + fingerprint;
+          },
+        } as Strategies,
+      }
+    );
   }
 
   async importData<PluginName extends keyof SeafowlImportPluginMap>(

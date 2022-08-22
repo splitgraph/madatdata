@@ -4,6 +4,9 @@ import {
   type QueryError,
   type ClientOptions,
   type CredentialOptions,
+  type Database,
+  type Host,
+  type UnknownCredential,
   UnknownRowShape,
   ExecutionResultWithObjectShapedRows,
   ExecutionResultWithArrayShapedRows,
@@ -34,8 +37,35 @@ export interface WebBridgeResponse<RowShape extends UnknownRowShape> {
 
 type BodyMode = "json" | "jsonl";
 
+type FetchOptionsStrategyArgs = {
+  credential: UnknownCredential;
+  query: string;
+};
+
+type FetchOptionsStrategy = ({
+  credential,
+  query,
+}: FetchOptionsStrategyArgs) => RequestInit;
+
+type MakeQueryURLStrategyArgs = {
+  database: Database;
+  host: Host;
+  query?: string;
+};
+
+type MakeQueryURLStrategy = ({
+  database,
+  host,
+}: MakeQueryURLStrategyArgs) => Promise<string>;
+
+export type Strategies = {
+  makeFetchOptions: FetchOptionsStrategy;
+  makeQueryURL: MakeQueryURLStrategy;
+};
+
 type HTTPClientOptions = {
   bodyMode?: BodyMode;
+  strategies?: Partial<Strategies>;
 };
 
 type BaseExecOptions = {
@@ -44,25 +74,53 @@ type BaseExecOptions = {
 
 export class SqlHTTPClient<
   InputCredentialOptions extends CredentialOptions
-> extends BaseClient<InputCredentialOptions> {
-  private queryUrl: string;
+> extends BaseClient<InputCredentialOptions, Strategies> {
   private bodyMode: BodyMode;
 
-  constructor(opts: ClientOptions & HTTPClientOptions) {
+  constructor(opts: ClientOptions<Strategies> & HTTPClientOptions) {
     super(opts);
-    this.queryUrl = this.host.baseUrls.sql + "/" + this.database.dbname;
 
     this.bodyMode = opts.bodyMode ?? "json";
+
+    this.strategies = {
+      makeFetchOptions:
+        opts.strategies?.makeFetchOptions ?? this.defaultMakeFetchOptions,
+      makeQueryURL: opts.strategies?.makeQueryURL ?? this.defaultMakeQueryURL,
+    };
   }
 
-  private get fetchOptions() {
+  private async makeQueryURL({ query }: Partial<MakeQueryURLStrategyArgs>) {
+    return await this.strategies.makeQueryURL({
+      query,
+      host: this.host,
+      database: this.database,
+    });
+  }
+
+  private makeFetchOptions({ query }: { query: string }) {
+    return this.strategies.makeFetchOptions({
+      credential: this.credential,
+      query,
+    });
+  }
+
+  private async defaultMakeQueryURL({
+    host,
+    database,
+  }: MakeQueryURLStrategyArgs) {
+    await Promise.resolve(); /* avoid warnings (default not async, but async ok) */
+
+    return host.baseUrls.sql + "/" + database.dbname;
+  }
+
+  private defaultMakeFetchOptions({ credential }: FetchOptionsStrategyArgs) {
     return {
       method: "POST",
       headers: {
-        ...makeAuthHeaders(this.credential),
+        ...makeAuthHeaders(credential),
         "Content-type": "application/json",
       },
-    };
+    } as RequestInit;
   }
 
   async execute<RowShape extends UnknownArrayShape>(
@@ -85,34 +143,44 @@ export class SqlHTTPClient<
     query: string,
     execOptions?: { rowMode?: "object" | "array" } & BaseExecOptions
   ) {
-    // HACKY: atm, splitgraph API does not accept "object" as valid param
-    // so remove it from execOptions (hacky because ideal is `...execOptions`)
-    const httpExecOptions =
-      execOptions?.rowMode === "object"
-        ? (({ rowMode, ...rest }) => rest)(execOptions)
-        : execOptions;
-
     // TODO: parameterize this into a function too (maybe just the whole execute method)
-    const fetchOptions = {
-      ...this.fetchOptions,
-      method: "POST",
-      body: JSON.stringify({ sql: query, ...httpExecOptions }),
-    };
+    const fetchOptions = this.makeFetchOptions({
+      query,
+    });
 
-    const { response, error } = await fetch(this.queryUrl, fetchOptions)
+    const queryURL = await this.makeQueryURL({ query });
+
+    // HACKY: needs strategy implementation
+    if (this.bodyMode === "json") {
+      // HACKY: atm, splitgraph API does not accept "object" as valid param
+      // so remove it from execOptions (hacky because ideal is `...execOptions`)
+      const httpExecOptions =
+        execOptions?.rowMode === "object"
+          ? (({ rowMode, ...rest }) => rest)(execOptions)
+          : execOptions;
+
+      fetchOptions.body = JSON.stringify({ sql: query, ...httpExecOptions });
+    }
+
+    const { response, error } = await fetch(queryURL, fetchOptions)
       .then(async (r) => {
         // TODO: instead of parameterizing mode, parameterize the parser function
         if (this.bodyMode === "jsonl") {
-          return (await r.text()).split("\n").map((rr) => {
-            try {
-              return JSON.parse(rr);
-            } catch (err) {
-              console.log("oh no, parsing error, on:");
-              console.log(rr);
-            }
-          });
+          return (await r.text())
+            .split("\n")
+            .map((rr) => {
+              try {
+                return JSON.parse(rr);
+              } catch (err) {
+                console.warn(
+                  `Failed to parse row. Row:\n${rr}Error:\n${err}\n`
+                );
+                return null;
+              }
+            })
+            .filter((rr) => rr !== null);
         } else if (this.bodyMode === "json") {
-          return r.json();
+          return await r.json();
         } else {
           throw "Unexpected bodyMode (should never happen, default is json)";
         }
@@ -142,7 +210,7 @@ export class SqlHTTPClient<
 
 // TODO: maybe move/copy to db-{splitgraph,seafowl,etc} - expect them to have it?
 // pass in their own factory function here?
-export const makeClient = (args: ClientOptions) => {
+export const makeClient = (args: ClientOptions<Strategies>) => {
   const client = new SqlHTTPClient(args);
   return client;
 };

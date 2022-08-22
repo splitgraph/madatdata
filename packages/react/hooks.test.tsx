@@ -153,7 +153,10 @@ describe("makeDefaultAnonymousContext", () => {
               "ssl": true,
             },
           },
-          "queryUrl": "https://data.splitgraph.com/sql/query/ddn",
+          "strategies": {
+            "makeFetchOptions": [Function],
+            "makeQueryURL": [Function],
+          },
         },
         "db": DbSplitgraph {
           "database": {
