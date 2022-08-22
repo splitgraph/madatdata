@@ -1363,6 +1363,7 @@ __metadata:
     "@madatdata/base-client": "workspace:*"
     "@madatdata/base-db": "workspace:*"
     "@madatdata/client-http": "workspace:*"
+    "@madatdata/db-seafowl": "workspace:*"
     "@madatdata/db-splitgraph": "workspace:*"
     "@madatdata/test-helpers": "workspace:*"
     "@types/node": 16.11.38
@@ -1370,7 +1371,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@madatdata/db-seafowl@workspace:packages/db-seafowl":
+"@madatdata/db-seafowl@workspace:*, @madatdata/db-seafowl@workspace:packages/db-seafowl":
   version: 0.0.0-use.local
   resolution: "@madatdata/db-seafowl@workspace:packages/db-seafowl"
   dependencies:

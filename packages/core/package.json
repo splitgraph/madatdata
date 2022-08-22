@@ -8,6 +8,7 @@
     "@madatdata/base-client": "workspace:*",
     "@madatdata/base-db": "workspace:*",
     "@madatdata/client-http": "workspace:*",
+    "@madatdata/db-seafowl": "workspace:*",
     "@madatdata/db-splitgraph": "workspace:*"
   },
   "devDependencies": {

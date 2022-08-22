@@ -92,18 +92,25 @@ export class SqlHTTPClient<
         ? (({ rowMode, ...rest }) => rest)(execOptions)
         : execOptions;
 
+    // TODO: parameterize this into a function too (maybe just the whole execute method)
     const fetchOptions = {
       ...this.fetchOptions,
+      method: "POST",
       body: JSON.stringify({ sql: query, ...httpExecOptions }),
     };
 
     const { response, error } = await fetch(this.queryUrl, fetchOptions)
       .then(async (r) => {
-        // TODO: insteada of parameterizing mode, parameterize the parser function
+        // TODO: instead of parameterizing mode, parameterize the parser function
         if (this.bodyMode === "jsonl") {
-          return r
-            .text()
-            .then((t) => t.split("\n").map((rr) => JSON.parse(rr)));
+          return (await r.text()).split("\n").map((rr) => {
+            try {
+              return JSON.parse(rr);
+            } catch (err) {
+              console.log("oh no, parsing error, on:");
+              console.log(rr);
+            }
+          });
         } else if (this.bodyMode === "json") {
           return r.json();
         } else {

@@ -19,9 +19,11 @@ export interface Db<ConcretePluginMap extends PluginMap> {
     pluginName: PluginName,
     ...rest: Parameters<ConcretePluginMap[PluginName]["importData"]>
   ) => Promise<unknown>;
-  makeClient: (
-    makeClientForProtocol: (wrappedOptions: ClientOptions) => Client,
-    opts: ClientOptions
+  makeClient: <ImplementationSpecificClientOptions extends ClientOptions>(
+    makeClientForProtocol: (
+      wrappedOptions: ImplementationSpecificClientOptions
+    ) => Client,
+    opts: ImplementationSpecificClientOptions
   ) => Client;
 }
 export interface DbOptions<ConcretePluginMap extends PluginMap> {
@@ -57,9 +59,11 @@ export abstract class BaseDb<ConcretePluginMap extends PluginMap>
     }
   }
 
-  makeClient(
-    makeClientForProtocol: (wrappedOptions: ClientOptions) => Client,
-    clientOptions: ClientOptions
+  public makeClient<ImplementationSpecificClientOptions>(
+    makeClientForProtocol: (
+      wrappedOptions: ImplementationSpecificClientOptions & ClientOptions
+    ) => Client,
+    clientOptions: ImplementationSpecificClientOptions
   ) {
     return makeClientForProtocol({
       database: this.database,

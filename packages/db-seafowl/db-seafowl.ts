@@ -5,7 +5,11 @@ import type { SeafowlImportPluginMap } from "./plugins/importers";
 import { ImportCSVPlugin } from "./plugins/importers/import-csv-seafowl-plugin";
 
 // TODO: It's not ideal for db-splitgraph to depend on base-client
-import { makeAuthHeaders } from "@madatdata/base-client";
+import {
+  type Client,
+  type ClientOptions,
+  makeAuthHeaders,
+} from "@madatdata/base-client";
 
 interface DbSeafowlOptions extends DbOptions<Partial<SeafowlImportPluginMap>> {}
 
@@ -38,6 +42,17 @@ export class DbSeafowl extends BaseDb<Partial<SeafowlImportPluginMap>> {
               ? makeAuthHeaders(this.authenticatedCredential)
               : {},
         }),
+    });
+  }
+
+  public makeHTTPClient(
+    makeClientForProtocol: (wrappedOptions: ClientOptions) => Client,
+    clientOptions: ClientOptions
+  ) {
+    // FIXME: smelly (hidden dependency on http-client)
+    return super.makeClient<{ bodyMode: "jsonl" }>(makeClientForProtocol, {
+      ...clientOptions,
+      bodyMode: "jsonl",
     });
   }
 

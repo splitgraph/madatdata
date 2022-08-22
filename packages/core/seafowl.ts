@@ -1,19 +1,17 @@
 import type { DataContext } from "./data-context";
 import { makeClient } from "@madatdata/client-http";
-import { makeDb } from "@madatdata/db-splitgraph";
+import { makeDb } from "@madatdata/db-seafowl";
+// TODO: these are splitgraph specific defaults
 import { defaultDatabase, defaultHost } from "@madatdata/base-client";
-export { makeClient as makeSplitgraphClient };
-export { makeDb as makeSplitgraphDb };
+export { makeDb as makeSeafowlDb };
 
 // note: "default" is redundant given base-client, but it's a TODO to extract it
-export { defaultDatabase as defaultSplitgraphDatabase };
-export { defaultHost as defaultSplitgraphHost };
+export { defaultDatabase as defaultSeafowlDatabase };
+export { defaultHost as defaultSeafowlHost };
 
-export type SplitgraphDataContext = ReturnType<
-  typeof makeSplitgraphHTTPContext
->;
+export type SeafowlDataContext = ReturnType<typeof makeSeafowlHTTPContext>;
 
-export const makeSplitgraphHTTPContext = (
+export const makeSeafowlHTTPContext = (
   opts?: {
     client?: Parameters<typeof makeClient>[0];
     db?: Parameters<typeof makeDb>[0];
@@ -51,12 +49,12 @@ export const makeSplitgraphHTTPContext = (
 
   const db = makeDb(dbOpts);
 
-  const client = db.makeClient(makeClient, clientOpts);
+  const client = db.makeHTTPClient(makeClient, clientOpts);
 
-  const splitgraphHTTPContext = {
+  const seafowlHTTPContext = {
     client,
     db,
   } as DataContext<typeof db>;
 
-  return splitgraphHTTPContext;
+  return seafowlHTTPContext;
 };
