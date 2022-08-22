@@ -3,6 +3,8 @@ import { webcrypto } from "node:crypto";
 
 // TODO: These are not related to client, should be exported from "core"?
 import {
+  type Client,
+  type ClientOptions,
   Credential,
   type AuthenticatedCredential,
   type Database,
@@ -17,6 +19,10 @@ export interface Db<ConcretePluginMap extends PluginMap> {
     pluginName: PluginName,
     ...rest: Parameters<ConcretePluginMap[PluginName]["importData"]>
   ) => Promise<unknown>;
+  makeClient: (
+    makeClientForProtocol: (wrappedOptions: ClientOptions) => Client,
+    opts: ClientOptions
+  ) => Client;
 }
 export interface DbOptions<ConcretePluginMap extends PluginMap> {
   plugins: ConcretePluginMap;
@@ -49,6 +55,18 @@ export abstract class BaseDb<ConcretePluginMap extends PluginMap>
       }
       this.authenticatedCredential = parsedCredential;
     }
+  }
+
+  makeClient(
+    makeClientForProtocol: (wrappedOptions: ClientOptions) => Client,
+    clientOptions: ClientOptions
+  ) {
+    return makeClientForProtocol({
+      database: this.database,
+      host: this.host,
+      credential: this.authenticatedCredential,
+      ...clientOptions,
+    });
   }
 
   abstract importData<PluginName extends keyof ConcretePluginMap>(

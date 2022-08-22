@@ -20,6 +20,25 @@ const createDb = () => {
   }));
 
   return makeDb({
+    database: {
+      dbname: "seafowl", // arbitrary
+    },
+    host: {
+      // temporary hacky mess
+      dataHost: "127.0.0.1:8080",
+      apexDomain: "bogus",
+      apiHost: "bogus",
+      baseUrls: {
+        gql: "bogus",
+        sql: "http://127.0.0.1:8080/q",
+        auth: "bogus",
+      },
+      postgres: {
+        host: "127.0.0.1",
+        port: 6432,
+        ssl: false,
+      },
+    },
     plugins: {
       csv: new ImportCSVPlugin({
         transformRequestHeaders,
@@ -60,4 +79,9 @@ describe.skipIf(shouldSkipSeafowlTests())("seafowl stub test", () => {
       }
     `);
   });
+
+  // it("can make a query to localhost", async () => {
+  //   const db = createDb();
+
+  // });
 });

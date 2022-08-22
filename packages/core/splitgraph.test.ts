@@ -21,6 +21,7 @@ describe("makeSplitgraphHTTPContext", () => {
     expect(ctx).toMatchInlineSnapshot(`
       {
         "client": SqlHTTPClient {
+          "bodyMode": "json",
           "credential": {
             "anonymous": false,
             "apiKey": "xxx",

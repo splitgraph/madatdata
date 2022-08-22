@@ -32,14 +32,27 @@ export interface WebBridgeResponse<RowShape extends UnknownRowShape> {
   executionTimeHighRes?: string;
 }
 
+type BodyMode = "json" | "jsonl";
+
+type HTTPClientOptions = {
+  bodyMode?: BodyMode;
+};
+
+type BaseExecOptions = {
+  bodyMode?: BodyMode;
+};
+
 export class SqlHTTPClient<
   InputCredentialOptions extends CredentialOptions
 > extends BaseClient<InputCredentialOptions> {
   private queryUrl: string;
+  private bodyMode: BodyMode;
 
-  constructor(opts: ClientOptions) {
+  constructor(opts: ClientOptions & HTTPClientOptions) {
     super(opts);
     this.queryUrl = this.host.baseUrls.sql + "/" + this.database.dbname;
+
+    this.bodyMode = opts.bodyMode ?? "json";
   }
 
   private get fetchOptions() {
@@ -54,7 +67,7 @@ export class SqlHTTPClient<
 
   async execute<RowShape extends UnknownArrayShape>(
     query: string,
-    executeOptions: { rowMode: "array" }
+    executeOptions: { rowMode: "array" } & BaseExecOptions
   ): Promise<{
     response: ExecutionResultWithArrayShapedRows<RowShape> | null;
     error: QueryError | null;
@@ -62,13 +75,16 @@ export class SqlHTTPClient<
 
   async execute<RowShape extends UnknownObjectShape>(
     query: string,
-    executeOptions?: { rowMode: "object" }
+    executeOptions?: { rowMode: "object" } & BaseExecOptions
   ): Promise<{
     response: ExecutionResultWithObjectShapedRows<RowShape> | null;
     error: QueryError | null;
   }>;
 
-  async execute(query: string, execOptions?: { rowMode?: "object" | "array" }) {
+  async execute(
+    query: string,
+    execOptions?: { rowMode?: "object" | "array" } & BaseExecOptions
+  ) {
     // HACKY: atm, splitgraph API does not accept "object" as valid param
     // so remove it from execOptions (hacky because ideal is `...execOptions`)
     const httpExecOptions =
@@ -82,7 +98,18 @@ export class SqlHTTPClient<
     };
 
     const { response, error } = await fetch(this.queryUrl, fetchOptions)
-      .then((r) => r.json())
+      .then(async (r) => {
+        // TODO: insteada of parameterizing mode, parameterize the parser function
+        if (this.bodyMode === "jsonl") {
+          return r
+            .text()
+            .then((t) => t.split("\n").map((rr) => JSON.parse(rr)));
+        } else if (this.bodyMode === "json") {
+          return r.json();
+        } else {
+          throw "Unexpected bodyMode (should never happen, default is json)";
+        }
+      })
       .then((rJson) =>
         execOptions?.rowMode === "array"
           ? {
@@ -106,6 +133,8 @@ export class SqlHTTPClient<
   }
 }
 
+// TODO: maybe move/copy to db-{splitgraph,seafowl,etc} - expect them to have it?
+// pass in their own factory function here?
 export const makeClient = (args: ClientOptions) => {
   const client = new SqlHTTPClient(args);
   return client;

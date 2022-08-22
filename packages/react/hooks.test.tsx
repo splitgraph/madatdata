@@ -130,6 +130,7 @@ describe("makeDefaultAnonymousContext", () => {
     expect(makeDefaultAnonymousContext()).toMatchInlineSnapshot(`
       {
         "client": SqlHTTPClient {
+          "bodyMode": "json",
           "credential": {
             "anonymous": true,
             "token": "anonymous-token",
