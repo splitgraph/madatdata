@@ -51,7 +51,7 @@ export const makeSplitgraphHTTPContext = (
 
   const db = makeDb(dbOpts);
 
-  const client = db.makeClient(makeClient, clientOpts);
+  const client = db.makeHTTPClient(makeClient, clientOpts);
 
   const splitgraphHTTPContext = {
     client,

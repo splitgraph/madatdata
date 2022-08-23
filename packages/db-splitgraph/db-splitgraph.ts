@@ -5,7 +5,14 @@ import type { SplitgraphImportPluginMap } from "./plugins/importers";
 import { ImportCSVPlugin } from "./plugins/importers/import-csv-plugin";
 
 // TODO: It's not ideal for db-splitgraph to depend on base-client
-import { makeAuthHeaders, defaultHost } from "@madatdata/base-client";
+import {
+  type Client,
+  type ClientOptions,
+  makeAuthHeaders,
+  defaultHost,
+} from "@madatdata/base-client";
+
+import type { Strategies, HTTPClientOptions } from "@madatdata/client-http";
 
 interface DbSplitgraphOptions
   extends DbOptions<Partial<SplitgraphImportPluginMap>> {}
@@ -47,6 +54,43 @@ export class DbSplitgraph extends BaseDb<Partial<SplitgraphImportPluginMap>> {
     });
 
     this.graphqlEndpoint = this.host.baseUrls.gql;
+  }
+
+  public makeHTTPClient(
+    makeClientForProtocol: (wrappedOptions: ClientOptions) => Client,
+    clientOptions: ClientOptions & HTTPClientOptions
+  ) {
+    // FIXME: do we need to depend on all of client-http just for `strategies` type?
+    // FIXME: this pattern would probably work better as a user-provided Class
+    // nb: careful to keep parity with (intentionally) same code in db-splitgraph.ts
+    return super.makeClient<HTTPClientOptions>(makeClientForProtocol, {
+      ...clientOptions,
+      bodyMode: "json",
+      strategies: {
+        makeFetchOptions: ({ credential, query, execOptions }) => {
+          // HACKY: atm, splitgraph API does not accept "object" as valid param
+          // so remove it from execOptions (hacky because ideal is `...execOptions`)
+          const httpExecOptions =
+            execOptions?.rowMode === "object"
+              ? (({ rowMode, ...rest }) => rest)(execOptions)
+              : execOptions;
+
+          return {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...makeAuthHeaders(
+                credential
+              ) /* fixme: smell? prefer `this.credential`? */,
+            },
+            body: JSON.stringify({ sql: query, ...httpExecOptions }),
+          };
+        },
+        makeQueryURL: async ({ host, database }) => {
+          return Promise.resolve(host.baseUrls.sql + "/" + database.dbname);
+        },
+      } as Strategies,
+    });
   }
 
   // TODO: doesn't belong here (or does it? maybe credential doesn't belong _there_)

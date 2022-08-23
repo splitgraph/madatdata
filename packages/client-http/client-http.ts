@@ -37,15 +37,17 @@ export interface WebBridgeResponse<RowShape extends UnknownRowShape> {
 
 type BodyMode = "json" | "jsonl";
 
-type FetchOptionsStrategyArgs = {
+type MakeFetchOptionsStrategyArgs = {
   credential: UnknownCredential;
   query: string;
+  execOptions: ExecOptions;
 };
 
-type FetchOptionsStrategy = ({
+type MakeFetchOptionsStrategy = ({
   credential,
   query,
-}: FetchOptionsStrategyArgs) => RequestInit;
+  execOptions,
+}: MakeFetchOptionsStrategyArgs) => RequestInit;
 
 type MakeQueryURLStrategyArgs = {
   database: Database;
@@ -59,17 +61,21 @@ type MakeQueryURLStrategy = ({
 }: MakeQueryURLStrategyArgs) => Promise<string>;
 
 export type Strategies = {
-  makeFetchOptions: FetchOptionsStrategy;
+  makeFetchOptions: MakeFetchOptionsStrategy;
   makeQueryURL: MakeQueryURLStrategy;
 };
 
-type HTTPClientOptions = {
+export type HTTPClientOptions = {
   bodyMode?: BodyMode;
   strategies?: Partial<Strategies>;
 };
 
 type BaseExecOptions = {
   bodyMode?: BodyMode;
+};
+
+type ExecOptions = BaseExecOptions & {
+  rowMode?: "object" | "array" | undefined;
 };
 
 export class SqlHTTPClient<
@@ -97,10 +103,14 @@ export class SqlHTTPClient<
     });
   }
 
-  private makeFetchOptions({ query }: { query: string }) {
+  private makeFetchOptions({
+    query,
+    execOptions,
+  }: Pick<MakeFetchOptionsStrategyArgs, "query" | "execOptions">) {
     return this.strategies.makeFetchOptions({
       credential: this.credential,
       query,
+      execOptions,
     });
   }
 
@@ -108,12 +118,16 @@ export class SqlHTTPClient<
     host,
     database,
   }: MakeQueryURLStrategyArgs) {
+    console.warn("Warning (deprecated): calling defaultMakeQueryURL");
     await Promise.resolve(); /* avoid warnings (default not async, but async ok) */
 
     return host.baseUrls.sql + "/" + database.dbname;
   }
 
-  private defaultMakeFetchOptions({ credential }: FetchOptionsStrategyArgs) {
+  private defaultMakeFetchOptions({
+    credential,
+  }: MakeFetchOptionsStrategyArgs) {
+    console.warn("Warning (deprecated): calling defaultMakeFetchOptions");
     return {
       method: "POST",
       headers: {
@@ -121,6 +135,15 @@ export class SqlHTTPClient<
         "Content-type": "application/json",
       },
     } as RequestInit;
+  }
+
+  static defaultExecOptions(
+    inputExecOptions: Partial<ExecOptions>
+  ): ExecOptions {
+    return {
+      rowMode: "object",
+      ...inputExecOptions,
+    };
   }
 
   async execute<RowShape extends UnknownArrayShape>(
@@ -146,21 +169,10 @@ export class SqlHTTPClient<
     // TODO: parameterize this into a function too (maybe just the whole execute method)
     const fetchOptions = this.makeFetchOptions({
       query,
+      execOptions: SqlHTTPClient.defaultExecOptions(execOptions ?? {}),
     });
 
     const queryURL = await this.makeQueryURL({ query });
-
-    // HACKY: needs strategy implementation
-    if (this.bodyMode === "json") {
-      // HACKY: atm, splitgraph API does not accept "object" as valid param
-      // so remove it from execOptions (hacky because ideal is `...execOptions`)
-      const httpExecOptions =
-        execOptions?.rowMode === "object"
-          ? (({ rowMode, ...rest }) => rest)(execOptions)
-          : execOptions;
-
-      fetchOptions.body = JSON.stringify({ sql: query, ...httpExecOptions });
-    }
 
     const { response, error } = await fetch(queryURL, fetchOptions)
       .then(async (r) => {

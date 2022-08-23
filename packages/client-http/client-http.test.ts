@@ -1,10 +1,45 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { makeClient } from "./client-http";
+import { makeClient, type Strategies } from "./client-http";
+import { makeAuthHeaders } from "@madatdata/base-client";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
 import { shouldSkipIntegrationTests } from "@madatdata/test-helpers/env-config";
 import { rest } from "msw";
 
 import { defaultHost } from "@madatdata/base-client/host";
+
+// NOTE: Previously, the default http-client was hardcoded for Splitgraph, which
+// is why all the tests reflect its shape. But we don't want this package to
+// depend on db-splitgraph, so we copy the strategies from DbSplitgraph.makeHTTPClient
+// even though ideally, these tests wouldn't be hardcoded to Splitgrpaph endpoints
+// anyway. But as long as we have the mocks for them, these defaults make sense.
+// Going forward, http client tests can/should use more generic callbacks and mocks
+const splitgraphClientOptions = {
+  bodyMode: "json",
+  strategies: {
+    makeFetchOptions: ({ credential, query, execOptions }) => {
+      // HACKY: atm, splitgraph API does not accept "object" as valid param
+      // so remove it from execOptions (hacky because ideal is `...execOptions`)
+      const httpExecOptions =
+        execOptions?.rowMode === "object"
+          ? (({ rowMode, ...rest }) => rest)(execOptions)
+          : execOptions;
+
+      return {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...makeAuthHeaders(
+            credential
+          ) /* fixme: smell? prefer `this.credential`? */,
+        },
+        body: JSON.stringify({ sql: query, ...httpExecOptions }),
+      };
+    },
+    makeQueryURL: async ({ host, database }) => {
+      return Promise.resolve(host.baseUrls.sql + "/" + database.dbname);
+    },
+  } as Strategies,
+};
 
 describe("makeClient creates a client which", () => {
   setupMswServerTestHooks();
@@ -45,6 +80,7 @@ describe("makeClient creates a client which", () => {
   it("receives SELECT 1 with expected metadata shape", async () => {
     const client = makeClient({
       credential: null,
+      ...splitgraphClientOptions,
     });
 
     const result = await client.execute<{ "?column?": number }>("SELECT 1;");
@@ -85,6 +121,7 @@ describe.skipIf(shouldSkipIntegrationTests())("http integration tests", () => {
   it("can select 1 from real ddn", async () => {
     const client = makeClient({
       credential: null,
+      ...splitgraphClientOptions,
     });
 
     const result = await client.execute<{ "?column?": number }>("SELECT 1;");
@@ -124,6 +161,7 @@ describe.skipIf(shouldSkipIntegrationTests())("http integration tests", () => {
   it("can select 1, 2, 3 from real ddn", async () => {
     const client = makeClient({
       credential: null,
+      ...splitgraphClientOptions,
     });
 
     const result = await client.execute<{ "?column?": number }>(
@@ -186,6 +224,7 @@ describe.skipIf(shouldSkipIntegrationTests())("http integration tests", () => {
   it("can select 1, 2, 3 from real ddn in row mode", async () => {
     const client = makeClient({
       credential: null,
+      ...splitgraphClientOptions,
     });
 
     const result = await client.execute<
@@ -275,6 +314,7 @@ describe.skip("type checking produces expected errors in", async () => {
   it("client-http.execute function overloading", async () => {
     const client = makeClient({
       credential: null,
+      ...splitgraphClientOptions,
     });
 
     const badObjectType = await client.execute<{ "?column?": number }>(

@@ -1,1 +1,5 @@
-export { makeClient, type Strategies } from "./client-http";
+export {
+  makeClient,
+  type Strategies,
+  type HTTPClientOptions,
+} from "./client-http";
