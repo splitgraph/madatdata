@@ -1396,6 +1396,7 @@ __metadata:
     "@graphql-codegen/typescript-operations": 2.5.1
     "@madatdata/base-client": "workspace:*"
     "@madatdata/base-db": "workspace:*"
+    "@madatdata/client-http": "workspace:*"
     "@madatdata/test-helpers": "workspace:*"
     "@types/node": 16.11.38
     cross-fetch: 3.1.5

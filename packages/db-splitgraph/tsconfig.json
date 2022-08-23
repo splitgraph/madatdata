@@ -9,6 +9,7 @@
   "references": [
     { "path": "../test-helpers" },
     { "path": "../base-db/tsconfig.json" },
-    { "path": "../base-client/tsconfig.json" }
+    { "path": "../base-client/tsconfig.json" },
+    { "path": "../client-http/tsconfig.json" }
   ]
 }
