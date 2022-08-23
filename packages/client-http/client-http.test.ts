@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { makeClient, type Strategies } from "./client-http";
+import { makeClient, type HTTPStrategies } from "./client-http";
 import { makeAuthHeaders } from "@madatdata/base-client";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
 import { shouldSkipIntegrationTests } from "@madatdata/test-helpers/env-config";
@@ -38,10 +38,10 @@ const splitgraphClientOptions = {
     makeQueryURL: async ({ host, database }) => {
       return Promise.resolve(host.baseUrls.sql + "/" + database.dbname);
     },
-  } as Strategies,
+  } as HTTPStrategies,
 };
 
-describe("makeClient creates a client which", () => {
+describe("makeClient creates client which", () => {
   setupMswServerTestHooks();
 
   beforeEach(({ mswServer }) => {
@@ -112,6 +112,123 @@ describe("makeClient creates a client which", () => {
           ],
           "success": true,
         },
+      }
+    `);
+  });
+});
+
+const makeStubClient = () => {
+  return makeClient({
+    credential: null,
+    strategies: {
+      makeFetchOptions: () => ({
+        method: "POST",
+      }),
+      makeQueryURL: async ({ host, database }) => {
+        return Promise.resolve(host.baseUrls.sql + "/" + database.dbname);
+      },
+    },
+  });
+};
+
+describe("client handles errors correctly because it", () => {
+  setupMswServerTestHooks();
+
+  it("propagates response with response-not-ok", async ({ mswServer }) => {
+    mswServer?.use(
+      rest.post(defaultHost.baseUrls.sql + "/ddn", (_req, res, ctx) => {
+        return res(
+          ctx.status(403),
+          ctx.json({
+            message: "Not authorized",
+          })
+        );
+      })
+    );
+
+    const client = makeStubClient();
+
+    const { error, response } = await client.execute<{}>("SELECT 1;");
+
+    expect(response).toBeNull();
+    expect(error).not.toBeNull();
+
+    expect((({ response, ...rest }) => rest)(error!)).toMatchInlineSnapshot(`
+        {
+          "success": false,
+          "type": "response-not-ok",
+        }
+      `);
+
+    expect(error!.response).toBeDefined();
+    expect(error!.response!.ok).toBeFalsy();
+  });
+
+  // NOTE: "network error" typically indicates the fetch itself rejected, but
+  // msw res.networkError() is slightly different: it throws an error in the
+  // request handler, so our network error handling code never even gets to run.
+  // It's worth simulating, but we must also test non-msw network error handling.
+  //
+  // see: https://mswjs.io/docs/api/response/network-error
+  // see: https://developer.mozilla.org/en-US/docs/Web/API/Response/type (esp. see "Note")
+  it("propagates network error", async ({ mswServer }) => {
+    mswServer?.use(
+      rest.post(defaultHost.baseUrls.sql + "/ddn", (_req, res, _ctx) => {
+        return res.networkError(
+          "Some fake network error from MSW request handler"
+        );
+      })
+    );
+
+    const client = makeStubClient();
+
+    const { error, response } = await client.execute<{}>("SELECT 1;");
+
+    expect(response).toBeNull();
+    expect(error).not.toBeNull();
+
+    expect(error).toMatchInlineSnapshot(`
+      {
+        "code": undefined,
+        "errno": undefined,
+        "message": "request to https://data.splitgraph.com/sql/query/ddn failed, reason: Some fake network error from MSW request handler",
+        "success": false,
+        "type": "system",
+      }
+    `);
+  });
+});
+
+const makeUnconnectableClient = () => {
+  return makeClient({
+    credential: null,
+    strategies: {
+      makeFetchOptions: () => ({}),
+      makeQueryURL: async () => {
+        return Promise.resolve("http://999.999.999.999/");
+      },
+    },
+  });
+};
+
+// note: needs to be tested separately from mock-service-worker res.networkError(),
+// because failing in the request handler is not exactly the same as fetch rejecting
+// and will bypass the http client error handling
+describe('client handles non-msw ("real") network errors', () => {
+  it("propagates network error ERR_INVALID_URL with invalid IP", async () => {
+    const lonelyClient = makeUnconnectableClient();
+
+    const { error, response } = await lonelyClient.execute<{}>("SELECT 1;");
+
+    expect(response).toBeNull();
+    expect(error).not.toBeNull();
+
+    expect(error).toMatchInlineSnapshot(`
+      {
+        "code": "ERR_INVALID_URL",
+        "input": "http://999.999.999.999/",
+        "success": false,
+        "type": "network",
       }
     `);
   });

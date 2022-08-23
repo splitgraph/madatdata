@@ -12,7 +12,7 @@ import {
   defaultHost,
 } from "@madatdata/base-client";
 
-import type { Strategies, HTTPClientOptions } from "@madatdata/client-http";
+import type { HTTPStrategies, HTTPClientOptions } from "@madatdata/client-http";
 
 interface DbSplitgraphOptions
   extends DbOptions<Partial<SplitgraphImportPluginMap>> {}
@@ -89,7 +89,7 @@ export class DbSplitgraph extends BaseDb<Partial<SplitgraphImportPluginMap>> {
         makeQueryURL: async ({ host, database }) => {
           return Promise.resolve(host.baseUrls.sql + "/" + database.dbname);
         },
-      } as Strategies,
+      } as HTTPStrategies,
     });
   }
 

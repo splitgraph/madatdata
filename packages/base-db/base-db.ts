@@ -1,10 +1,10 @@
 import type { PluginMap } from "./plugin-bindings";
 import { webcrypto } from "node:crypto";
 
-// TODO: These are not related to client, should be exported from "core"?
 import {
   type Client,
   type ClientOptions,
+  // TODO: imports below are not related to client, export from "core"(?) instead?
   Credential,
   type AuthenticatedCredential,
   type Database,

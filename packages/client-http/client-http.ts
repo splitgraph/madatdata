@@ -1,6 +1,5 @@
 import {
   BaseClient,
-  makeAuthHeaders,
   type QueryError,
   type ClientOptions,
   type CredentialOptions,
@@ -60,14 +59,14 @@ type MakeQueryURLStrategy = ({
   host,
 }: MakeQueryURLStrategyArgs) => Promise<string>;
 
-export type Strategies = {
+export type HTTPStrategies = {
   makeFetchOptions: MakeFetchOptionsStrategy;
   makeQueryURL: MakeQueryURLStrategy;
 };
 
 export type HTTPClientOptions = {
   bodyMode?: BodyMode;
-  strategies?: Partial<Strategies>;
+  strategies?: HTTPStrategies;
 };
 
 type BaseExecOptions = {
@@ -78,20 +77,27 @@ type ExecOptions = BaseExecOptions & {
   rowMode?: "object" | "array" | undefined;
 };
 
+export interface HTTPClientQueryError extends QueryError {
+  response?: Response;
+}
+
 export class SqlHTTPClient<
   InputCredentialOptions extends CredentialOptions
-> extends BaseClient<InputCredentialOptions, Strategies> {
+> extends BaseClient<InputCredentialOptions, HTTPStrategies> {
   private bodyMode: BodyMode;
 
-  constructor(opts: ClientOptions<Strategies> & HTTPClientOptions) {
+  constructor(opts: ClientOptions<HTTPStrategies> & HTTPClientOptions) {
     super(opts);
 
     this.bodyMode = opts.bodyMode ?? "json";
 
+    if (!opts.strategies) {
+      throw "strategies parameter is required for SqlHTTPClient";
+    }
+
     this.strategies = {
-      makeFetchOptions:
-        opts.strategies?.makeFetchOptions ?? this.defaultMakeFetchOptions,
-      makeQueryURL: opts.strategies?.makeQueryURL ?? this.defaultMakeQueryURL,
+      makeFetchOptions: opts.strategies?.makeFetchOptions,
+      makeQueryURL: opts.strategies?.makeQueryURL,
     };
   }
 
@@ -114,35 +120,12 @@ export class SqlHTTPClient<
     });
   }
 
-  private async defaultMakeQueryURL({
-    host,
-    database,
-  }: MakeQueryURLStrategyArgs) {
-    console.warn("Warning (deprecated): calling defaultMakeQueryURL");
-    await Promise.resolve(); /* avoid warnings (default not async, but async ok) */
-
-    return host.baseUrls.sql + "/" + database.dbname;
-  }
-
-  private defaultMakeFetchOptions({
-    credential,
-  }: MakeFetchOptionsStrategyArgs) {
-    console.warn("Warning (deprecated): calling defaultMakeFetchOptions");
-    return {
-      method: "POST",
-      headers: {
-        ...makeAuthHeaders(credential),
-        "Content-type": "application/json",
-      },
-    } as RequestInit;
-  }
-
   static defaultExecOptions(
-    inputExecOptions: Partial<ExecOptions>
+    inputExecOptions?: Partial<ExecOptions>
   ): ExecOptions {
     return {
       rowMode: "object",
-      ...inputExecOptions,
+      ...(inputExecOptions ?? {}),
     };
   }
 
@@ -151,7 +134,7 @@ export class SqlHTTPClient<
     executeOptions: { rowMode: "array" } & BaseExecOptions
   ): Promise<{
     response: ExecutionResultWithArrayShapedRows<RowShape> | null;
-    error: QueryError | null;
+    error: HTTPClientQueryError | null;
   }>;
 
   async execute<RowShape extends UnknownObjectShape>(
@@ -159,23 +142,32 @@ export class SqlHTTPClient<
     executeOptions?: { rowMode: "object" } & BaseExecOptions
   ): Promise<{
     response: ExecutionResultWithObjectShapedRows<RowShape> | null;
-    error: QueryError | null;
+    error: HTTPClientQueryError | null;
   }>;
 
   async execute(
     query: string,
     execOptions?: { rowMode?: "object" | "array" } & BaseExecOptions
   ) {
-    // TODO: parameterize this into a function too (maybe just the whole execute method)
+    const queryURL = await this.makeQueryURL({ query });
     const fetchOptions = this.makeFetchOptions({
       query,
-      execOptions: SqlHTTPClient.defaultExecOptions(execOptions ?? {}),
+      execOptions: SqlHTTPClient.defaultExecOptions(execOptions),
     });
 
-    const queryURL = await this.makeQueryURL({ query });
-
     const { response, error } = await fetch(queryURL, fetchOptions)
+      .catch((err) => Promise.reject({ type: "network", ...err }))
       .then(async (r) => {
+        if (r.type === "error") {
+          // note: very rare (usually fetch itself rejects promise)
+          // see: https://developer.mozilla.org/en-US/docs/Web/API/Response/type
+          return Promise.reject({ type: "network", response: r });
+        }
+
+        if (!r.ok) {
+          return Promise.reject({ type: "response-not-ok", response: r });
+        }
+
         // TODO: instead of parameterizing mode, parameterize the parser function
         if (this.bodyMode === "jsonl") {
           return (await r.text())
@@ -210,7 +202,10 @@ export class SqlHTTPClient<
       )
       .catch((err) => ({
         response: null,
-        error: { success: false, error: err, trace: err.stack } as QueryError,
+        error: {
+          success: false,
+          ...err,
+        } as HTTPClientQueryError,
       }));
 
     return {
@@ -222,7 +217,7 @@ export class SqlHTTPClient<
 
 // TODO: maybe move/copy to db-{splitgraph,seafowl,etc} - expect them to have it?
 // pass in their own factory function here?
-export const makeClient = (args: ClientOptions<Strategies>) => {
+export const makeClient = (args: ClientOptions<HTTPStrategies>) => {
   const client = new SqlHTTPClient(args);
   return client;
 };

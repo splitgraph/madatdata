@@ -13,7 +13,7 @@ import {
 
 // FIXME: we _should_ only be depending on types from this pacakge - should
 // they be in a separate package from the actual http-client?
-import type { Strategies, HTTPClientOptions } from "@madatdata/client-http";
+import type { HTTPStrategies, HTTPClientOptions } from "@madatdata/client-http";
 
 interface DbSeafowlOptions extends DbOptions<Partial<SeafowlImportPluginMap>> {}
 
@@ -80,7 +80,7 @@ export class DbSeafowl extends BaseDb<Partial<SeafowlImportPluginMap>> {
           const { fingerprint } = await this.fingerprintQuery(query ?? "");
           return host.baseUrls.sql + "/" + fingerprint;
         },
-      } as Strategies,
+      } as HTTPStrategies,
     });
   }
 
