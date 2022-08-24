@@ -214,7 +214,7 @@ const makeUnconnectableClient = () => {
 // note: needs to be tested separately from mock-service-worker res.networkError(),
 // because failing in the request handler is not exactly the same as fetch rejecting
 // and will bypass the http client error handling
-describe('client handles non-msw ("real") network errors', () => {
+describe("client handles non-msw errors (fetch rejections)", () => {
   it("propagates network error ERR_INVALID_URL with invalid IP", async () => {
     const lonelyClient = makeUnconnectableClient();
 
@@ -222,6 +222,8 @@ describe('client handles non-msw ("real") network errors', () => {
 
     expect(response).toBeNull();
     expect(error).not.toBeNull();
+    expect(error!.type).toEqual("network");
+    expect(error!.response).toBeUndefined();
 
     expect(error).toMatchInlineSnapshot(`
       {

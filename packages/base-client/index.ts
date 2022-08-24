@@ -45,12 +45,14 @@ export interface ExecutionResultWithObjectShapedRows<
   ObjectRowShape extends UnknownObjectShape
 > extends ExecutionResultBase {
   rows: ObjectRowShape[];
+  readable: () => ReadableStream<ObjectRowShape>;
 }
 
 export interface ExecutionResultWithArrayShapedRows<
   ArrayRowShape extends UnknownArrayShape
 > extends ExecutionResultBase {
   rows: ArrayRowShape[];
+  readable: () => ReadableStream<ArrayRowShape>;
 }
 
 export type ExecutionResultFromRowShape<RowShape extends UnknownRowShape> =
@@ -114,13 +116,7 @@ export abstract class BaseClient<
     this.database = opts.database ?? defaultDatabase;
 
     this.strategies = (opts.strategies ?? {}) as InputStrategyOptions;
-
-    // this.setStrategies(opts.strategies);
   }
-
-  // setStrategies(strategies: InputStrategyOptions) {
-  //   this.strategies = strategies;
-  // }
 
   setCredential(newCredential: InputCredentialOptions | null) {
     this.credential = Credential(newCredential || null);

@@ -27,6 +27,7 @@ export interface WebBridgeResponse<RowShape extends UnknownRowShape> {
   }[];
   rowCount: 1;
   rows: RowShape[];
+  readable: () => ReadableStream<RowShape>;
   success: true;
   /** FIXME: optional to allow deleting it for inline snapshots */
   executionTime?: string;
@@ -34,7 +35,8 @@ export interface WebBridgeResponse<RowShape extends UnknownRowShape> {
   executionTimeHighRes?: string;
 }
 
-type BodyMode = "json" | "jsonl";
+// todo: "streaming" just here for debug, should be deleted
+type BodyMode = "json" | "jsonl" | "streaming";
 
 type MakeFetchOptionsStrategyArgs = {
   credential: UnknownCredential;
@@ -78,6 +80,7 @@ type ExecOptions = BaseExecOptions & {
 };
 
 export interface HTTPClientQueryError extends QueryError {
+  type: "unknown" | "network" | "response-not-ok";
   response?: Response;
 }
 
@@ -168,7 +171,14 @@ export class SqlHTTPClient<
           return Promise.reject({ type: "response-not-ok", response: r });
         }
 
-        // TODO: instead of parameterizing mode, parameterize the parser function
+        // TODO: streaming jus there for debug, should be deleted
+        if (this.bodyMode === "streaming") {
+          console.log("streaming body");
+          this.bodyMode = "jsonl";
+
+          // const responseReadableStream = r.body?.getReader();
+        }
+
         if (this.bodyMode === "jsonl") {
           return (await r.text())
             .split("\n")
@@ -192,11 +202,17 @@ export class SqlHTTPClient<
       .then((rJson) =>
         execOptions?.rowMode === "array"
           ? {
-              response: rJson as WebBridgeResponse<UnknownArrayShape>,
+              response: {
+                readable: () => new ReadableStream<UnknownArrayShape>(),
+                ...rJson,
+              } as WebBridgeResponse<UnknownArrayShape>,
               error: null,
             }
           : {
-              response: rJson as WebBridgeResponse<UnknownObjectShape>,
+              response: {
+                readable: () => new ReadableStream<UnknownObjectShape>(),
+                ...rJson,
+              } as WebBridgeResponse<UnknownObjectShape>,
               error: null,
             }
       )
@@ -204,6 +220,7 @@ export class SqlHTTPClient<
         response: null,
         error: {
           success: false,
+          type: err.type || "unknown",
           ...err,
         } as HTTPClientQueryError,
       }));
