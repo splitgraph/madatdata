@@ -124,9 +124,3 @@ export abstract class BaseDb<ConcretePluginMap extends PluginMap>
     return sql.trim().replace(/(?:\r\n|\r|\n)/g, " ");
   }
 }
-
-declare module "node:crypto" {
-  namespace webcrypto {
-    const subtle: SubtleCrypto;
-  }
-}
