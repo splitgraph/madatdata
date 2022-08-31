@@ -104,6 +104,7 @@ describe("makeClient creates client which", () => {
               "tableID": 0,
             },
           ],
+          "readable": [Function],
           "rowCount": 1,
           "rows": [
             {
@@ -189,11 +190,9 @@ describe("client handles errors correctly because it", () => {
 
     expect(error).toMatchInlineSnapshot(`
       {
-        "code": undefined,
-        "errno": undefined,
-        "message": "request to https://data.splitgraph.com/sql/query/ddn failed, reason: Some fake network error from MSW request handler",
+        "name": "NetworkError",
         "success": false,
-        "type": "system",
+        "type": "network",
       }
     `);
   });
@@ -227,8 +226,6 @@ describe("client handles non-msw errors (fetch rejections)", () => {
 
     expect(error).toMatchInlineSnapshot(`
       {
-        "code": "ERR_INVALID_URL",
-        "input": "http://999.999.999.999/",
         "success": false,
         "type": "network",
       }
@@ -262,6 +259,7 @@ describe.skipIf(shouldSkipIntegrationTests())("http integration tests", () => {
               "tableID": 0,
             },
           ],
+          "readable": [Function],
           "rowCount": 1,
           "rows": [
             {
@@ -326,6 +324,7 @@ describe.skipIf(shouldSkipIntegrationTests())("http integration tests", () => {
               "tableID": 0,
             },
           ],
+          "readable": [Function],
           "rowCount": 1,
           "rows": [
             {
@@ -405,6 +404,7 @@ describe.skipIf(shouldSkipIntegrationTests())("http integration tests", () => {
               "tableID": 0,
             },
           ],
+          "readable": [Function],
           "rowCount": 1,
           "rows": [
             [

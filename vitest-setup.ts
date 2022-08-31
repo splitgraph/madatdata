@@ -9,10 +9,6 @@ const [nodeMajorVersion, _nodeMinorVersion, _nodePatchVersion] = process.version
 // The dependency is in the root of the mono-repo, and any package that relies
 // on it is responsible for polyfilling it in its own bundle
 // import "cross-fetch/polyfill";
-
-console.log(
-  `SET window.fetch<${window.fetch}> = globalThis.fetch<${globalThis.fetch}>`
-);
 window.fetch = globalThis.fetch;
 
 // Optionally disable TLS verification and suppress its resultant warning spam
@@ -63,31 +59,6 @@ if (process.env.MITM) {
 
     setGlobalDispatcher(new ProxyAgent(mitmProxyOpts));
   }
-
-  //   < 18  : use global agent to patch globally
-  //  >= 18  : native fetch, powered by undici, set undici Agent as global dispatcher
-  // if (nodeMajorVersion < 18) {
-  //   if (!process.env.GLOBAL_AGENT_HTTP_PROXY) {
-  //     process.env["GLOBAL_AGENT_HTTP_PROXY"] = process.env.MITM;
-  //   }
-
-  //   bootstrapGlobalAgent();
-  // } else {
-  //   const mitmProxyOpts: ConstructorParameters<typeof ProxyAgent>[0] = {
-  //     uri: process.env.MITM,
-  //     ...(process.env.INSECURE_TLS === "1"
-  //       ? {
-  //           connect: {
-  //             rejectUnauthorized: false,
-  //             requestCert: false,
-  //           },
-  //         }
-  //       : {}),
-  //   };
-
-  //   setGlobalDispatcher(new ProxyAgent(mitmProxyOpts));
-  // }
-  // } else {
 }
 
 declare global {
