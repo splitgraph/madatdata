@@ -6748,7 +6748,7 @@ __metadata:
 
 "msw@patch:msw@npm:0.45.0#.yarn/patches/msw-npm-0.45.0-a8bee6eb0c.patch::locator=%40madatdata%2Froot%40workspace%3A.":
   version: 0.45.0
-  resolution: "msw@patch:msw@npm%3A0.45.0#.yarn/patches/msw-npm-0.45.0-a8bee6eb0c.patch::version=0.45.0&hash=f9db77&locator=%40madatdata%2Froot%40workspace%3A."
+  resolution: "msw@patch:msw@npm%3A0.45.0#.yarn/patches/msw-npm-0.45.0-a8bee6eb0c.patch::version=0.45.0&hash=d85a51&locator=%40madatdata%2Froot%40workspace%3A."
   dependencies:
     "@mswjs/cookies": ^0.2.2
     "@mswjs/interceptors": ^0.17.2
@@ -6779,7 +6779,7 @@ __metadata:
       optional: true
   bin:
     msw: cli/index.js
-  checksum: c9171a69f78c57f5d1d36d63f2bec154f564ed073d0b5889e70f21a109849a72a1708c03b9671f6dc735cc5917fc4b11a759c4c2a9cb85650fbf14ad2d5eabd4
+  checksum: 73842ef4cd01cf1818708fb58e47e724d38a44660d52d6f4d4a5847b16d5912e210fdfc6b50dd6cfabba96d3398a3dde9bec149e295b602c2d6417d81e227941
   languageName: node
   linkType: hard
 
