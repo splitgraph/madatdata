@@ -140,13 +140,21 @@ export class DbSplitgraph extends BaseDb<Partial<SplitgraphImportPluginMap>> {
         response: parsedResponse,
         error: null,
       }))
-      .catch((error) => ({
-        response: null,
-        error: {
-          type: "network-error",
-          ...error,
-        },
-      }));
+      .catch((error) => {
+        console.warn("fetchToken error:", error);
+        // console.trace(error);
+
+        return {
+          response: null,
+          error: {
+            type: error?.error?.type ?? "network-error",
+            message:
+              error?.error?.message ??
+              "error in db-splitgraph fetchAccessToken",
+            // ...error,
+          },
+        };
+      });
 
     if (error) {
       throw error;

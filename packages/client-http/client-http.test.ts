@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { makeClient, type HTTPStrategies } from "./client-http";
+import { makeClient, type HTTPClientOptions } from "./client-http";
 import { makeAuthHeaders } from "@madatdata/base-client";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
 import { shouldSkipIntegrationTests } from "@madatdata/test-helpers/env-config";
@@ -38,8 +38,8 @@ const splitgraphClientOptions = {
     makeQueryURL: async ({ host, database }) => {
       return Promise.resolve(host.baseUrls.sql + "/" + database.dbname);
     },
-  } as HTTPStrategies,
-};
+  },
+} as HTTPClientOptions;
 
 describe("makeClient creates client which", () => {
   setupMswServerTestHooks();
@@ -104,6 +104,7 @@ describe("makeClient creates client which", () => {
               "tableID": 0,
             },
           ],
+          "readable": [Function],
           "rowCount": 1,
           "rows": [
             {
@@ -235,6 +236,57 @@ describe("client handles non-msw errors (fetch rejections)", () => {
     `);
   });
 });
+
+type FakeRowShape = { name: string; purpose: string; id: number };
+
+describe.skipIf(true)(
+  "client handles streaming json lines from response",
+  () => {
+    setupMswServerTestHooks();
+
+    it("reads json lines", async ({ mswServer }) => {
+      const fakeResultSet: FakeRowShape[] = [];
+      for (let i = 0; i < 3000; i++) {
+        fakeResultSet.push({
+          id: i,
+          name: `foo_${i}`,
+          purpose: `bar_${i + 1}`,
+        });
+      }
+
+      mswServer?.use(
+        rest.post(defaultHost.baseUrls.sql + "/ddn", (_req, res, ctx) => {
+          return res(
+            ctx.status(200),
+            ctx.body(fakeResultSet.map((x) => JSON.stringify(x)).join("\n"))
+          );
+        })
+      );
+
+      const client = makeClient({
+        credential: null,
+        ...splitgraphClientOptions,
+        bodyMode: "streaming",
+      });
+
+      const { error, response } = await client.execute<FakeRowShape>(
+        "SELECT 1;",
+        { rowMode: "object", bodyMode: "streaming" }
+      );
+
+      expect(error).toMatchInlineSnapshot(`
+      {
+        "success": false,
+        "type": "unknown",
+      }
+    `);
+
+      expect(error).toBeNull();
+      expect(response).not.toBeNull();
+      expect(response!.rows.length).toEqual(3000);
+    });
+  }
+);
 
 describe.skipIf(shouldSkipIntegrationTests())("http integration tests", () => {
   it("can select 1 from real ddn", async () => {

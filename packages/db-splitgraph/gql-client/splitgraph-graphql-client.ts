@@ -30,7 +30,13 @@ export class SplitgraphGraphQLClient {
         error: null,
         info: { headers, status },
       }))
-      .catch((error) => ({ error: { ...error }, response: null, info: null }));
+      .catch((_err) => {
+        const parsedError = {
+          message: "unknown graphql error",
+          response: null,
+        };
+        return { error: parsedError, response: null, info: null };
+      });
 
     return {
       response,

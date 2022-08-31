@@ -341,9 +341,20 @@ export class ImportCSVPlugin implements Plugin {
           ? { response, error: null }
           : { response, error: { type: "http-error" } }
       )
-      .catch((error) => ({
+      .catch((_error) => ({
         response: null,
-        error: { type: "network-error", ...error },
+        error: {
+          type: "network-error",
+          response: null,
+
+          // ...((error) => {
+          //   try {
+          //     return { ...error };
+          //   } catch (err) {
+          //     return { message: "Unserializable network-error" };
+          //   }
+          // })(error),
+        },
       }));
 
     return { response, error };
@@ -398,9 +409,7 @@ export class ImportCSVPlugin implements Plugin {
 
     return {
       response: uploadCSVResponse ?? null,
-      error: uploadCSVError
-        ? { type: "upload-error", ...uploadCSVError }
-        : null,
+      error: uploadCSVError ? { type: "upload-error" } : null,
       info: info as Required<typeof info>,
     };
   }

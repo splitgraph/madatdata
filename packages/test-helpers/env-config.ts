@@ -65,5 +65,5 @@ export const shouldSkipIntegrationTests = () => {
 export const shouldSkipSeafowlTests = () => {
   // TEMP: true for commit in CI (uncomment for local dev)
   // (because there is no seafowl setup in CI yet)
-  return true;
+  return false;
 };

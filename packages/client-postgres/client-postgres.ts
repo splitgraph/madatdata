@@ -90,9 +90,20 @@ class SplitgraphPostgresClient<
         };
       }
     } catch (err: any) {
+      const errStr = (() => {
+        try {
+          return err.toString();
+        } catch (err) {
+          return "Unserializable error";
+        }
+      })();
+
       return {
         response: null,
-        error: { success: false, error: err, trace: err?.stack } as QueryError,
+        error: {
+          success: false,
+          error: errStr,
+        } as QueryError,
       };
     }
   }

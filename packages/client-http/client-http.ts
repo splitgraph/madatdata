@@ -66,7 +66,7 @@ export type HTTPStrategies = {
   makeQueryURL: MakeQueryURLStrategy;
 };
 
-export type HTTPClientOptions = {
+export type HTTPClientOptions = ClientOptions<HTTPStrategies> & {
   bodyMode?: BodyMode;
   strategies?: HTTPStrategies;
 };
@@ -80,7 +80,7 @@ type ExecOptions = BaseExecOptions & {
 };
 
 export interface HTTPClientQueryError extends QueryError {
-  type: "unknown" | "network" | "response-not-ok";
+  type: "unknown" | "network" | "response-not-ok" | "response-missing-body";
   response?: Response;
 }
 
@@ -89,7 +89,7 @@ export class SqlHTTPClient<
 > extends BaseClient<InputCredentialOptions, HTTPStrategies> {
   private bodyMode: BodyMode;
 
-  constructor(opts: ClientOptions<HTTPStrategies> & HTTPClientOptions) {
+  constructor(opts: HTTPClientOptions) {
     super(opts);
 
     this.bodyMode = opts.bodyMode ?? "json";
@@ -159,7 +159,16 @@ export class SqlHTTPClient<
     });
 
     const { response, error } = await fetch(queryURL, fetchOptions)
-      .catch((err) => Promise.reject({ type: "network", ...err }))
+      .catch((err) => {
+        let serializedErr;
+        try {
+          serializedErr = { type: "network", message: "unknown error", ...err };
+        } catch {
+          serializedErr = { type: "network", message: "unserializable error" };
+        }
+
+        return Promise.reject(serializedErr);
+      })
       .then(async (r) => {
         if (r.type === "error") {
           // note: very rare (usually fetch itself rejects promise)
@@ -174,25 +183,44 @@ export class SqlHTTPClient<
         // TODO: streaming jus there for debug, should be deleted
         if (this.bodyMode === "streaming") {
           console.log("streaming body");
-          this.bodyMode = "jsonl";
+          // this.bodyMode = "jsonl";
 
-          // const responseReadableStream = r.body?.getReader();
-        }
+          if (!r.body) {
+            return Promise.reject({
+              type: "response-missing-body",
+              response: r,
+            });
+          }
 
-        if (this.bodyMode === "jsonl") {
-          return (await r.text())
-            .split("\n")
-            .map((rr) => {
-              try {
-                return JSON.parse(rr);
-              } catch (err) {
-                console.warn(
-                  `Failed to parse row. Row:\n${rr}Error:\n${err}\n`
-                );
-                return null;
-              }
-            })
-            .filter((rr) => rr !== null);
+          const reader = r.body.getReader();
+
+          const jsonLines = makeJsonLinesIteratorFromReadableStream({ reader });
+
+          const rows = [];
+          for await (let line of jsonLines) {
+            rows.push(line);
+          }
+
+          console.log("There are", rows.length, "rows");
+
+          return rows;
+        } else if (this.bodyMode === "jsonl") {
+          return {
+            readable: () => new ReadableStream(),
+            rows: (await r.text())
+              .split("\n")
+              .map((rr) => {
+                try {
+                  return JSON.parse(rr);
+                } catch (err) {
+                  console.warn(
+                    `Failed to parse row. Row:\n${rr}Error:\n${err}\n`
+                  );
+                  return null;
+                }
+              })
+              .filter((rr) => rr !== null),
+          };
         } else if (this.bodyMode === "json") {
           return await r.json();
         } else {
@@ -221,7 +249,8 @@ export class SqlHTTPClient<
         error: {
           success: false,
           type: err.type || "unknown",
-          ...err,
+          message: "error in execute of client-http",
+          // ...err,
         } as HTTPClientQueryError,
       }));
 
@@ -232,9 +261,46 @@ export class SqlHTTPClient<
   }
 }
 
+interface MakeJsonLinesIteratorFromReadableStreamArgs {
+  reader: ReadableStreamDefaultReader<Uint8Array>;
+}
+
+// "Adapted" from:
+// https://developer.mozilla.org/en-US/docs/Web/API/ReadableStreamDefaultReader/read
+const makeJsonLinesIteratorFromReadableStream = async function* ({
+  reader,
+}: MakeJsonLinesIteratorFromReadableStreamArgs) {
+  const decoder = new TextDecoder("utf-8");
+  let { value: rawChunk, done: readerDone } = await reader.read();
+  let chunk = decoder.decode(rawChunk, { stream: true });
+
+  let re = /\r\n|\n|\r/gm;
+  let startIndex = 0;
+
+  for (;;) {
+    let result = re.exec(chunk);
+    if (!result) {
+      if (readerDone) {
+        break;
+      }
+      let remainder = chunk.slice(startIndex);
+      ({ value: rawChunk, done: readerDone } = await reader.read());
+      chunk = remainder + decoder.decode(rawChunk, { stream: true });
+      startIndex = re.lastIndex = 0;
+      continue;
+    }
+    yield JSON.parse(chunk.substring(startIndex, result.index));
+    startIndex = re.lastIndex;
+  }
+  if (startIndex < chunk.length) {
+    // last line didn't end in a newline char
+    yield JSON.parse(chunk.slice(startIndex));
+  }
+};
+
 // TODO: maybe move/copy to db-{splitgraph,seafowl,etc} - expect them to have it?
 // pass in their own factory function here?
-export const makeClient = (args: ClientOptions<HTTPStrategies>) => {
+export const makeClient = (args: HTTPClientOptions) => {
   const client = new SqlHTTPClient(args);
   return client;
 };

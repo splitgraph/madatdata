@@ -90,15 +90,6 @@ export interface Client {
 
 // type StrategyMapFromOptions<Options extends StrategyOptions> = StrategyOptions
 
-// export type CredentialFromOptions<Opt extends BaseCredentialOptions> =
-//   Opt extends KeypairCredentialOptions
-//     ? KeypairCredential
-//     : Opt extends AnonymousTokenCredentialOptions
-//     ? AnonymousTokenCredential
-//     : Opt extends AuthenticatedTokenCredentialOptions
-//     ? AuthenticatedTokenCredential
-//     : AnonymousTokenCredential;
-
 export abstract class BaseClient<
   InputCredentialOptions extends CredentialOptions,
   InputStrategyOptions extends StrategyOptions = {}

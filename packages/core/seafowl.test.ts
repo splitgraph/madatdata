@@ -113,12 +113,15 @@ describe.skipIf(shouldSkipSeafowlTests())("can query local seafowl", () => {
     expect(res).toMatchInlineSnapshot(`
       {
         "error": null,
-        "response": [
-          {
-            "Int64(1)": 1,
-            "Int64(2)": 2,
-          },
-        ],
+        "response": {
+          "readable": [Function],
+          "rows": [
+            {
+              "Int64(1)": 1,
+              "Int64(2)": 2,
+            },
+          ],
+        },
       }
     `);
   });
