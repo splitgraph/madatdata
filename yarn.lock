@@ -6746,6 +6746,43 @@ __metadata:
   languageName: node
   linkType: hard
 
+"msw@patch:msw@npm:0.45.0#.yarn/patches/msw-npm-0.45.0-a8bee6eb0c.patch::locator=%40madatdata%2Froot%40workspace%3A.":
+  version: 0.45.0
+  resolution: "msw@patch:msw@npm%3A0.45.0#.yarn/patches/msw-npm-0.45.0-a8bee6eb0c.patch::version=0.45.0&hash=f9db77&locator=%40madatdata%2Froot%40workspace%3A."
+  dependencies:
+    "@mswjs/cookies": ^0.2.2
+    "@mswjs/interceptors": ^0.17.2
+    "@open-draft/until": ^1.0.3
+    "@types/cookie": ^0.4.1
+    "@types/js-levenshtein": ^1.1.1
+    chalk: 4.1.1
+    chokidar: ^3.4.2
+    cookie: ^0.4.2
+    headers-polyfill: ^3.0.4
+    inquirer: ^8.2.0
+    is-node-process: ^1.0.1
+    js-levenshtein: ^1.1.6
+    node-fetch: ^2.6.7
+    outvariant: ^1.3.0
+    path-to-regexp: ^6.2.0
+    statuses: ^2.0.0
+    strict-event-emitter: ^0.2.0
+    type-fest: ^1.2.2
+    yargs: ^17.3.1
+  peerDependencies:
+    graphql: ^15.0.0 || ^16.0.0
+    typescript: ">= 4.2.x <= 4.7.x"
+  peerDependenciesMeta:
+    graphql:
+      optional: true
+    typescript:
+      optional: true
+  bin:
+    msw: cli/index.js
+  checksum: c9171a69f78c57f5d1d36d63f2bec154f564ed073d0b5889e70f21a109849a72a1708c03b9671f6dc735cc5917fc4b11a759c4c2a9cb85650fbf14ad2d5eabd4
+  languageName: node
+  linkType: hard
+
 "mute-stream@npm:0.0.8":
   version: 0.0.8
   resolution: "mute-stream@npm:0.0.8"
