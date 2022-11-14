@@ -63,7 +63,7 @@ describe("can use raw msw FetchInterceptor", () => {
  * polyfill in our test environment, and so if the tests pass, they're passing
  * using the node "native" fetch, i.e. new global `fetch` provided by `undici`
  */
-describe.only("setupMswServerTestHooks", () => {
+describe("setupMswServerTestHooks", () => {
   setupMswServerTestHooks();
 
   beforeEach(({ mswServer }) => {
