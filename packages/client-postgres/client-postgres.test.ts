@@ -30,6 +30,7 @@ describe.skipIf(!hasCredential)("makeClient creates a pg client which", () => {
       {
         "error": null,
         "response": {
+          "readable": [Function],
           "rows": [
             {
               "?column?": 1,
@@ -53,6 +54,7 @@ describe.skipIf(!hasCredential)("makeClient creates a pg client which", () => {
       {
         "error": null,
         "response": {
+          "readable": [Function],
           "rows": [
             {
               "array_2d_col": [
@@ -118,6 +120,7 @@ describe.skipIf(!hasCredential)("makeClient creates a pg client which", () => {
       {
         "error": null,
         "response": {
+          "readable": [Function],
           "rows": [
             {
               "?column?": 4,
@@ -145,6 +148,7 @@ describe.skipIf(!hasCredential)("makeClient creates a pg client which", () => {
       {
         "error": null,
         "response": {
+          "readable": [Function],
           "rows": [
             [
               1,
@@ -176,6 +180,7 @@ describe.skipIf(!hasCredential)("makeClient creates a pg client which", () => {
 
     expect(r2.response).toMatchInlineSnapshot(`
       {
+        "readable": [Function],
         "rows": [
           [
             1,

@@ -8,7 +8,7 @@
     "debug": "yarn run esno --inspect-brk=127.0.0.1:9229 parse-ast.ts"
   },
   "devDependencies": {
-    "@types/node": "16.11.38"
+    "@types/node": "18.7.13"
   },
   "dependencies": {
     "chalk": "5.0.1",

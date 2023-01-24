@@ -11,13 +11,20 @@ export { type CredentialOptions, Credential };
 
 export {
   type AuthenticatedCredential,
+  type UnknownCredential,
   makeAuthHeaders,
   makeAuthPgParams,
 } from "./credential";
-export interface ClientOptions {
+
+export type StrategyOptions = {
+  [strategyName: string]: (args: any) => any;
+};
+
+export interface ClientOptions<InputStrategyOptions = any> {
   credential?: CredentialOptions | null;
   host?: Host | null;
   database?: Database | null;
+  strategies?: InputStrategyOptions;
 }
 
 export interface QueryError {
@@ -38,12 +45,14 @@ export interface ExecutionResultWithObjectShapedRows<
   ObjectRowShape extends UnknownObjectShape
 > extends ExecutionResultBase {
   rows: ObjectRowShape[];
+  readable: () => ReadableStream<ObjectRowShape>;
 }
 
 export interface ExecutionResultWithArrayShapedRows<
   ArrayRowShape extends UnknownArrayShape
 > extends ExecutionResultBase {
   rows: ArrayRowShape[];
+  readable: () => ReadableStream<ArrayRowShape>;
 }
 
 export type ExecutionResultFromRowShape<RowShape extends UnknownRowShape> =
@@ -79,19 +88,34 @@ export interface Client {
   }>;
 }
 
+// type StrategyMapFromOptions<Options extends StrategyOptions> = StrategyOptions
+
+// export type CredentialFromOptions<Opt extends BaseCredentialOptions> =
+//   Opt extends KeypairCredentialOptions
+//     ? KeypairCredential
+//     : Opt extends AnonymousTokenCredentialOptions
+//     ? AnonymousTokenCredential
+//     : Opt extends AuthenticatedTokenCredentialOptions
+//     ? AuthenticatedTokenCredential
+//     : AnonymousTokenCredential;
+
 export abstract class BaseClient<
-  InputCredentialOptions extends CredentialOptions
+  InputCredentialOptions extends CredentialOptions,
+  InputStrategyOptions extends StrategyOptions = {}
 > implements Client
 {
   protected credential: CredentialFromOptions<InputCredentialOptions>;
   protected host: Host;
   protected database: Database;
+  protected strategies: InputStrategyOptions;
 
-  constructor(opts: ClientOptions) {
+  constructor(opts: ClientOptions<InputStrategyOptions>) {
     this.credential = Credential(opts.credential || null);
 
     this.host = opts.host ?? defaultHost;
     this.database = opts.database ?? defaultDatabase;
+
+    this.strategies = (opts.strategies ?? {}) as InputStrategyOptions;
   }
 
   setCredential(newCredential: InputCredentialOptions | null) {

@@ -73,6 +73,7 @@ class SplitgraphPostgresClient<
           response: {
             success: true,
             rows: arrayShapedRows,
+            readable: () => new ReadableStream<UnknownArrayShape>(),
           },
           error: null,
         };
@@ -83,6 +84,7 @@ class SplitgraphPostgresClient<
           response: {
             success: true,
             rows: objectShapedRows,
+            readable: () => new ReadableStream<UnknownObjectShape>(),
           },
           error: null,
         };

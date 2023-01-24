@@ -1,12 +1,47 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { makeClient } from "./client-http";
+import { makeClient, type HTTPStrategies } from "./client-http";
+import { makeAuthHeaders } from "@madatdata/base-client";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
 import { shouldSkipIntegrationTests } from "@madatdata/test-helpers/env-config";
 import { rest } from "msw";
 
 import { defaultHost } from "@madatdata/base-client/host";
 
-describe("makeClient creates a client which", () => {
+// NOTE: Previously, the default http-client was hardcoded for Splitgraph, which
+// is why all the tests reflect its shape. But we don't want this package to
+// depend on db-splitgraph, so we copy the strategies from DbSplitgraph.makeHTTPClient
+// even though ideally, these tests wouldn't be hardcoded to Splitgrpaph endpoints
+// anyway. But as long as we have the mocks for them, these defaults make sense.
+// Going forward, http client tests can/should use more generic callbacks and mocks
+const splitgraphClientOptions = {
+  bodyMode: "json",
+  strategies: {
+    makeFetchOptions: ({ credential, query, execOptions }) => {
+      // HACKY: atm, splitgraph API does not accept "object" as valid param
+      // so remove it from execOptions (hacky because ideal is `...execOptions`)
+      const httpExecOptions =
+        execOptions?.rowMode === "object"
+          ? (({ rowMode, ...rest }) => rest)(execOptions)
+          : execOptions;
+
+      return {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...makeAuthHeaders(
+            credential
+          ) /* fixme: smell? prefer `this.credential`? */,
+        },
+        body: JSON.stringify({ sql: query, ...httpExecOptions }),
+      };
+    },
+    makeQueryURL: async ({ host, database }) => {
+      return Promise.resolve(host.baseUrls.sql + "/" + database.dbname);
+    },
+  } as HTTPStrategies,
+};
+
+describe("makeClient creates client which", () => {
   setupMswServerTestHooks();
 
   beforeEach(({ mswServer }) => {
@@ -45,6 +80,7 @@ describe("makeClient creates a client which", () => {
   it("receives SELECT 1 with expected metadata shape", async () => {
     const client = makeClient({
       credential: null,
+      ...splitgraphClientOptions,
     });
 
     const result = await client.execute<{ "?column?": number }>("SELECT 1;");
@@ -68,6 +104,7 @@ describe("makeClient creates a client which", () => {
               "tableID": 0,
             },
           ],
+          "readable": [Function],
           "rowCount": 1,
           "rows": [
             {
@@ -81,10 +118,126 @@ describe("makeClient creates a client which", () => {
   });
 });
 
+const makeStubClient = () => {
+  return makeClient({
+    credential: null,
+    strategies: {
+      makeFetchOptions: () => ({
+        method: "POST",
+      }),
+      makeQueryURL: async ({ host, database }) => {
+        return Promise.resolve(host.baseUrls.sql + "/" + database.dbname);
+      },
+    },
+  });
+};
+
+describe("client handles errors correctly because it", () => {
+  setupMswServerTestHooks();
+
+  it("propagates response with response-not-ok", async ({ mswServer }) => {
+    mswServer?.use(
+      rest.post(defaultHost.baseUrls.sql + "/ddn", (_req, res, ctx) => {
+        return res(
+          ctx.status(403),
+          ctx.json({
+            message: "Not authorized",
+          })
+        );
+      })
+    );
+
+    const client = makeStubClient();
+
+    const { error, response } = await client.execute<{}>("SELECT 1;");
+
+    expect(response).toBeNull();
+    expect(error).not.toBeNull();
+
+    expect((({ response, ...rest }) => rest)(error!)).toMatchInlineSnapshot(`
+        {
+          "success": false,
+          "type": "response-not-ok",
+        }
+      `);
+
+    expect(error!.response).toBeDefined();
+    expect(error!.response!.ok).toBeFalsy();
+  });
+
+  // NOTE: "network error" typically indicates the fetch itself rejected, but
+  // msw res.networkError() is slightly different: it throws an error in the
+  // request handler, so our network error handling code never even gets to run.
+  // It's worth simulating, but we must also test non-msw network error handling.
+  //
+  // see: https://mswjs.io/docs/api/response/network-error
+  // see: https://developer.mozilla.org/en-US/docs/Web/API/Response/type (esp. see "Note")
+  it("propagates network error", async ({ mswServer }) => {
+    mswServer?.use(
+      rest.post(defaultHost.baseUrls.sql + "/ddn", (_req, res, _ctx) => {
+        return res.networkError(
+          "Some fake network error from MSW request handler"
+        );
+      })
+    );
+
+    const client = makeStubClient();
+
+    const { error, response } = await client.execute<{}>("SELECT 1;");
+
+    expect(response).toBeNull();
+    expect(error).not.toBeNull();
+
+    expect(error).toMatchInlineSnapshot(`
+      {
+        "name": "NetworkError",
+        "success": false,
+        "type": "network",
+      }
+    `);
+  });
+});
+
+const makeUnconnectableClient = () => {
+  return makeClient({
+    credential: null,
+    strategies: {
+      makeFetchOptions: () => ({}),
+      makeQueryURL: async () => {
+        return Promise.resolve("http://999.999.999.999/");
+      },
+    },
+  });
+};
+
+// note: needs to be tested separately from mock-service-worker res.networkError(),
+// because failing in the request handler is not exactly the same as fetch rejecting
+// and will bypass the http client error handling
+describe("client handles non-msw errors (fetch rejections)", () => {
+  it("propagates network error ERR_INVALID_URL with invalid IP", async () => {
+    const lonelyClient = makeUnconnectableClient();
+
+    const { error, response } = await lonelyClient.execute<{}>("SELECT 1;");
+
+    expect(response).toBeNull();
+    expect(error).not.toBeNull();
+    expect(error!.type).toEqual("network");
+    expect(error!.response).toBeUndefined();
+
+    expect(error).toMatchInlineSnapshot(`
+      {
+        "success": false,
+        "type": "network",
+      }
+    `);
+  });
+});
+
 describe.skipIf(shouldSkipIntegrationTests())("http integration tests", () => {
   it("can select 1 from real ddn", async () => {
     const client = makeClient({
       credential: null,
+      ...splitgraphClientOptions,
     });
 
     const result = await client.execute<{ "?column?": number }>("SELECT 1;");
@@ -106,6 +259,7 @@ describe.skipIf(shouldSkipIntegrationTests())("http integration tests", () => {
               "tableID": 0,
             },
           ],
+          "readable": [Function],
           "rowCount": 1,
           "rows": [
             {
@@ -124,6 +278,7 @@ describe.skipIf(shouldSkipIntegrationTests())("http integration tests", () => {
   it("can select 1, 2, 3 from real ddn", async () => {
     const client = makeClient({
       credential: null,
+      ...splitgraphClientOptions,
     });
 
     const result = await client.execute<{ "?column?": number }>(
@@ -169,6 +324,7 @@ describe.skipIf(shouldSkipIntegrationTests())("http integration tests", () => {
               "tableID": 0,
             },
           ],
+          "readable": [Function],
           "rowCount": 1,
           "rows": [
             {
@@ -186,6 +342,7 @@ describe.skipIf(shouldSkipIntegrationTests())("http integration tests", () => {
   it("can select 1, 2, 3 from real ddn in row mode", async () => {
     const client = makeClient({
       credential: null,
+      ...splitgraphClientOptions,
     });
 
     const result = await client.execute<
@@ -247,6 +404,7 @@ describe.skipIf(shouldSkipIntegrationTests())("http integration tests", () => {
               "tableID": 0,
             },
           ],
+          "readable": [Function],
           "rowCount": 1,
           "rows": [
             [
@@ -275,6 +433,7 @@ describe.skip("type checking produces expected errors in", async () => {
   it("client-http.execute function overloading", async () => {
     const client = makeClient({
       credential: null,
+      ...splitgraphClientOptions,
     });
 
     const badObjectType = await client.execute<{ "?column?": number }>(

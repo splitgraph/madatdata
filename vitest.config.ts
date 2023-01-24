@@ -22,6 +22,10 @@ export default defineConfig({
         replacement: join(currentDirectoryPath, "packages", "client-http"),
       },
       {
+        find: "@madatdata/db-seafowl",
+        replacement: join(currentDirectoryPath, "packages", "db-seafowl"),
+      },
+      {
         find: "@madatdata/db-splitgraph",
         replacement: join(currentDirectoryPath, "packages", "db-splitgraph"),
       },

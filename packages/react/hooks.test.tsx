@@ -130,6 +130,7 @@ describe("makeDefaultAnonymousContext", () => {
     expect(makeDefaultAnonymousContext()).toMatchInlineSnapshot(`
       {
         "client": SqlHTTPClient {
+          "bodyMode": "json",
           "credential": {
             "anonymous": true,
             "token": "anonymous-token",
@@ -152,7 +153,10 @@ describe("makeDefaultAnonymousContext", () => {
               "ssl": true,
             },
           },
-          "queryUrl": "https://data.splitgraph.com/sql/query/ddn",
+          "strategies": {
+            "makeFetchOptions": [Function],
+            "makeQueryURL": [Function],
+          },
         },
         "db": DbSplitgraph {
           "database": {

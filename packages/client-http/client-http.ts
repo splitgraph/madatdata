@@ -1,9 +1,11 @@
 import {
   BaseClient,
-  makeAuthHeaders,
   type QueryError,
   type ClientOptions,
   type CredentialOptions,
+  type Database,
+  type Host,
+  type UnknownCredential,
   UnknownRowShape,
   ExecutionResultWithObjectShapedRows,
   ExecutionResultWithArrayShapedRows,
@@ -25,6 +27,7 @@ export interface WebBridgeResponse<RowShape extends UnknownRowShape> {
   }[];
   rowCount: 1;
   rows: RowShape[];
+  readable: () => ReadableStream<RowShape>;
   success: true;
   /** FIXME: optional to allow deleting it for inline snapshots */
   executionTime?: string;
@@ -32,71 +35,194 @@ export interface WebBridgeResponse<RowShape extends UnknownRowShape> {
   executionTimeHighRes?: string;
 }
 
+// todo: "streaming" just here for debug, should be deleted
+type BodyMode = "json" | "jsonl" | "streaming";
+
+type MakeFetchOptionsStrategyArgs = {
+  credential: UnknownCredential;
+  query: string;
+  execOptions: ExecOptions;
+};
+
+type MakeFetchOptionsStrategy = ({
+  credential,
+  query,
+  execOptions,
+}: MakeFetchOptionsStrategyArgs) => RequestInit;
+
+type MakeQueryURLStrategyArgs = {
+  database: Database;
+  host: Host;
+  query?: string;
+};
+
+type MakeQueryURLStrategy = ({
+  database,
+  host,
+}: MakeQueryURLStrategyArgs) => Promise<string>;
+
+export type HTTPStrategies = {
+  makeFetchOptions: MakeFetchOptionsStrategy;
+  makeQueryURL: MakeQueryURLStrategy;
+};
+
+export type HTTPClientOptions = {
+  bodyMode?: BodyMode;
+  strategies?: HTTPStrategies;
+};
+
+type BaseExecOptions = {
+  bodyMode?: BodyMode;
+};
+
+type ExecOptions = BaseExecOptions & {
+  rowMode?: "object" | "array" | undefined;
+};
+
+export interface HTTPClientQueryError extends QueryError {
+  type: "unknown" | "network" | "response-not-ok";
+  response?: Response;
+}
+
 export class SqlHTTPClient<
   InputCredentialOptions extends CredentialOptions
-> extends BaseClient<InputCredentialOptions> {
-  private queryUrl: string;
+> extends BaseClient<InputCredentialOptions, HTTPStrategies> {
+  private bodyMode: BodyMode;
 
-  constructor(opts: ClientOptions) {
+  constructor(opts: ClientOptions<HTTPStrategies> & HTTPClientOptions) {
     super(opts);
-    this.queryUrl = this.host.baseUrls.sql + "/" + this.database.dbname;
+
+    this.bodyMode = opts.bodyMode ?? "json";
+
+    if (!opts.strategies) {
+      throw "strategies parameter is required for SqlHTTPClient";
+    }
+
+    this.strategies = {
+      makeFetchOptions: opts.strategies?.makeFetchOptions,
+      makeQueryURL: opts.strategies?.makeQueryURL,
+    };
   }
 
-  private get fetchOptions() {
+  private async makeQueryURL({ query }: Partial<MakeQueryURLStrategyArgs>) {
+    return await this.strategies.makeQueryURL({
+      query,
+      host: this.host,
+      database: this.database,
+    });
+  }
+
+  private makeFetchOptions({
+    query,
+    execOptions,
+  }: Pick<MakeFetchOptionsStrategyArgs, "query" | "execOptions">) {
+    return this.strategies.makeFetchOptions({
+      credential: this.credential,
+      query,
+      execOptions,
+    });
+  }
+
+  static defaultExecOptions(
+    inputExecOptions?: Partial<ExecOptions>
+  ): ExecOptions {
     return {
-      method: "POST",
-      headers: {
-        ...makeAuthHeaders(this.credential),
-        "Content-type": "application/json",
-      },
+      rowMode: "object",
+      ...(inputExecOptions ?? {}),
     };
   }
 
   async execute<RowShape extends UnknownArrayShape>(
     query: string,
-    executeOptions: { rowMode: "array" }
+    executeOptions: { rowMode: "array" } & BaseExecOptions
   ): Promise<{
     response: ExecutionResultWithArrayShapedRows<RowShape> | null;
-    error: QueryError | null;
+    error: HTTPClientQueryError | null;
   }>;
 
   async execute<RowShape extends UnknownObjectShape>(
     query: string,
-    executeOptions?: { rowMode: "object" }
+    executeOptions?: { rowMode: "object" } & BaseExecOptions
   ): Promise<{
     response: ExecutionResultWithObjectShapedRows<RowShape> | null;
-    error: QueryError | null;
+    error: HTTPClientQueryError | null;
   }>;
 
-  async execute(query: string, execOptions?: { rowMode?: "object" | "array" }) {
-    // HACKY: atm, splitgraph API does not accept "object" as valid param
-    // so remove it from execOptions (hacky because ideal is `...execOptions`)
-    const httpExecOptions =
-      execOptions?.rowMode === "object"
-        ? (({ rowMode, ...rest }) => rest)(execOptions)
-        : execOptions;
+  async execute(
+    query: string,
+    execOptions?: { rowMode?: "object" | "array" } & BaseExecOptions
+  ) {
+    const queryURL = await this.makeQueryURL({ query });
+    const fetchOptions = this.makeFetchOptions({
+      query,
+      execOptions: SqlHTTPClient.defaultExecOptions(execOptions),
+    });
 
-    const fetchOptions = {
-      ...this.fetchOptions,
-      body: JSON.stringify({ sql: query, ...httpExecOptions }),
-    };
+    const { response, error } = await fetch(queryURL, fetchOptions)
+      .catch((err) => Promise.reject({ type: "network", ...err }))
+      .then(async (r) => {
+        if (r.type === "error") {
+          // note: very rare (usually fetch itself rejects promise)
+          // see: https://developer.mozilla.org/en-US/docs/Web/API/Response/type
+          return Promise.reject({ type: "network", response: r });
+        }
 
-    const { response, error } = await fetch(this.queryUrl, fetchOptions)
-      .then((r) => r.json())
+        if (!r.ok) {
+          return Promise.reject({ type: "response-not-ok", response: r });
+        }
+
+        // TODO: streaming jus there for debug, should be deleted
+        if (this.bodyMode === "streaming") {
+          console.log("streaming body");
+          this.bodyMode = "jsonl";
+
+          // const responseReadableStream = r.body?.getReader();
+        }
+
+        if (this.bodyMode === "jsonl") {
+          return (await r.text())
+            .split("\n")
+            .map((rr) => {
+              try {
+                return JSON.parse(rr);
+              } catch (err) {
+                console.warn(
+                  `Failed to parse row. Row:\n${rr}Error:\n${err}\n`
+                );
+                return null;
+              }
+            })
+            .filter((rr) => rr !== null);
+        } else if (this.bodyMode === "json") {
+          return await r.json();
+        } else {
+          throw "Unexpected bodyMode (should never happen, default is json)";
+        }
+      })
       .then((rJson) =>
         execOptions?.rowMode === "array"
           ? {
-              response: rJson as WebBridgeResponse<UnknownArrayShape>,
+              response: {
+                readable: () => new ReadableStream<UnknownArrayShape>(),
+                ...rJson,
+              } as WebBridgeResponse<UnknownArrayShape>,
               error: null,
             }
           : {
-              response: rJson as WebBridgeResponse<UnknownObjectShape>,
+              response: {
+                readable: () => new ReadableStream<UnknownObjectShape>(),
+                ...rJson,
+              } as WebBridgeResponse<UnknownObjectShape>,
               error: null,
             }
       )
       .catch((err) => ({
         response: null,
-        error: { success: false, error: err, trace: err.stack } as QueryError,
+        error: {
+          success: false,
+          type: err.type || "unknown",
+          ...err,
+        } as HTTPClientQueryError,
       }));
 
     return {
@@ -106,7 +232,9 @@ export class SqlHTTPClient<
   }
 }
 
-export const makeClient = (args: ClientOptions) => {
+// TODO: maybe move/copy to db-{splitgraph,seafowl,etc} - expect them to have it?
+// pass in their own factory function here?
+export const makeClient = (args: ClientOptions<HTTPStrategies>) => {
   const client = new SqlHTTPClient(args);
   return client;
 };

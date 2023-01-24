@@ -7,6 +7,7 @@
   "dependencies": {
     "@madatdata/base-client": "workspace:*",
     "@madatdata/base-db": "workspace:*",
+    "@madatdata/client-http": "workspace:*",
     "graphql": "16.5.0",
     "graphql-request": "4.3.0",
     "typescript-retry-decorator": "2.0.5"
@@ -19,7 +20,7 @@
     "@graphql-codegen/typescript": "2.7.1",
     "@graphql-codegen/typescript-operations": "2.5.1",
     "@madatdata/test-helpers": "workspace:*",
-    "@types/node": "16.11.38",
+    "@types/node": "18.7.13",
     "cross-fetch": "3.1.5",
     "esno": "0.16.3",
     "json-schema-to-typescript": "10.1.5",

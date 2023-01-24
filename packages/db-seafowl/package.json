@@ -1,5 +1,5 @@
 {
-  "name": "@madatdata/core",
+  "name": "@madatdata/db-seafowl",
   "version": "0.0.5",
   "packageManager": "yarn@3.2.0",
   "main": "index.ts",
@@ -7,9 +7,7 @@
   "dependencies": {
     "@madatdata/base-client": "workspace:*",
     "@madatdata/base-db": "workspace:*",
-    "@madatdata/client-http": "workspace:*",
-    "@madatdata/db-seafowl": "workspace:*",
-    "@madatdata/db-splitgraph": "workspace:*"
+    "@madatdata/client-http": "workspace:*"
   },
   "devDependencies": {
     "@madatdata/test-helpers": "workspace:*",

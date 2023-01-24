@@ -624,6 +624,35 @@ find ~/.yarn/berry/cache/ -type f -name '@madatdata*' -delete \
 - DSX
 - DDX
 
+# Patching Process
+
+See also [patching gotchas][patching-gotchas] (blog post)
+
+In other package (assuming Yarn 1):
+
+```
+yarn pack --prod --frozen-lockfile --verbose
+```
+
+In this package, run `yarn patch` and note the created directory:
+
+```
+yarn patch
+```
+
+for example and ease of reference, saving it to a variable:
+
+```
+export patch_dir="/private/var/folders/np/djbv9lnn5wd62yrs60zxh_p40000gn/T/xfs-1aff2a96/user"
+# (also, note sibling dirs `user` and `patch`, which Yarn will use to compute diff)
+```
+
+move built tarball output from first step
+
+```
+tar xf msw-v0.45.0.tgz && rm -rf "$patch_dir" && mv package "$patch_dir"
+```
+
 [src-base-client]: ./packages/base-client/index.ts
 [src-client-http]: ./packages/client-http/client-http.ts
 [src-client-postgres]: ./packages/client-postgres/client-postgres.ts
@@ -648,3 +677,5 @@ find ~/.yarn/berry/cache/ -type f -name '@madatdata*' -delete \
 [tsc-multi]: https://github.com/tommy351/tsc-multi
 [in-anger]:
   https://english.stackexchange.com/questions/30939/is-used-in-anger-a-britishism-for-something
+[patching-gotchas]:
+  https://charles-stover.medium.com/patching-packages-in-yarn-berry-72e4ded29a56
