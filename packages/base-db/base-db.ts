@@ -92,11 +92,16 @@ export abstract class BaseDb<ConcretePluginMap extends PluginMap>
     // In vitest, really JSDOM, it's a bit of a mix between the two (window is available?)
     // NOTE: Need to test how this will work in a browser bundle which we don't even have yet
     const subtle = (() => {
-      if (typeof window === "undefined" || !window.crypto) {
-        // TODO: put dynamic imports back here
-        return webcrypto.subtle;
-      } else {
+      if (!window?.crypto?.subtle) {
+        if (webcrypto.subtle) {
+          return webcrypto.subtle;
+        } else {
+          throw new Error("Missing webcrypto.subtle");
+        }
+      } else if (window.crypto.subtle) {
         return window.crypto.subtle;
+      } else {
+        throw new Error("Missing webcrypto.subtle and window.crypto.subtle");
       }
     })();
 

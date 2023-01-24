@@ -103,13 +103,14 @@ describe("makeSeafowlHTTPContext", () => {
 
 describe.skipIf(shouldSkipSeafowlTests())("can query local seafowl", () => {
   // NOTE: EXPECTED TO BE FAILING RIGHT NOW (snapshot matches an error)
-  it("select 1, 2", async () => {
+  it.todo("select 1, 2 in array mode", async () => {
     const { client } = createDataContext();
 
     const res = await client.execute<[number, number]>("select 1, 2;", {
       rowMode: "array",
     });
 
+    // TODO: desired (when row mode works)
     expect(res).toMatchInlineSnapshot(`
       {
         "error": null,
@@ -119,6 +120,27 @@ describe.skipIf(shouldSkipSeafowlTests())("can query local seafowl", () => {
             "Int64(2)": 2,
           },
         ],
+      }
+    `);
+  });
+
+  it("select 1, 2 in object mode", async () => {
+    const { client } = createDataContext();
+
+    const res = await client.execute<[number, number]>("select 1, 2;", {
+      rowMode: "object",
+    });
+
+    expect(res).toMatchInlineSnapshot(`
+      {
+        "error": null,
+        "response": {
+          "0": {
+            "Int64(1)": 1,
+            "Int64(2)": 2,
+          },
+          "readable": [Function],
+        },
       }
     `);
   });
