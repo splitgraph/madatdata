@@ -172,27 +172,36 @@ export class SqlHTTPClient<
         }
 
         // TODO: streaming jus there for debug, should be deleted
-        if (this.bodyMode === "streaming") {
-          console.log("streaming body");
-          this.bodyMode = "jsonl";
+        // if (this.bodyMode === "streaming") {
+        //   console.log("streaming body");
+        //   this.bodyMode = "jsonl";
 
-          // const responseReadableStream = r.body?.getReader();
-        }
+        //   // const responseReadableStream = r.body?.getReader();
+        // }
 
+        // FIXME: it would be nice to support streaming responses piped into a readable stream
         if (this.bodyMode === "jsonl") {
-          return (await r.text())
-            .split("\n")
-            .map((rr) => {
-              try {
-                return JSON.parse(rr);
-              } catch (err) {
-                console.warn(
-                  `Failed to parse row. Row:\n${rr}Error:\n${err}\n`
-                );
-                return null;
-              }
-            })
-            .filter((rr) => rr !== null);
+          const bigInMemoryJsonLinesResponseBody = (await r.text()).split("\n");
+          const parsedLines = [];
+          while (bigInMemoryJsonLinesResponseBody.length > 0) {
+            const line = bigInMemoryJsonLinesResponseBody.shift();
+            if (!line) {
+              continue;
+            }
+
+            try {
+              parsedLines.push(JSON.parse(line));
+            } catch (err) {
+              console.warn(
+                `Failed to parse row. Row:\n${line}Error:\n${err}\n`
+              );
+              return null;
+            }
+          }
+          return {
+            rows: parsedLines,
+            success: true,
+          };
         } else if (this.bodyMode === "json") {
           return await r.json();
         } else {

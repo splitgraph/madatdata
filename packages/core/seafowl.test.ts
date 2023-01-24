@@ -101,46 +101,26 @@ describe("makeSeafowlHTTPContext", () => {
   });
 });
 
+// NOTE: It's up to the backend to support rowMode array/object mode
+// and at the moment seafowl is only object mode
 describe.skipIf(shouldSkipSeafowlTests())("can query local seafowl", () => {
-  // NOTE: EXPECTED TO BE FAILING RIGHT NOW (snapshot matches an error)
-  it.todo("select 1, 2 in array mode", async () => {
-    const { client } = createDataContext();
-
-    const res = await client.execute<[number, number]>("select 1, 2;", {
-      rowMode: "array",
-    });
-
-    // TODO: desired (when row mode works)
-    expect(res).toMatchInlineSnapshot(`
-      {
-        "error": null,
-        "response": [
-          {
-            "Int64(1)": 1,
-            "Int64(2)": 2,
-          },
-        ],
-      }
-    `);
-  });
-
-  it("select 1, 2 in object mode", async () => {
+  it("select 1, 2 in (default) object mode in (default) jsonl body mode", async () => {
     const { client } = createDataContext();
 
     const res = await client.execute<[number, number]>("select 1, 2;", {
       rowMode: "object",
     });
 
-    expect(res).toMatchInlineSnapshot(`
+    expect(res.response).toMatchInlineSnapshot(`
       {
-        "error": null,
-        "response": {
-          "0": {
+        "readable": [Function],
+        "rows": [
+          {
             "Int64(1)": 1,
             "Int64(2)": 2,
           },
-          "readable": [Function],
-        },
+        ],
+        "success": true,
       }
     `);
   });
