@@ -1,5 +1,5 @@
 import type { PluginMap } from "./plugin-bindings";
-import { webcrypto } from "node:crypto";
+import { webcrypto } from "crypto";
 
 import {
   type Client,
