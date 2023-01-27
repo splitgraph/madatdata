@@ -561,7 +561,7 @@ Note: If `publish-all` takes more than 30 seconds, the OTP could expire. It's
 currently unknown what will happen in this case, but it could break this script,
 in which case dropping the `--otp` might be sufficient for it to prompt on each.
 
-## Verdaccio
+## Verdaccio - First time setup
 
 Start it
 
@@ -596,25 +596,10 @@ environment variable `VERDACCIO=http://localhost:4873`, which gets interpolated
 into the necessary config settings in `.yarnrc.yml`, and otherwise defaults to
 `https://registry.yarnpkg.com`.
 
-Clean publish and sync extensions:
+## Verdaccio - Further instructions
 
-(todo: script this into `sync-examples` or something like that)
-
-```bash
-yarn build
-
-yarn verdaccio.reset
-
-yarn with-verdaccio publish-all --tolerate-republish
-
-cd examples
-find ~/.yarn/berry/cache/ -type f -name '@madatdata*' -delete \
-  ; rm -rf .yarn/install-state.gz node_modules react-nextjs-basic-hooks/node_modules \
-    react-nextjs-ssr-hooks/node_modules .yarn/cache yarn.lock \
-    react-nextjs-basic-hooks/.next \
-  ; touch yarn.lock \
-  && YARN_RC_FILENAME=.yarnrc.yml VERDACCIO=http://localhost:4873 yarn install
-```
+See [./examples/README.md](./examples/README.md) for details on using Verdaccio
+and for a command to
 
 # Appendix
 

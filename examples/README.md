@@ -30,6 +30,59 @@ the project, while also keeping each `examples/*` package individually
 installable, so we can later automate deployment of examples to various code
 hosting platforms.
 
+## Verdaccio: End to end test cycle for developing madatdata and examples
+
+Scenario: You're developing on Madatdata and want to fix an issue in a specific
+build of a specific package from npm. Here's the easiest way to do that.
+
+Try to copy paste this "one liner" :) If it fails, run `pkill -f verdaccio` to
+cleanup (keeping in mind it will kill any process on machine matching
+`verdaccio` in its command line args).
+
+```bash
+# This example is for examples/react-nextjs-basic-hooks
+# Modify the snippet accordingly depending on which example you're focused on
+
+echo "Start in root of repository" \
+  && { ( yarn verdaccio.start > verdaccio.log & export VERDACCIO_PID=$! ) ; } \
+  && { echo "VERDACCIO_PID: $VERDACCIO_PID" ; } \
+  && { yarn build && yarn verdaccio.reset ; } \
+  && { yarn with-verdaccio publish-all ; } \
+  && { cd examples ; yarn md.clear ; echo "Ignore above errors" ; VERDACCIO=http://localhost:4873 yarn install ; cd .. ; } \
+  && { cd examples/react-nextjs-basic-hooks && rm -rf .next ; VERDACCIO=http://localhost:4873 yarn install ; cd ../.. ; } \
+  ; { echo "Kill $VERDACCIO_PID" ; kill -9 "$VERDACCIO_PID" ; ps aux | grep verdaccio ; } \
+  ; { ps aux | grep verdaccio | grep node | awk '{ print $2 }' | xargs kill -9 ; } \
+  ; { echo "Waiting" ; wait $(jobs -p) ; } \
+  ; { echo "Verdaccio log: -----" ; cat verdaccio.log ; } \
+  ; { echo ps aux | grep verdaccio ; } \
+  ; { cd examples/react-nextjs-basic-hooks ; }
+```
+
+Note: this specific example also removes the `.next` directory in
+`examples/react-nextjs-basic-hooks`. Other examples might have similar
+directories that need to be deleted - by the nature of having realistic
+examples, it can vary wildly and depends on the software being used.
+
+Note: Each test cycle will change `yarn.lock` (which is why we do `yarn install`
+and not `yarn --immutable` here), as the hash of each local package changes.
+It's best practice not to commit these changes into the repository, and leave
+`yarn.lock` referencing hashes of public versions of our packages. This way, the
+next developer starts from a known working state.
+
+## Verdaccio: Delete everything (not just our packages) in `./examples`
+
+_(Note: not very stable, and copy/pasted from some older documentation)_
+
+```bash
+cd examples
+find ~/.yarn/berry/cache/ -type f -name '@madatdata*' -delete \
+  ; rm -rf .yarn/install-state.gz node_modules react-nextjs-basic-hooks/node_modules \
+    react-nextjs-ssr-hooks/node_modules .yarn/cache yarn.lock \
+    react-nextjs-basic-hooks/.next \
+  ; touch yarn.lock \
+  && YARN_RC_FILENAME=.yarnrc.yml VERDACCIO=http://localhost:4873 yarn install
+```
+
 ## Terminology
 
 This document will refer to the "main" worktree, and the "examples" worktree, to
