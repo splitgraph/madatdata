@@ -33,10 +33,13 @@ const createDb = () => {
       anonymous: false,
     },
     plugins: {
-      csv: new ImportCSVPlugin({
-        graphqlEndpoint: defaultHost.baseUrls.gql,
-        transformRequestHeaders,
-      }),
+      importers: {
+        csv: new ImportCSVPlugin({
+          graphqlEndpoint: defaultHost.baseUrls.gql,
+          transformRequestHeaders,
+        }),
+      },
+      exporters: {},
     },
   });
 };
@@ -63,9 +66,12 @@ const createRealDb = () => {
       anonymous: false,
     },
     plugins: {
-      csv: new ImportCSVPlugin({
-        graphqlEndpoint: defaultHost.baseUrls.gql,
-      }),
+      importers: {
+        csv: new ImportCSVPlugin({
+          graphqlEndpoint: defaultHost.baseUrls.gql,
+        }),
+      },
+      exporters: {},
     },
   });
 };

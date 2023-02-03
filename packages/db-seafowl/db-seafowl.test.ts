@@ -40,9 +40,12 @@ const createDb = () => {
       },
     },
     plugins: {
-      csv: new ImportCSVPlugin({
-        transformRequestHeaders,
-      }),
+      importers: {
+        csv: new ImportCSVPlugin({
+          transformRequestHeaders,
+        }),
+      },
+      exporters: {},
     },
   });
 };

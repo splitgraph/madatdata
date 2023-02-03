@@ -5,12 +5,42 @@
 
 // }
 
-export type PluginMap<ConcretePluginMap extends Record<string, Plugin> = any> =
-  {
-    [pluginName in keyof ConcretePluginMap]: ConcretePluginMap extends never
-      ? Plugin
-      : ConcretePluginMap[pluginName];
+type PluginMapShape = {
+  importers: Record<string, ImportPlugin>;
+  exporters: Record<string, ExportPlugin>;
+};
+
+export type PluginMap<
+  ConcretePluginMap extends PluginMapShape = {
+    importers: any;
+    exporters: any;
+  }
+> = {
+  importers: {
+    [pluginName in keyof ConcretePluginMap["importers"]]: ConcretePluginMap["importers"] extends never
+      ? ImportPlugin
+      : ConcretePluginMap["importers"][pluginName];
   };
+  exporters: {
+    [pluginName in keyof ConcretePluginMap["exporters"]]: ConcretePluginMap["exporters"] extends never
+      ? ExportPlugin
+      : ConcretePluginMap["exporters"][pluginName];
+  };
+};
+
+export type OptionalPluginMap<
+  ConcretePluginMap extends PluginMapShape = {
+    importers: any;
+    exporters: any;
+  },
+  Importers = PluginMap<ConcretePluginMap>["importers"],
+  Exporters = PluginMap<ConcretePluginMap>["exporters"]
+> = {
+  importers: Partial<Importers>;
+  exporters: Partial<Exporters>;
+};
+
+export type PluginMapOptions<> = {};
 
 export interface BasePlugin {
   // importData: <

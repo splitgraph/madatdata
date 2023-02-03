@@ -1,8 +1,13 @@
-import { BaseDb, type DbOptions } from "@madatdata/base-db";
-import type { SplitgraphImportPluginMap } from "./plugins/importers";
+import { BaseDb, type DbOptions, OptionalPluginMap } from "@madatdata/base-db";
+import type {
+  SplitgraphPluginMap,
+  SplitgraphImportPluginMap,
+  SplitgraphExportPluginMap,
+} from "./plugins/importers";
 
-// TODO: This sould be injected in the constructor as the actual plugin map
+// TODO: These could be injected in the constructor as the actual plugin map
 import { ImportCSVPlugin } from "./plugins/importers/import-csv-plugin";
+import { ExportQueryPlugin } from "./plugins/exporters/export-query-plugin";
 
 // TODO: It's not ideal for db-splitgraph to depend on base-client
 import {
@@ -15,13 +20,33 @@ import {
 import type { HTTPStrategies, HTTPClientOptions } from "@madatdata/client-http";
 
 interface DbSplitgraphOptions
-  extends DbOptions<Partial<SplitgraphImportPluginMap>> {}
+  extends DbOptions<OptionalPluginMap<SplitgraphPluginMap>> {}
+
+// const makeGraphQLOptions = (opts: ): Pick<
+//   ConstructorParameters<typeof ImportCSVPlugin>[0],
+//   "graphqlEndpoint" | "transformRequestHeaders"
+//   > => {
+
+//   return {
+//     graphqlEndpoint: opts.graphqlEndpoint,
+//     transformRequestHeaders: (reqHeaders) =>
+//       opts.makeAuthHeaders
+//         ? {
+//             ...reqHeaders,
+//             ...opts.makeAuthHeaders(),
+//           }
+//         : reqHeaders,
+//   };
+// };
 
 const makeDefaultPluginMap = (opts: {
   graphqlEndpoint: string;
   makeAuthHeaders: () => HeadersInit;
-}) => ({
-  csv: new ImportCSVPlugin({
+}) => {
+  const graphqlOptions: Pick<
+    ConstructorParameters<typeof ImportCSVPlugin>[0],
+    "graphqlEndpoint" | "transformRequestHeaders"
+  > = {
     graphqlEndpoint: opts.graphqlEndpoint,
     transformRequestHeaders: (reqHeaders) =>
       opts.makeAuthHeaders
@@ -30,12 +55,24 @@ const makeDefaultPluginMap = (opts: {
             ...opts.makeAuthHeaders(),
           }
         : reqHeaders,
-  }),
+  };
 
-  // exportQueryResult:
-});
+  return {
+    importers: {
+      csv: new ImportCSVPlugin({ ...graphqlOptions }),
+      // TODO: not real obviously
+      mysql: new ImportCSVPlugin({ ...graphqlOptions }),
+      postgres: new ImportCSVPlugin({ ...graphqlOptions }),
+    },
+    exporters: {
+      exportQuery: new ExportQueryPlugin({ ...graphqlOptions }),
+    },
+  };
+};
 
-export class DbSplitgraph extends BaseDb<Partial<SplitgraphImportPluginMap>> {
+export class DbSplitgraph extends BaseDb<
+  OptionalPluginMap<SplitgraphPluginMap>
+> {
   private graphqlEndpoint: string;
 
   constructor(
@@ -170,14 +207,28 @@ export class DbSplitgraph extends BaseDb<Partial<SplitgraphImportPluginMap>> {
     };
   }
 
+  async exportData<PluginName extends keyof SplitgraphExportPluginMap>(
+    _pluginName: PluginName,
+    ..._rest: Parameters<SplitgraphExportPluginMap[PluginName]["exportData"]>
+  ): Promise<unknown> {
+    await Promise.resolve();
+    return {
+      response: null,
+      error: {
+        success: false,
+      },
+      info: null,
+    };
+  }
+
   async importData<PluginName extends keyof SplitgraphImportPluginMap>(
     pluginName: PluginName,
     ...rest: Parameters<SplitgraphImportPluginMap[PluginName]["importData"]>
   ) {
     const [sourceOpts, destOpts] = rest;
 
-    if (pluginName === "csv" && this.plugins["csv"]) {
-      const plugin = this.plugins["csv"];
+    if (pluginName === "csv" && this.plugins["importers"]["csv"]) {
+      const plugin = this.plugins["importers"]["csv"];
 
       return await plugin
         .withOptions({

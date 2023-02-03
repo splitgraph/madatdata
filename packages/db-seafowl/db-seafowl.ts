@@ -1,5 +1,9 @@
-import { BaseDb, type DbOptions } from "@madatdata/base-db";
-import type { SeafowlImportPluginMap } from "./plugins/importers";
+import { BaseDb, OptionalPluginMap, type DbOptions } from "@madatdata/base-db";
+import type {
+  SeafowlPluginMap,
+  SeafowlExportPluginMap,
+  SeafowlImportPluginMap,
+} from "./plugins/importers";
 
 // TODO: This sould be injected in the constructor as the actual plugin map
 import { ImportCSVPlugin } from "./plugins/importers/import-csv-seafowl-plugin";
@@ -15,23 +19,27 @@ import {
 // they be in a separate package from the actual http-client?
 import type { HTTPStrategies, HTTPClientOptions } from "@madatdata/client-http";
 
-interface DbSeafowlOptions extends DbOptions<Partial<SeafowlImportPluginMap>> {}
+interface DbSeafowlOptions
+  extends DbOptions<OptionalPluginMap<SeafowlPluginMap>> {}
 
 const makeDefaultPluginMap = (opts: {
   makeAuthHeaders: () => HeadersInit;
 }) => ({
-  csv: new ImportCSVPlugin({
-    transformRequestHeaders: (reqHeaders) =>
-      opts.makeAuthHeaders
-        ? {
-            ...reqHeaders,
-            ...opts.makeAuthHeaders(),
-          }
-        : reqHeaders,
-  }),
+  importers: {
+    csv: new ImportCSVPlugin({
+      transformRequestHeaders: (reqHeaders) =>
+        opts.makeAuthHeaders
+          ? {
+              ...reqHeaders,
+              ...opts.makeAuthHeaders(),
+            }
+          : reqHeaders,
+    }),
+  },
+  exporters: {},
 });
 
-export class DbSeafowl extends BaseDb<Partial<SeafowlImportPluginMap>> {
+export class DbSeafowl extends BaseDb<OptionalPluginMap<SeafowlPluginMap>> {
   constructor(
     opts: Omit<DbSeafowlOptions, "plugins"> &
       Pick<Partial<DbSeafowlOptions>, "plugins">
@@ -84,6 +92,20 @@ export class DbSeafowl extends BaseDb<Partial<SeafowlImportPluginMap>> {
     });
   }
 
+  async exportData<PluginName extends keyof SeafowlExportPluginMap>(
+    _pluginName: PluginName,
+    ..._rest: Parameters<SeafowlExportPluginMap[PluginName]["exportData"]>
+  ): Promise<unknown> {
+    await Promise.resolve();
+    return {
+      response: null,
+      error: {
+        success: false,
+      },
+      info: null,
+    };
+  }
+
   async importData<PluginName extends keyof SeafowlImportPluginMap>(
     pluginName: PluginName,
     ...rest: Parameters<SeafowlImportPluginMap[PluginName]["importData"]>
@@ -91,9 +113,9 @@ export class DbSeafowl extends BaseDb<Partial<SeafowlImportPluginMap>> {
     const [sourceOpts, destOpts] = rest;
 
     // TODO: temporarily hardcode the plugin map
-    const plugin = (this.plugins as ReturnType<typeof makeDefaultPluginMap>)[
-      pluginName
-    ];
+    const plugin = (
+      this.plugins["importers"] as ReturnType<typeof makeDefaultPluginMap>
+    )["importers"][pluginName];
 
     if (plugin) {
       return await plugin
