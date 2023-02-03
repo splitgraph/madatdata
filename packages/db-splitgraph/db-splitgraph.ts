@@ -207,7 +207,7 @@ export class DbSplitgraph extends BaseDb<
   async exportData<PluginName extends keyof SplitgraphExportPluginMap>(
     pluginName: PluginName,
     ...rest: Parameters<SplitgraphExportPluginMap[PluginName]["exportData"]>
-  ): Promise<unknown> {
+  ) {
     const [sourceOpts, destOpts] = rest;
 
     const plugin = this.plugins.exporters[pluginName];

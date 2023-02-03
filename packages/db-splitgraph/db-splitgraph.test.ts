@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { makeDb } from "./db-splitgraph";
 import { ImportCSVPlugin } from "./plugins/importers/import-csv-plugin";
+import { ExportQueryPlugin } from "./plugins/exporters/export-query-plugin";
 
 import { shouldSkipIntegrationTests } from "@madatdata/test-helpers/env-config";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
@@ -39,6 +40,7 @@ const createDb = () => {
           transformRequestHeaders,
         }),
       },
+      // NOTE: exportQuery is not mocked yet
       exporters: {},
     },
   });
@@ -71,7 +73,11 @@ const createRealDb = () => {
           graphqlEndpoint: defaultHost.baseUrls.gql,
         }),
       },
-      exporters: {},
+      exporters: {
+        exportQuery: new ExportQueryPlugin({
+          graphqlEndpoint: defaultHost.baseUrls.gql,
+        }),
+      },
     },
   });
 };
@@ -522,6 +528,43 @@ describe("importData for ImportCSVPlugin", () => {
         },
       ]
     `);
+  });
+});
+
+// TODO WIP
+describe.skipIf(true)("real export query", () => {
+  it.only("exports a basic postgres query to CSV", async () => {
+    const db = createRealDb();
+
+    const { response, error, info } = await db.exportData(
+      "exportQuery",
+      {
+        query: `SELECT a as int_val, string_agg(random()::text, '') as text_val
+FROM generate_series(1, 5) a, generate_series(1, 50) b
+GROUP BY a ORDER BY a;`,
+        vdbId: "ddn",
+      },
+      {
+        format: "csv",
+        filename: "random-series",
+      }
+    );
+
+    expect(response).toBeDefined();
+    expect(info).toBeDefined();
+
+    expect({
+      ...response,
+      taskId: response?.taskId ? "something-constant" : "something-wrong",
+    }).toMatchInlineSnapshot(`
+      {
+        "filename": "random-series.csv",
+        "success": true,
+        "taskId": "something-constant",
+      }
+    `);
+
+    expect(error).toMatchInlineSnapshot("null");
   });
 });
 

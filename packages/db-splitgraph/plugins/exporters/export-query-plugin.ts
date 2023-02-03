@@ -1,7 +1,12 @@
 import type { ExportPlugin, WithOptionsInterface } from "@madatdata/base-db";
 import { SplitgraphGraphQLClient } from "../../gql-client/splitgraph-graphql-client";
+import { ExportFormat } from "../../gql-client/generated/unified-schema";
 
-// import { gql } from "graphql-request";
+import { gql } from "graphql-request";
+import type {
+  StartExportJobMutation,
+  StartExportJobMutationVariables,
+} from "./export-query-plugin.generated";
 
 type ExportQuerySourceOptions = {
   /**
@@ -74,21 +79,75 @@ export class ExportQueryPlugin
   }
 
   async exportData(
-    _sourceOptions: ExportQuerySourceOptions,
-    _destOptions: ExportQueryDestOptions
+    sourceOptions: ExportQuerySourceOptions,
+    destOptions: ExportQueryDestOptions
   ) {
-    console.log("exportData");
-    console.log("opts:", this.opts);
-    await Promise.resolve();
+    const {
+      response: exportResponse,
+      error: exportError,
+      info: exportInfo,
+    } = await this.startExport(sourceOptions, destOptions);
+
+    if (exportError || !exportResponse) {
+      return {
+        response: null,
+        error: exportError,
+        info: { ...exportInfo },
+      };
+    }
+    const { id: taskId, filename } = exportResponse.exportQuery;
+
     return {
       response: {
         success: true,
+        taskId,
+        filename,
       },
       error: null,
-      info: {
-        jobStatus: "finished",
-      },
+      info: {},
     };
+  }
+
+  private async startExport(
+    sourceOptions: ExportQuerySourceOptions,
+    destOptions: ExportQueryDestOptions
+  ) {
+    return this.graphqlClient.send<
+      StartExportJobMutation,
+      StartExportJobMutationVariables
+    >(
+      gql`
+        mutation StartExportJob(
+          $query: String!
+          $format: ExportFormat!
+          $filename: String!
+          $vdbId: String = null
+        ) {
+          exportQuery(
+            query: $query
+            format: $format
+            filename: $filename
+            vdbId: $vdbId
+          ) {
+            filename
+            id
+          }
+        }
+      `,
+      {
+        query: sourceOptions.query,
+        format: (() => {
+          switch (destOptions.format) {
+            case "csv":
+              return ExportFormat.Csv;
+            case "parquet":
+              return ExportFormat.Parquet;
+          }
+        })(),
+        filename: destOptions.filename ?? "exported-query",
+        vdbId: sourceOptions.vdbId,
+      }
+    );
   }
 }
 
