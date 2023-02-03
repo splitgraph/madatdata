@@ -99,7 +99,7 @@
         "!build",
         "!.wireit"
       ],
-      "clean": "if-file-deleted"
+      "clean": true
     },
     "fetch-remote-graphql-schema": {
       "//": "this command should be run once or out of band, so no dependencies",

@@ -1,4 +1,4 @@
-import type { Plugin } from "@madatdata/base-db";
+import type { ImportPlugin } from "@madatdata/base-db";
 import type { SeafowlDestOptions } from "./base-seafowl-import-plugin";
 
 interface ImportCSVDestOptions extends SeafowlDestOptions {
@@ -31,7 +31,7 @@ type ImportCSVSourceOptions =
 
 type DbInjectedOptions = Partial<ImportCSVPluginOptions>;
 
-export class ImportCSVPlugin implements Plugin {
+export class ImportCSVPlugin implements ImportPlugin {
   public readonly opts: ImportCSVPluginOptions;
   public readonly transformRequestHeaders: Required<ImportCSVPluginOptions>["transformRequestHeaders"];
 

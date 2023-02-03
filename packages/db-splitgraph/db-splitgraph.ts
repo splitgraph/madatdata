@@ -31,6 +31,8 @@ const makeDefaultPluginMap = (opts: {
           }
         : reqHeaders,
   }),
+
+  // exportQueryResult:
 });
 
 export class DbSplitgraph extends BaseDb<Partial<SplitgraphImportPluginMap>> {
