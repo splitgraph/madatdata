@@ -42,6 +42,14 @@ export type OptionalPluginMap<
 
 export type PluginMapOptions<> = {};
 
+export type WithOptions<OuterClassT> = <InjectedOpts, InnerClassT>(
+  injectOpts: InjectedOpts
+) => InnerClassT | OuterClassT;
+
+export interface WithOptionsInterface<ClassT> {
+  withOptions: WithOptions<ClassT>;
+}
+
 export interface BasePlugin {
   // importData: <
   //   SourceOptions extends Record<PropertyKey, unknown>,
@@ -54,9 +62,14 @@ export interface BasePlugin {
   // ) => Promise<{ response: ResultShape | null; error: ErrorShape | null }>;
 
   __name?: string;
+
+  graphqlEndpoint: string;
 }
 
+// export abstract class
+
 export interface ImportPlugin extends BasePlugin {
+  withOptions: WithOptions<ImportPlugin>;
   importData: (
     sourceOptions: any,
     destOptions: any
@@ -64,6 +77,7 @@ export interface ImportPlugin extends BasePlugin {
 }
 
 export interface ExportPlugin extends BasePlugin {
+  withOptions: WithOptions<ExportPlugin>;
   exportData: (
     sourceOptions: any,
     destOptions: any

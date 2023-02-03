@@ -18,35 +18,32 @@ import {
 } from "@madatdata/base-client";
 
 import type { HTTPStrategies, HTTPClientOptions } from "@madatdata/client-http";
+import type { GraphQLClientOptions } from "./plugins";
 
 interface DbSplitgraphOptions
   extends DbOptions<OptionalPluginMap<SplitgraphPluginMap>> {}
 
-// const makeGraphQLOptions = (opts: ): Pick<
-//   ConstructorParameters<typeof ImportCSVPlugin>[0],
-//   "graphqlEndpoint" | "transformRequestHeaders"
-//   > => {
-
-//   return {
-//     graphqlEndpoint: opts.graphqlEndpoint,
-//     transformRequestHeaders: (reqHeaders) =>
-//       opts.makeAuthHeaders
-//         ? {
-//             ...reqHeaders,
-//             ...opts.makeAuthHeaders(),
-//           }
-//         : reqHeaders,
-//   };
-// };
+const makeGraphQLOptions = (
+  opts: Partial<GraphQLClientOptions> &
+    Required<Pick<GraphQLClientOptions, "graphqlEndpoint">>
+): Pick<
+  ConstructorParameters<typeof ImportCSVPlugin>[0],
+  "graphqlEndpoint" | "transformRequestHeaders"
+> => {
+  return {
+    graphqlEndpoint: opts.graphqlEndpoint,
+    transformRequestHeaders: opts.transformRequestHeaders,
+  };
+};
 
 const makeDefaultPluginMap = (opts: {
-  graphqlEndpoint: string;
+  graphqlEndpoint: GraphQLClientOptions["graphqlEndpoint"];
   makeAuthHeaders: () => HeadersInit;
 }) => {
   const graphqlOptions: Pick<
     ConstructorParameters<typeof ImportCSVPlugin>[0],
     "graphqlEndpoint" | "transformRequestHeaders"
-  > = {
+  > = makeGraphQLOptions({
     graphqlEndpoint: opts.graphqlEndpoint,
     transformRequestHeaders: (reqHeaders) =>
       opts.makeAuthHeaders
@@ -55,7 +52,7 @@ const makeDefaultPluginMap = (opts: {
             ...opts.makeAuthHeaders(),
           }
         : reqHeaders,
-  };
+  });
 
   return {
     importers: {
@@ -208,17 +205,28 @@ export class DbSplitgraph extends BaseDb<
   }
 
   async exportData<PluginName extends keyof SplitgraphExportPluginMap>(
-    _pluginName: PluginName,
-    ..._rest: Parameters<SplitgraphExportPluginMap[PluginName]["exportData"]>
+    pluginName: PluginName,
+    ...rest: Parameters<SplitgraphExportPluginMap[PluginName]["exportData"]>
   ): Promise<unknown> {
-    await Promise.resolve();
-    return {
-      response: null,
-      error: {
-        success: false,
-      },
-      info: null,
-    };
+    const [sourceOpts, destOpts] = rest;
+
+    const plugin = this.plugins.exporters[pluginName];
+    if (!plugin) {
+      throw new Error(`plugin not found: ${pluginName}`);
+    }
+
+    return await plugin
+      .withOptions({
+        graphqlEndpoint: plugin.graphqlEndpoint ?? this.graphqlEndpoint,
+        transformRequestHeaders: (reqHeaders) =>
+          this.authenticatedCredential
+            ? {
+                ...reqHeaders,
+                ...makeAuthHeaders(this.authenticatedCredential),
+              }
+            : reqHeaders,
+      })
+      .exportData(sourceOpts, destOpts);
   }
 
   async importData<PluginName extends keyof SplitgraphImportPluginMap>(
@@ -243,6 +251,8 @@ export class DbSplitgraph extends BaseDb<
         })
         .importData(sourceOpts, destOpts);
     } else {
+      // const plugin = this.plugins.importers[pluginName];
+
       return Promise.resolve({
         response: null,
         error: {

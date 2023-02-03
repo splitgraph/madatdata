@@ -47,6 +47,7 @@ export abstract class BaseDb<ConcretePluginMap extends PluginMap>
   protected authenticatedCredential?: AuthenticatedCredential;
   protected host: Host;
   protected database: Database;
+  protected opts: DbOptions<ConcretePluginMap>;
 
   constructor(opts: DbOptions<ConcretePluginMap>) {
     this.setAuthenticatedCredential(opts?.authenticatedCredential);
@@ -60,6 +61,7 @@ export abstract class BaseDb<ConcretePluginMap extends PluginMap>
         ...opts?.plugins.exporters,
       },
     };
+    this.opts = opts;
   }
 
   public setAuthenticatedCredential(

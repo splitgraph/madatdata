@@ -1,5 +1,5 @@
 import type { ImportCSVPlugin } from "./import-csv-plugin";
-import type { ExportPlugin, ImportPlugin } from "@madatdata/base-db";
+import type { /*ExportPlugin,*/ ImportPlugin } from "@madatdata/base-db";
 import type { ExportQueryPlugin } from "../exporters/export-query-plugin";
 
 // NOTE: In theory this will be auto-generated
@@ -13,11 +13,9 @@ export type SplitgraphPluginMap = {
   } & {
     [k in keyof SPECIAL_IMPORT_PLUGINS]: SPECIAL_IMPORT_PLUGINS[k];
   };
-  exporters:
-    | {
-        exportQuery: ExportQueryPlugin;
-      }
-    | Record<string, ExportPlugin>;
+  exporters: {
+    exportQuery: ExportQueryPlugin;
+  };
 };
 
 export type SplitgraphImportPluginMap = SplitgraphPluginMap["importers"];
