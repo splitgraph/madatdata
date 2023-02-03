@@ -40,9 +40,10 @@ export type OptionalPluginMap<
   exporters: Partial<Exporters>;
 };
 
-export type PluginMapOptions<> = {};
-
-export type WithOptions<OuterClassT> = <InjectedOpts, InnerClassT>(
+export type WithOptions<OuterClassT> = <
+  InjectedOpts,
+  InnerClassT extends OuterClassT
+>(
   injectOpts: InjectedOpts
 ) => InnerClassT | OuterClassT;
 

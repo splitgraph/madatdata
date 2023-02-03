@@ -113,9 +113,10 @@ export class DbSeafowl extends BaseDb<OptionalPluginMap<SeafowlPluginMap>> {
     const [sourceOpts, destOpts] = rest;
 
     // TODO: temporarily hardcode the plugin map
-    const plugin = (
-      this.plugins["importers"] as ReturnType<typeof makeDefaultPluginMap>
-    )["importers"][pluginName];
+    const plugin = this.plugins.importers[pluginName];
+    if (!plugin) {
+      throw new Error(`plugin not found: ${pluginName}`);
+    }
 
     if (plugin) {
       return await plugin
