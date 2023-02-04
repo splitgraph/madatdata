@@ -532,7 +532,7 @@ describe("importData for ImportCSVPlugin", () => {
 });
 
 // TODO WIP
-describe.skipIf(true)("real export query", () => {
+describe.only("real export query", () => {
   it.only("exports a basic postgres query to CSV", async () => {
     const db = createRealDb();
 
@@ -555,17 +555,30 @@ GROUP BY a ORDER BY a;`,
 
     expect({
       ...response,
-      taskId: response?.taskId ? "something-constant" : "something-wrong",
+      // filter out variable values from snapshot just by checking they exist
+      taskId: response?.taskId ? "task-id-ok" : "error-in-task-id",
+      started: response?.started ? "started-ok" : "error-in-started",
+      finished: response?.finished ? "finished-ok" : "error-id",
+      output: !!(response?.output as { url?: string })["url"]
+        ? { url: "url-ok" }
+        : { url: "error-in-url" },
     }).toMatchInlineSnapshot(`
       {
+        "exportFormat": "csv",
         "filename": "random-series.csv",
+        "finished": "finished-ok",
+        "output": {
+          "url": "url-ok",
+        },
+        "started": "started-ok",
+        "status": "SUCCESS",
         "success": true,
-        "taskId": "something-constant",
+        "taskId": "task-id-ok",
       }
     `);
 
     expect(error).toMatchInlineSnapshot("null");
-  });
+  }, 30_000);
 });
 
 describe.skipIf(shouldSkipIntegrationTests())("real DDN", () => {

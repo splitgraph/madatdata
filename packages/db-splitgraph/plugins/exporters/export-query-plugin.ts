@@ -1,11 +1,14 @@
 import type { ExportPlugin, WithOptionsInterface } from "@madatdata/base-db";
 import { SplitgraphGraphQLClient } from "../../gql-client/splitgraph-graphql-client";
 import { ExportFormat } from "../../gql-client/generated/unified-schema";
+import { Retryable, BackOffPolicy } from "typescript-retry-decorator";
 
 import { gql } from "graphql-request";
 import type {
   StartExportJobMutation,
   StartExportJobMutationVariables,
+  ExportJobStatusQuery,
+  ExportJobStatusQueryVariables,
 } from "./export-query-plugin.generated";
 
 type ExportQuerySourceOptions = {
@@ -33,6 +36,19 @@ interface ExportQueryPluginOptions {
 }
 type DbInjectedOptions = Partial<ExportQueryPluginOptions>;
 
+// 1 hour
+const MAX_POLL_TIMEOUT = 1_000 * 60 * 60;
+// const MAX_ATTEMPTS = MAX_POLL_TIMEOUT - (25.5 * 1000) / 10000;
+const MAX_BACKOFF_INTERVAL = 10_000;
+const MAX_ATTEMPTS = Math.ceil(
+  (MAX_POLL_TIMEOUT - 25.5 * 1_000) / MAX_BACKOFF_INTERVAL
+);
+const retryOptions = {
+  maxAttempts: MAX_ATTEMPTS,
+  backOff: 500,
+  backOffPolicy: BackOffPolicy.ExponentialBackOffPolicy,
+  exponentialOption: { maxInterval: MAX_BACKOFF_INTERVAL, multiplier: 2 },
+};
 export class ExportQueryPlugin
   implements ExportPlugin, WithOptionsInterface<ExportQueryPlugin>
 {
@@ -88,7 +104,7 @@ export class ExportQueryPlugin
       info: exportInfo,
     } = await this.startExport(sourceOptions, destOptions);
 
-    if (exportError || !exportResponse) {
+    if (exportError || !exportResponse || !exportResponse.exportQuery.id) {
       return {
         response: null,
         error: exportError,
@@ -97,14 +113,23 @@ export class ExportQueryPlugin
     }
     const { id: taskId, filename } = exportResponse.exportQuery;
 
+    const {
+      response: taskResponse,
+      error: taskError,
+      info: taskInfo,
+    } = await this.waitForTask(taskId);
+
+    // console.log("got output:", taskResponse);
+
     return {
       response: {
         success: true,
         taskId,
         filename,
+        ...taskResponse,
       },
-      error: null,
-      info: {},
+      error: taskError,
+      info: taskInfo,
     };
   }
 
@@ -149,6 +174,95 @@ export class ExportQueryPlugin
       }
     );
   }
+
+  // TODO: DRY (with at least import-csv-plugin)
+  @Retryable({
+    ...retryOptions,
+    doRetry: ({ type }) => type === "retry",
+  })
+  private async waitForTask(taskId: string) {
+    console.log(new Date().toLocaleTimeString(), "waitFor:", taskId);
+
+    const {
+      response: jobStatusResponse,
+      error: jobStatusError,
+      info: jobStatusInfo,
+    } = await this.fetchExportJobStatus(taskId);
+
+    if (jobStatusError) {
+      return {
+        response: null,
+        error: jobStatusError,
+        info: { jobStatus: jobStatusInfo },
+      };
+    } else if (!jobStatusResponse) {
+      throw { type: "retry" };
+      // FIXME(codegen): this shouldn't be nullable
+    } else if (taskUnresolved(jobStatusResponse.status as ExportTaskStatus)) {
+      throw { type: "retry" };
+    }
+
+    return {
+      response: jobStatusResponse,
+      error: jobStatusError,
+      info: jobStatusInfo,
+    };
+  }
+
+  private async fetchExportJobStatus(taskId: string) {
+    const { response, error, info } = await this.graphqlClient.send<
+      ExportJobStatusQuery,
+      ExportJobStatusQueryVariables
+    >(
+      gql`
+        query ExportJobStatus($taskId: UUID!) {
+          exportJobStatus(taskId: $taskId) {
+            status
+            started
+            finished
+            exportFormat
+            output
+          }
+        }
+      `,
+      {
+        taskId: taskId,
+      }
+    );
+
+    if (error || !response) {
+      return { response: null, error, info };
+    }
+
+    return {
+      response: response.exportJobStatus,
+      error: null,
+      info,
+    };
+  }
 }
 
 const IdentityFunc = <T>(x: T) => x;
+
+enum ExportTaskStatus {
+  // Standard Celery statuses
+  Pending = "PENDING",
+  Started = "STARTED",
+  Success = "SUCCESS",
+  Failure = "FAILURE",
+  Revoked = "REVOKED",
+
+  // Custom Splitgraph statuses
+  Lost = "LOST",
+  TimedOut = "TIMED_OUT",
+
+  // Currently unused statuses
+  Retry = "RETRY",
+  Received = "RECEIVED",
+  Rejected = "REJECTED",
+  Ignored = "IGNORED",
+}
+
+const standbyStatuses = [ExportTaskStatus.Pending, ExportTaskStatus.Started];
+
+const taskUnresolved = (ts: ExportTaskStatus) => standbyStatuses.includes(ts);

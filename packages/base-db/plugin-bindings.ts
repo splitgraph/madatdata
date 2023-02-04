@@ -12,8 +12,8 @@ type PluginMapShape = {
 
 export type PluginMap<
   ConcretePluginMap extends PluginMapShape = {
-    importers: any;
-    exporters: any;
+    importers: PluginMapShape["importers"];
+    exporters: PluginMapShape["exporters"];
   }
 > = {
   importers: {
