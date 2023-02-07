@@ -1,6 +1,6 @@
 import type { ExportPlugin, WithOptionsInterface } from "@madatdata/base-db";
 import { SplitgraphGraphQLClient } from "../../gql-client/splitgraph-graphql-client";
-import { ExportFormat } from "../../gql-client/generated/unified-schema";
+import { ExportFormat, ExportJobOutput } from "../../gql-client/unified-types";
 import { Retryable, BackOffPolicy } from "typescript-retry-decorator";
 
 import { gql } from "graphql-request";
@@ -119,14 +119,21 @@ export class ExportQueryPlugin
       info: taskInfo,
     } = await this.waitForTask(taskId);
 
-    // console.log("got output:", taskResponse);
+    // TODO: use superstruct or something to verify JSON is as expected
+    const parsedOutput = taskResponse?.output as ExportJobOutput;
+    if (!parsedOutput.url) {
+      throw new Error("output did not include url field as suspected");
+    }
 
     return {
       response: {
         success: true,
         taskId,
         filename,
+        // Let taskResponse fields take highest priority, except for output,
+        // where we prefer our parsed (and typed) version to the raw JSON
         ...taskResponse,
+        output: parsedOutput,
       },
       error: taskError,
       info: taskInfo,
@@ -181,8 +188,6 @@ export class ExportQueryPlugin
     doRetry: ({ type }) => type === "retry",
   })
   private async waitForTask(taskId: string) {
-    console.log(new Date().toLocaleTimeString(), "waitFor:", taskId);
-
     const {
       response: jobStatusResponse,
       error: jobStatusError,

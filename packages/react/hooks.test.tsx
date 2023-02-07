@@ -200,7 +200,7 @@ describe("makeDefaultAnonymousContext", () => {
             },
             "plugins": {
               "exporters": {
-                "exportQuery": ExportQueryPlugin {
+                "exportQuery": _ExportQueryPlugin {
                   "graphqlClient": SplitgraphGraphQLClient {
                     "graphqlClient": GraphQLClient {
                       "options": {
@@ -279,7 +279,7 @@ describe("makeDefaultAnonymousContext", () => {
           },
           "plugins": {
             "exporters": {
-              "exportQuery": ExportQueryPlugin {
+              "exportQuery": _ExportQueryPlugin {
                 "graphqlClient": SplitgraphGraphQLClient {
                   "graphqlClient": GraphQLClient {
                     "options": {

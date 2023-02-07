@@ -101,7 +101,7 @@ describe("makeSplitgraphHTTPContext", () => {
             },
             "plugins": {
               "exporters": {
-                "exportQuery": ExportQueryPlugin {
+                "exportQuery": _ExportQueryPlugin {
                   "graphqlClient": SplitgraphGraphQLClient {
                     "graphqlClient": GraphQLClient {
                       "options": {
@@ -180,7 +180,7 @@ describe("makeSplitgraphHTTPContext", () => {
           },
           "plugins": {
             "exporters": {
-              "exportQuery": ExportQueryPlugin {
+              "exportQuery": _ExportQueryPlugin {
                 "graphqlClient": SplitgraphGraphQLClient {
                   "graphqlClient": GraphQLClient {
                     "options": {

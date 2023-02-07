@@ -531,9 +531,9 @@ describe("importData for ImportCSVPlugin", () => {
   });
 });
 
-// TODO WIP
-describe.only("real export query", () => {
-  it.only("exports a basic postgres query to CSV", async () => {
+// TODO: Make a mocked version of this test
+describe.skipIf(shouldSkipIntegrationTests())("real export query", () => {
+  it("exports a basic postgres query to CSV", async () => {
     const db = createRealDb();
 
     const { response, error, info } = await db.exportData(
@@ -552,6 +552,10 @@ GROUP BY a ORDER BY a;`,
 
     expect(response).toBeDefined();
     expect(info).toBeDefined();
+
+    expect(response?.output.url).toBeDefined();
+
+    expect(() => new URL(response?.output.url!)).not.toThrow();
 
     expect({
       ...response,
