@@ -1,4 +1,4 @@
-import type { Plugin } from "@madatdata/base-db";
+import type { ImportPlugin, WithOptionsInterface } from "@madatdata/base-db";
 import type { SeafowlDestOptions } from "./base-seafowl-import-plugin";
 
 interface ImportCSVDestOptions extends SeafowlDestOptions {
@@ -31,14 +31,19 @@ type ImportCSVSourceOptions =
 
 type DbInjectedOptions = Partial<ImportCSVPluginOptions>;
 
-export class ImportCSVPlugin implements Plugin {
+export class ImportCSVPlugin
+  implements ImportPlugin, WithOptionsInterface<ImportCSVPlugin>
+{
   public readonly opts: ImportCSVPluginOptions;
   public readonly transformRequestHeaders: Required<ImportCSVPluginOptions>["transformRequestHeaders"];
+  public readonly graphqlEndpoint: string;
 
   constructor(opts: ImportCSVPluginOptions) {
     this.opts = opts;
 
     this.transformRequestHeaders = opts.transformRequestHeaders ?? IdentityFunc;
+
+    this.graphqlEndpoint = "http://todo.test/should-not-be-required-property";
   }
 
   // TODO: improve it (e.g. allow either mutation or copy), and/or generalize it

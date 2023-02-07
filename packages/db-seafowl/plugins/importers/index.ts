@@ -1,9 +1,14 @@
-import type { Plugin } from "@madatdata/base-db";
+import type { ImportPlugin } from "@madatdata/base-db";
 
-type DEFAULT_PLUGINS = "csv";
+type DEFAULT_IMPORT_PLUGINS = "csv";
 
 type DefaultPluginMap = {
-  [k in DEFAULT_PLUGINS]: Plugin;
+  importers: {
+    [k in DEFAULT_IMPORT_PLUGINS]: ImportPlugin;
+  };
+  exporters: {};
 };
 
-export type SeafowlImportPluginMap = DefaultPluginMap;
+export type SeafowlPluginMap = DefaultPluginMap;
+export type SeafowlExportPluginMap = SeafowlPluginMap["exporters"];
+export type SeafowlImportPluginMap = SeafowlPluginMap["importers"];

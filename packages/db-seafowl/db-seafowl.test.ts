@@ -6,10 +6,19 @@ import { shouldSkipSeafowlTests } from "@madatdata/test-helpers/env-config";
 
 describe("importData", () => {
   it("returns false for unknown plugin", async () => {
+    let err: unknown;
     const db = makeDb({});
 
-    // @ts-expect-error not a key in SplitgraphPluginMap
-    const importResult = await db.importData("unknown-doesnotexist", {}, {});
+    await db
+      // @ts-expect-error typescript shouldn't allow using a plugin name not in map
+      .importData("unknown-doesnotexist", {}, {})
+      .catch((e) => {
+        err = e;
+      });
+
+    expect(err).toMatchInlineSnapshot(
+      "[Error: plugin not found: unknown-doesnotexist]"
+    );
   });
 });
 
@@ -40,9 +49,12 @@ const createDb = () => {
       },
     },
     plugins: {
-      csv: new ImportCSVPlugin({
-        transformRequestHeaders,
-      }),
+      importers: {
+        csv: new ImportCSVPlugin({
+          transformRequestHeaders,
+        }),
+      },
+      exporters: {},
     },
   });
 };

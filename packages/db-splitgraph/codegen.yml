@@ -10,6 +10,8 @@ config:
   #       (See file `base-documents-visitor.ts` for base config)
   strictScalars: true
   scalars:
+    # unified-schema.graphql includes custom scalar called Void to equal NULL
+    Void: "null"
     Datetime: "string"
     DateTime: "string"
     # FIXME: Splitgraph API has some inconsistent behavior
@@ -57,7 +59,7 @@ generates:
       # Avoid needless intersection with { __typename: Query } on every Query
       skipTypeNameForRoot: true
     presetConfig:
-      baseTypesPath: "gql-client/generated/unified-schema"
+      baseTypesPath: "gql-client/unified-types.ts"
       extension: .generated.ts
       importTypesNamespace: Unified
     plugins:

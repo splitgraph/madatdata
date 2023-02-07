@@ -1,4 +1,4 @@
-import type { Plugin } from "@madatdata/base-db";
+import type { ImportPlugin, WithOptionsInterface } from "@madatdata/base-db";
 import type { SplitgraphDestOptions } from "./base-import-plugin";
 
 import { gql } from "graphql-request";
@@ -17,8 +17,6 @@ import type {
   StartExternalRepositoryLoadMutation,
   StartExternalRepositoryLoadMutationVariables,
 } from "./import-csv-plugin.generated";
-
-// something
 
 interface ImportCSVDestOptions extends SplitgraphDestOptions {
   params?: CsvParamsSchema;
@@ -75,7 +73,10 @@ const retryOptions = {
   backOffPolicy: BackOffPolicy.ExponentialBackOffPolicy,
   exponentialOption: { maxInterval: MAX_BACKOFF_INTERVAL, multiplier: 2 },
 };
-export class ImportCSVPlugin implements Plugin {
+
+export class ImportCSVPlugin
+  implements ImportPlugin, WithOptionsInterface<ImportCSVPlugin>
+{
   public readonly opts: ImportCSVPluginOptions;
   public readonly graphqlEndpoint: ImportCSVPluginOptions["graphqlEndpoint"];
   public readonly graphqlClient: SplitgraphGraphQLClient;
@@ -416,8 +417,6 @@ export class ImportCSVPlugin implements Plugin {
       repository,
     }: Pick<ImportCSVDestOptions, "namespace" | "repository">
   ) {
-    console.log(new Date().toLocaleTimeString(), "waitFor:", taskId);
-
     const {
       response: jobStatusResponse,
       error: jobStatusError,

@@ -1,4 +1,4 @@
-import type { PluginMap } from "./plugin-bindings";
+import type { PluginMap, OptionalPluginMap } from "./plugin-bindings";
 import { webcrypto } from "crypto";
 
 import {
@@ -14,10 +14,18 @@ import {
 } from "@madatdata/base-client";
 
 export interface Db<ConcretePluginMap extends PluginMap> {
-  plugins: PluginMap<ConcretePluginMap>;
-  importData: <PluginName extends keyof ConcretePluginMap>(
+  plugins: OptionalPluginMap<ConcretePluginMap>;
+  importData: <PluginName extends keyof ConcretePluginMap["importers"]>(
     pluginName: PluginName,
-    ...rest: Parameters<ConcretePluginMap[PluginName]["importData"]>
+    ...rest: Parameters<
+      ConcretePluginMap["importers"][PluginName]["importData"]
+    >
+  ) => Promise<unknown>;
+  exportData: <PluginName extends keyof ConcretePluginMap["exporters"]>(
+    pluginName: PluginName,
+    ...rest: Parameters<
+      ConcretePluginMap["exporters"][PluginName]["exportData"]
+    >
   ) => Promise<unknown>;
   makeClient: <ImplementationSpecificClientOptions extends ClientOptions>(
     makeClientForProtocol: (
@@ -27,7 +35,7 @@ export interface Db<ConcretePluginMap extends PluginMap> {
   ) => Client;
 }
 export interface DbOptions<ConcretePluginMap extends PluginMap> {
-  plugins: ConcretePluginMap;
+  plugins: OptionalPluginMap<ConcretePluginMap>;
   authenticatedCredential?: AuthenticatedCredential;
   host?: Host;
   database?: Database;
@@ -35,16 +43,25 @@ export interface DbOptions<ConcretePluginMap extends PluginMap> {
 export abstract class BaseDb<ConcretePluginMap extends PluginMap>
   implements Db<ConcretePluginMap>
 {
-  public plugins: PluginMap<ConcretePluginMap>;
+  public plugins: OptionalPluginMap<ConcretePluginMap>;
   protected authenticatedCredential?: AuthenticatedCredential;
   protected host: Host;
   protected database: Database;
+  protected opts: DbOptions<ConcretePluginMap>;
 
   constructor(opts: DbOptions<ConcretePluginMap>) {
     this.setAuthenticatedCredential(opts?.authenticatedCredential);
     this.host = opts?.host ?? defaultHost;
     this.database = opts?.database ?? defaultDatabase;
-    this.plugins = opts?.plugins ?? {};
+    this.plugins = {
+      importers: {
+        ...opts?.plugins.importers,
+      },
+      exporters: {
+        ...opts?.plugins.exporters,
+      },
+    };
+    this.opts = opts;
   }
 
   public setAuthenticatedCredential(
@@ -73,9 +90,18 @@ export abstract class BaseDb<ConcretePluginMap extends PluginMap>
     });
   }
 
-  abstract importData<PluginName extends keyof ConcretePluginMap>(
+  abstract importData<PluginName extends keyof ConcretePluginMap["importers"]>(
     pluginName: PluginName,
-    ...rest: Parameters<ConcretePluginMap[PluginName]["importData"]>
+    ...rest: Parameters<
+      ConcretePluginMap["importers"][PluginName]["importData"]
+    >
+  ): Promise<unknown>;
+
+  abstract exportData<PluginName extends keyof ConcretePluginMap["exporters"]>(
+    pluginName: PluginName,
+    ...rest: Parameters<
+      ConcretePluginMap["exporters"][PluginName]["exportData"]
+    >
   ): Promise<unknown>;
 
   /**

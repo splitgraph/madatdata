@@ -87,12 +87,49 @@ describe("makeSeafowlHTTPContext", () => {
               "ssl": false,
             },
           },
+          "opts": {
+            "authenticatedCredential": undefined,
+            "database": {
+              "dbname": "seafowl",
+            },
+            "host": {
+              "apexDomain": "bogus",
+              "apiHost": "bogus",
+              "baseUrls": {
+                "auth": "bogus",
+                "gql": "bogus",
+                "sql": "http://127.0.0.1:8080/q",
+              },
+              "dataHost": "127.0.0.1:8080",
+              "postgres": {
+                "host": "127.0.0.1",
+                "port": 6432,
+                "ssl": false,
+              },
+            },
+            "plugins": {
+              "exporters": {},
+              "importers": {
+                "csv": ImportCSVPlugin {
+                  "graphqlEndpoint": "http://todo.test/should-not-be-required-property",
+                  "opts": {
+                    "transformRequestHeaders": [Function],
+                  },
+                  "transformRequestHeaders": [Function],
+                },
+              },
+            },
+          },
           "plugins": {
-            "csv": ImportCSVPlugin {
-              "opts": {
+            "exporters": {},
+            "importers": {
+              "csv": ImportCSVPlugin {
+                "graphqlEndpoint": "http://todo.test/should-not-be-required-property",
+                "opts": {
+                  "transformRequestHeaders": [Function],
+                },
                 "transformRequestHeaders": [Function],
               },
-              "transformRequestHeaders": [Function],
             },
           },
         },

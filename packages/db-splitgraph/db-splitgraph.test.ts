@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { makeDb } from "./db-splitgraph";
 import { ImportCSVPlugin } from "./plugins/importers/import-csv-plugin";
+import { ExportQueryPlugin } from "./plugins/exporters/export-query-plugin";
 
 import { shouldSkipIntegrationTests } from "@madatdata/test-helpers/env-config";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
@@ -33,10 +34,14 @@ const createDb = () => {
       anonymous: false,
     },
     plugins: {
-      csv: new ImportCSVPlugin({
-        graphqlEndpoint: defaultHost.baseUrls.gql,
-        transformRequestHeaders,
-      }),
+      importers: {
+        csv: new ImportCSVPlugin({
+          graphqlEndpoint: defaultHost.baseUrls.gql,
+          transformRequestHeaders,
+        }),
+      },
+      // NOTE: exportQuery is not mocked yet
+      exporters: {},
     },
   });
 };
@@ -63,9 +68,16 @@ const createRealDb = () => {
       anonymous: false,
     },
     plugins: {
-      csv: new ImportCSVPlugin({
-        graphqlEndpoint: defaultHost.baseUrls.gql,
-      }),
+      importers: {
+        csv: new ImportCSVPlugin({
+          graphqlEndpoint: defaultHost.baseUrls.gql,
+        }),
+      },
+      exporters: {
+        exportQuery: new ExportQueryPlugin({
+          graphqlEndpoint: defaultHost.baseUrls.gql,
+        }),
+      },
     },
   });
 };
@@ -517,6 +529,60 @@ describe("importData for ImportCSVPlugin", () => {
       ]
     `);
   });
+});
+
+// TODO: Make a mocked version of this test
+describe.skipIf(shouldSkipIntegrationTests())("real export query", () => {
+  it("exports a basic postgres query to CSV", async () => {
+    const db = createRealDb();
+
+    const { response, error, info } = await db.exportData(
+      "exportQuery",
+      {
+        query: `SELECT a as int_val, string_agg(random()::text, '') as text_val
+FROM generate_series(1, 5) a, generate_series(1, 50) b
+GROUP BY a ORDER BY a;`,
+        vdbId: "ddn",
+      },
+      {
+        format: "csv",
+        filename: "random-series",
+      }
+    );
+
+    expect(response).toBeDefined();
+    expect(info).toBeDefined();
+
+    expect(response?.output.url).toBeDefined();
+
+    expect(() => new URL(response?.output.url!)).not.toThrow();
+
+    expect({
+      ...response,
+      // filter out variable values from snapshot just by checking they exist
+      taskId: response?.taskId ? "task-id-ok" : "error-in-task-id",
+      started: response?.started ? "started-ok" : "error-in-started",
+      finished: response?.finished ? "finished-ok" : "error-id",
+      output: !!(response?.output as { url?: string })["url"]
+        ? { url: "url-ok" }
+        : { url: "error-in-url" },
+    }).toMatchInlineSnapshot(`
+      {
+        "exportFormat": "csv",
+        "filename": "random-series.csv",
+        "finished": "finished-ok",
+        "output": {
+          "url": "url-ok",
+        },
+        "started": "started-ok",
+        "status": "SUCCESS",
+        "success": true,
+        "taskId": "task-id-ok",
+      }
+    `);
+
+    expect(error).toMatchInlineSnapshot("null");
+  }, 30_000);
 });
 
 describe.skipIf(shouldSkipIntegrationTests())("real DDN", () => {
