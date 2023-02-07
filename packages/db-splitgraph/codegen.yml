@@ -10,6 +10,8 @@ config:
   #       (See file `base-documents-visitor.ts` for base config)
   strictScalars: true
   scalars:
+    # unified-schema.graphql includes custom scalar called Void to equal NULL
+    Void: "null"
     Datetime: "string"
     DateTime: "string"
     # FIXME: Splitgraph API has some inconsistent behavior
