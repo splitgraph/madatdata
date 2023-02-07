@@ -59,7 +59,7 @@ generates:
       # Avoid needless intersection with { __typename: Query } on every Query
       skipTypeNameForRoot: true
     presetConfig:
-      baseTypesPath: "gql-client/generated/unified-schema"
+      baseTypesPath: "gql-client/unified-types.ts"
       extension: .generated.ts
       importTypesNamespace: Unified
     plugins:

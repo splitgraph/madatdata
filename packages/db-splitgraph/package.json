@@ -104,7 +104,9 @@
     "fetch-remote-graphql-schema": {
       "//": "this command should be run once or out of band, so no dependencies",
       "command": "DEBUG=1 VERBOSE=1 yarn graphql-codegen --config codegen.schema.yml",
-      "output": [],
+      "output": [
+        "gql-client/generated/unified-schema.graphql"
+      ],
       "packageLocks": [],
       "files": []
     }
