@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { makeDb } from "./db-seafowl";
 import { ImportCSVPlugin } from "./plugins/importers/import-csv-seafowl-plugin";
 
@@ -23,12 +23,12 @@ describe("importData", () => {
 });
 
 const createDb = () => {
-  const transformRequestHeaders = vi.fn((headers) => ({
-    ...headers,
-    foobar: "fizzbuzz",
-  }));
+  // const transformRequestHeaders = vi.fn((headers) => ({
+  //   ...headers,
+  //   foobar: "fizzbuzz",
+  // }));
 
-  return makeDb({
+  const db = makeDb({
     database: {
       dbname: "seafowl", // arbitrary
     },
@@ -55,13 +55,13 @@ const createDb = () => {
     },
     plugins: {
       importers: {
-        csv: new ImportCSVPlugin({
-          transformRequestHeaders,
-        }),
+        csv: new ImportCSVPlugin({}),
       },
       exporters: {},
     },
   });
+
+  return db;
 };
 
 describe.skipIf(shouldSkipSeafowlTests())("seafowl stub test", () => {

@@ -1,5 +1,6 @@
 import type { ImportPlugin, WithOptionsInterface } from "@madatdata/base-db";
 import type { SeafowlDestOptions } from "./base-seafowl-import-plugin";
+import type { Client } from "@madatdata/base-client";
 
 interface ImportCSVDestOptions extends SeafowlDestOptions {
   tableName: SeafowlDestOptions["tableName"];
@@ -7,7 +8,7 @@ interface ImportCSVDestOptions extends SeafowlDestOptions {
 }
 
 interface ImportCSVPluginOptions {
-  transformRequestHeaders?: (requestHeaders: HeadersInit) => HeadersInit;
+  seafowlClient: Client;
 }
 
 interface ImportCSVBaseOptions {
@@ -34,40 +35,26 @@ type DbInjectedOptions = Partial<ImportCSVPluginOptions>;
 export class ImportCSVPlugin
   implements ImportPlugin, WithOptionsInterface<ImportCSVPlugin>
 {
-  public readonly opts: ImportCSVPluginOptions;
-  public readonly transformRequestHeaders: Required<ImportCSVPluginOptions>["transformRequestHeaders"];
-  public readonly graphqlEndpoint: string;
+  public readonly opts: Partial<ImportCSVPluginOptions>;
+  private readonly seafowlClient?: Client;
 
-  constructor(opts: ImportCSVPluginOptions) {
+  constructor(opts: Partial<ImportCSVPluginOptions>) {
     this.opts = opts;
 
-    this.transformRequestHeaders = opts.transformRequestHeaders ?? IdentityFunc;
-
-    this.graphqlEndpoint = "http://todo.test/should-not-be-required-property";
+    if (opts.seafowlClient) {
+      this.seafowlClient = opts.seafowlClient;
+    }
   }
 
   // TODO: improve it (e.g. allow either mutation or copy), and/or generalize it
   withOptions(injectOpts: DbInjectedOptions) {
+    if (!this.seafowlClient && !injectOpts.seafowlClient) {
+      throw new Error("refusing to inject opts while missing seafowlClient");
+    }
+
     return new ImportCSVPlugin({
       ...this.opts,
       ...injectOpts,
-      // TODO: replace transformer with some kind of chainable "link" plugin
-      transformRequestHeaders: (reqHeaders) => {
-        const withOriginal = {
-          ...reqHeaders,
-          ...this.opts.transformRequestHeaders?.(reqHeaders),
-        };
-
-        const withNext = {
-          ...withOriginal,
-          ...injectOpts.transformRequestHeaders?.(withOriginal),
-        };
-
-        return {
-          ...withOriginal,
-          ...withNext,
-        };
-      },
     });
   }
 
@@ -88,5 +75,3 @@ export class ImportCSVPlugin
     };
   }
 }
-
-const IdentityFunc = <T>(x: T) => x;

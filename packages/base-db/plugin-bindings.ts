@@ -64,7 +64,7 @@ export interface BasePlugin {
 
   __name?: string;
 
-  graphqlEndpoint: string;
+  graphqlEndpoint?: string;
 }
 
 // export abstract class

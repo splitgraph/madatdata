@@ -16,6 +16,8 @@ import {
   makeAuthHeaders,
 } from "@madatdata/base-client";
 
+import { makeClient as makeHTTPClient } from "@madatdata/client-http";
+
 // FIXME: we _should_ only be depending on types from this pacakge - should
 // they be in a separate package from the actual http-client?
 import type { HTTPStrategies, HTTPClientOptions } from "@madatdata/client-http";
@@ -23,13 +25,11 @@ import type { HTTPStrategies, HTTPClientOptions } from "@madatdata/client-http";
 interface DbSeafowlOptions
   extends DbOptions<OptionalPluginMap<SeafowlPluginMap>> {}
 
-const makeDefaultPluginMap = (opts: {
-  transformRequestHeaders: (headers: HeadersInit) => HeadersInit;
-}) => ({
+// NOTE: optional here because we don't set in constructor but we do in withOptions
+// this is because the type is self referential (config object needs class instantiated)
+const makeDefaultPluginMap = (opts: { seafowlClient?: Client }) => ({
   importers: {
-    csv: new ImportCSVPlugin({
-      transformRequestHeaders: opts.transformRequestHeaders,
-    }),
+    csv: new ImportCSVPlugin({ seafowlClient: opts.seafowlClient }),
   },
   exporters: {},
 });
@@ -52,14 +52,7 @@ export class DbSeafowl extends BaseDb<OptionalPluginMap<SeafowlPluginMap>> {
   ) {
     super({
       ...opts,
-      plugins:
-        opts.plugins ??
-        makeDefaultPluginMap({
-          transformRequestHeaders: () =>
-            this.authenticatedCredential
-              ? makeAuthHeaders(this.authenticatedCredential)
-              : {},
-        }),
+      plugins: opts.plugins ?? makeDefaultPluginMap({}),
     });
   }
 
@@ -84,18 +77,8 @@ export class DbSeafowl extends BaseDb<OptionalPluginMap<SeafowlPluginMap>> {
     });
   }
 
-  // FIXME: make static, decouple from instance (needs better defaults system)
-  //        e.g. a static property member pointing to Class defining callbacks
-  //        or just utilize the existing class hiearchy of client-http/SqlHttpClient
-  public makeHTTPClient(
-    makeClientForProtocol: (wrappedOptions: ClientOptions) => Client,
-    clientOptions: ClientOptions & HTTPClientOptions
-  ) {
-    // FIXME: do we need to depend on all of client-http just for `strategies` type?
-    // FIXME: this pattern would probably work better as a user-provided Class
-    // nb: careful to keep parity with (intentionally) same code in db-splitgraph.ts
-    return super.makeClient<HTTPClientOptions>(makeClientForProtocol, {
-      ...clientOptions,
+  public get httpClientOptions(): HTTPClientOptions {
+    return {
       bodyMode: "jsonl",
       strategies: {
         makeFetchOptions: ({ credential, query }) => {
@@ -118,7 +101,26 @@ export class DbSeafowl extends BaseDb<OptionalPluginMap<SeafowlPluginMap>> {
           return host.baseUrls.sql + "/" + fingerprint;
         },
       } as HTTPStrategies,
-    });
+    };
+  }
+
+  // FIXME: make static, decouple from instance (needs better defaults system)
+  //        e.g. a static property member pointing to Class defining callbacks
+  //        or just utilize the existing class hiearchy of client-http/SqlHttpClient
+  public makeHTTPClient(
+    makeClientForProtocol?: (wrappedOptions: ClientOptions) => Client,
+    clientOptions?: ClientOptions & HTTPClientOptions
+  ) {
+    // FIXME: do we need to depend on all of client-http just for `strategies` type?
+    // FIXME: this pattern would probably work better as a user-provided Class
+    // nb: careful to keep parity with (intentionally) same code in db-splitgraph.ts
+    return super.makeClient<HTTPClientOptions>(
+      makeClientForProtocol ?? makeHTTPClient,
+      {
+        ...clientOptions,
+        ...this.httpClientOptions,
+      }
+    );
   }
 
   async exportData<PluginName extends keyof SeafowlExportPluginMap>(
@@ -152,6 +154,7 @@ export class DbSeafowl extends BaseDb<OptionalPluginMap<SeafowlPluginMap>> {
         .withOptions({
           ...this.pluginConfig,
           ...plugin,
+          seafowlClient: this.makeHTTPClient(),
           // NOTE: If you're adding an acculumulated callback like transformRequestHeaders
           // make sure to define it as a wrapper, similarly to how it is in db-splitgraph.ts
         })

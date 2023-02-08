@@ -44,6 +44,12 @@ describe("makeSeafowlHTTPContext", () => {
     expect(ctx.client).toBeTruthy();
     expect(ctx.db).toBeTruthy();
 
+    // NOTE: seafowlClient is expected to be undefined because we don't set it
+    // in the constructor (since it depends on the instantiated class). Instead
+    // we set it via a builder like withOptions (in other words, the instance
+    // created via `new DbSeafowl()` cannot control a seafowlClient, and must create
+    // a new instance from one of its builder methods to use a seafowlClient)
+    //    (this is not necessarily a desirable state of affairs)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "client": SqlHTTPClient {
@@ -125,11 +131,9 @@ describe("makeSeafowlHTTPContext", () => {
               "exporters": {},
               "importers": {
                 "csv": ImportCSVPlugin {
-                  "graphqlEndpoint": "http://todo.test/should-not-be-required-property",
                   "opts": {
-                    "transformRequestHeaders": [Function],
+                    "seafowlClient": undefined,
                   },
-                  "transformRequestHeaders": [Function],
                 },
               },
             },
@@ -138,11 +142,9 @@ describe("makeSeafowlHTTPContext", () => {
             "exporters": {},
             "importers": {
               "csv": ImportCSVPlugin {
-                "graphqlEndpoint": "http://todo.test/should-not-be-required-property",
                 "opts": {
-                  "transformRequestHeaders": [Function],
+                  "seafowlClient": undefined,
                 },
-                "transformRequestHeaders": [Function],
               },
             },
           },
