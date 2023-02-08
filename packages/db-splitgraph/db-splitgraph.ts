@@ -13,6 +13,7 @@ import { ExportQueryPlugin } from "./plugins/exporters/export-query-plugin";
 import {
   type Client,
   type ClientOptions,
+  type AuthenticatedCredential,
   makeAuthHeaders,
   defaultHost,
 } from "@madatdata/base-client";
@@ -21,38 +22,30 @@ import type { HTTPStrategies, HTTPClientOptions } from "@madatdata/client-http";
 import type { GraphQLClientOptions } from "./plugins";
 
 interface DbSplitgraphOptions
-  extends DbOptions<OptionalPluginMap<SplitgraphPluginMap>> {}
+  extends DbOptions<OptionalPluginMap<SplitgraphPluginMap>>,
+    Partial<GraphQLClientOptions> {}
 
-const makeGraphQLOptions = (
-  opts: Partial<GraphQLClientOptions> &
-    Required<Pick<GraphQLClientOptions, "graphqlEndpoint">>
-): Pick<
-  ConstructorParameters<typeof ImportCSVPlugin>[0],
-  "graphqlEndpoint" | "transformRequestHeaders"
-> => {
-  return {
-    graphqlEndpoint: opts.graphqlEndpoint,
-    transformRequestHeaders: opts.transformRequestHeaders,
-  };
-};
-
-const makeDefaultPluginMap = (opts: {
-  graphqlEndpoint: GraphQLClientOptions["graphqlEndpoint"];
-  makeAuthHeaders: () => HeadersInit;
-}) => {
-  const graphqlOptions: Pick<
-    ConstructorParameters<typeof ImportCSVPlugin>[0],
-    "graphqlEndpoint" | "transformRequestHeaders"
-  > = makeGraphQLOptions({
-    graphqlEndpoint: opts.graphqlEndpoint,
-    transformRequestHeaders: (reqHeaders) =>
-      opts.makeAuthHeaders
-        ? {
-            ...reqHeaders,
-            ...opts.makeAuthHeaders(),
-          }
-        : reqHeaders,
+const makeTransformRequestHeadersForAuthenticatedRequest =
+  (
+    maybeAuthenticatedCredential?: AuthenticatedCredential
+  ): Required<GraphQLClientOptions>["transformRequestHeaders"] =>
+  (reqHeaders) => ({
+    ...reqHeaders,
+    ...(maybeAuthenticatedCredential
+      ? makeAuthHeaders(maybeAuthenticatedCredential)
+      : {}),
   });
+
+const makeDefaultPluginMap = (
+  opts: Pick<Required<DbSplitgraphOptions>, "graphqlEndpoint"> &
+    Pick<Partial<DbSplitgraphOptions>, "authenticatedCredential">
+) => {
+  const graphqlOptions: GraphQLClientOptions = {
+    graphqlEndpoint: opts.graphqlEndpoint,
+    transformRequestHeaders: makeTransformRequestHeadersForAuthenticatedRequest(
+      opts.authenticatedCredential
+    ),
+  };
 
   return {
     importers: {
@@ -76,20 +69,35 @@ export class DbSplitgraph extends BaseDb<
     opts: Omit<DbSplitgraphOptions, "plugins"> &
       Pick<Partial<DbSplitgraphOptions>, "plugins">
   ) {
+    const graphqlEndpoint =
+      opts.graphqlEndpoint ?? (opts.host ?? defaultHost).baseUrls.gql;
+    const plugins =
+      opts.plugins ??
+      makeDefaultPluginMap({
+        graphqlEndpoint,
+        authenticatedCredential: opts.authenticatedCredential,
+      });
+
     super({
       ...opts,
-      plugins:
-        opts.plugins ??
-        makeDefaultPluginMap({
-          graphqlEndpoint: (opts.host ?? defaultHost).baseUrls.gql,
-          makeAuthHeaders: () =>
-            this.authenticatedCredential
-              ? makeAuthHeaders(this.authenticatedCredential)
-              : {},
-        }),
+      plugins,
     });
 
-    this.graphqlEndpoint = this.host.baseUrls.gql;
+    this.graphqlEndpoint = graphqlEndpoint;
+  }
+
+  // NOTE: we want this to update when this.authenticatedCredential updates
+  private get pluginConfig(): Pick<
+    Required<DbSplitgraphOptions>,
+    "graphqlEndpoint" | "transformRequestHeaders"
+  > {
+    return {
+      graphqlEndpoint: this.graphqlEndpoint,
+      transformRequestHeaders:
+        makeTransformRequestHeadersForAuthenticatedRequest(
+          this.authenticatedCredential
+        ),
+    };
   }
 
   public makeHTTPClient(
@@ -98,7 +106,7 @@ export class DbSplitgraph extends BaseDb<
   ) {
     // FIXME: do we need to depend on all of client-http just for `strategies` type?
     // FIXME: this pattern would probably work better as a user-provided Class
-    // nb: careful to keep parity with (intentionally) same code in db-splitgraph.ts
+    // nb: careful to keep parity with (intentionally) same code in db-seafowl.ts
     return super.makeClient<HTTPClientOptions>(makeClientForProtocol, {
       ...clientOptions,
       bodyMode: "json",
@@ -113,12 +121,11 @@ export class DbSplitgraph extends BaseDb<
 
           return {
             method: "POST",
-            headers: {
+            headers: makeTransformRequestHeadersForAuthenticatedRequest(
+              credential as AuthenticatedCredential
+            )({
               "Content-Type": "application/json",
-              ...makeAuthHeaders(
-                credential
-              ) /* fixme: smell? prefer `this.credential`? */,
-            },
+            }),
             body: JSON.stringify({ sql: query, ...httpExecOptions }),
           };
         },
@@ -217,14 +224,12 @@ export class DbSplitgraph extends BaseDb<
 
     return await plugin
       .withOptions({
-        graphqlEndpoint: plugin.graphqlEndpoint ?? this.graphqlEndpoint,
-        transformRequestHeaders: (reqHeaders) =>
-          this.authenticatedCredential
-            ? {
-                ...reqHeaders,
-                ...makeAuthHeaders(this.authenticatedCredential),
-              }
-            : reqHeaders,
+        ...this.pluginConfig,
+        ...plugin,
+        transformRequestHeaders: (headers) =>
+          plugin.transformRequestHeaders(
+            this.pluginConfig.transformRequestHeaders(headers)
+          ),
       })
       .exportData(sourceOpts, destOpts);
   }
@@ -240,14 +245,12 @@ export class DbSplitgraph extends BaseDb<
 
       return await plugin
         .withOptions({
-          graphqlEndpoint: plugin.graphqlEndpoint ?? this.graphqlEndpoint,
-          transformRequestHeaders: (reqHeaders) =>
-            this.authenticatedCredential
-              ? {
-                  ...reqHeaders,
-                  ...makeAuthHeaders(this.authenticatedCredential),
-                }
-              : reqHeaders,
+          ...this.pluginConfig,
+          ...plugin,
+          transformRequestHeaders: (headers) =>
+            plugin.transformRequestHeaders(
+              this.pluginConfig.transformRequestHeaders(headers)
+            ),
         })
         .importData(sourceOpts, destOpts);
     } else {

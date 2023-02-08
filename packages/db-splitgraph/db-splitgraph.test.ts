@@ -33,6 +33,8 @@ const createDb = () => {
       apiSecret: "yyy",
       anonymous: false,
     },
+    graphqlEndpoint: defaultHost.baseUrls.gql,
+    transformRequestHeaders,
     plugins: {
       importers: {
         csv: new ImportCSVPlugin({
