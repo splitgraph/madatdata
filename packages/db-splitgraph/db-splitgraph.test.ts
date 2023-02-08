@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { randSuffix } from "@madatdata/test-helpers/rand-suffix";
 import { makeDb } from "./db-splitgraph";
 import { ImportCSVPlugin } from "./plugins/importers/import-csv-plugin";
 import { ExportQueryPlugin } from "./plugins/exporters/export-query-plugin";
@@ -535,7 +536,7 @@ describe("importData for ImportCSVPlugin", () => {
 
 // TODO: Make a mocked version of this test
 describe.skipIf(shouldSkipIntegrationTests())("real export query", () => {
-  it("exports a basic postgres query to CSV", async () => {
+  it("exports a basic postgres query to parquet", async () => {
     const db = createRealDb();
 
     const { response, error, info } = await db.exportData(
@@ -547,7 +548,7 @@ GROUP BY a ORDER BY a;`,
         vdbId: "ddn",
       },
       {
-        format: "csv",
+        format: "parquet",
         filename: "random-series",
       }
     );
@@ -556,6 +557,8 @@ GROUP BY a ORDER BY a;`,
     expect(info).toBeDefined();
 
     expect(response?.output.url).toBeDefined();
+
+    console.log("output URL:", response?.output.url);
 
     expect(() => new URL(response?.output.url!)).not.toThrow();
 
@@ -570,8 +573,8 @@ GROUP BY a ORDER BY a;`,
         : { url: "error-in-url" },
     }).toMatchInlineSnapshot(`
       {
-        "exportFormat": "csv",
-        "filename": "random-series.csv",
+        "exportFormat": "parquet",
+        "filename": "random-series.parquet",
         "finished": "finished-ok",
         "output": {
           "url": "url-ok",
@@ -596,7 +599,7 @@ describe.skipIf(shouldSkipIntegrationTests())("real DDN", () => {
       "csv",
       { data: Buffer.from(`name;candies\r\nBob;5\r\nAlice;10`) },
       {
-        tableName: "irrelevant",
+        tableName: `irrelevant-${randSuffix()}`,
         namespace,
         repository: "dunno",
         tableParams: {
