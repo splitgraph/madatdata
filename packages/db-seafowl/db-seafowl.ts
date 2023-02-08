@@ -45,6 +45,13 @@ const makeTransformRequestHeadersForAuthenticatedRequest =
       : {}),
   });
 
+const guessMethodForQuery = (query: string) => {
+  return query.trim().startsWith("CREATE TABLE ") ||
+    query.trim().startsWith("CREATE EXTERNAL TABLE ")
+    ? "POST"
+    : "GET";
+};
+
 export class DbSeafowl extends BaseDb<OptionalPluginMap<SeafowlPluginMap>> {
   constructor(
     opts: Omit<DbSeafowlOptions, "plugins"> &
@@ -82,14 +89,24 @@ export class DbSeafowl extends BaseDb<OptionalPluginMap<SeafowlPluginMap>> {
       bodyMode: "jsonl",
       strategies: {
         makeFetchOptions: ({ credential, query }) => {
+          // TODO: this is hacky
+          const guessedMethod = guessMethodForQuery(query);
+
           return {
-            method: "GET",
+            method: guessedMethod,
             headers: makeTransformRequestHeadersForAuthenticatedRequest(
               credential as AuthenticatedCredential
             )({
-              "X-Seafowl-Query": this.normalizeQueryForHTTPHeader(query),
+              ...(guessedMethod === "GET"
+                ? { "X-Seafowl-Query": this.normalizeQueryForHTTPHeader(query) }
+                : {}),
               "Content-Type": "application/json",
             }),
+            ...(guessedMethod === "POST"
+              ? {
+                  body: JSON.stringify({ query }),
+                }
+              : {}),
           };
         },
         makeQueryURL: async ({ host, query }) => {
@@ -98,7 +115,10 @@ export class DbSeafowl extends BaseDb<OptionalPluginMap<SeafowlPluginMap>> {
           }
 
           const { fingerprint } = await this.fingerprintQuery(query ?? "");
-          return host.baseUrls.sql + "/" + fingerprint;
+          const guessedMethod = guessMethodForQuery(query);
+          return guessedMethod === "GET"
+            ? host.baseUrls.sql + "/" + fingerprint
+            : host.baseUrls.sql;
         },
       } as HTTPStrategies,
     };
