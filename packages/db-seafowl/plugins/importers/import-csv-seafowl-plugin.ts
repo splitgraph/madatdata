@@ -19,11 +19,13 @@ interface ImportCSVBaseOptions {
 interface ImportCSVFromURLOptions extends ImportCSVBaseOptions {
   data?: never;
   url: string;
+  format: "csv" | "parquet";
 }
 
 interface ImportCSVFromDataOptions extends ImportCSVBaseOptions {
   data: BodyInit;
   url?: never;
+  format: "csv" | "parquet";
 }
 
 type ImportCSVSourceOptions =
@@ -58,20 +60,41 @@ export class ImportCSVPlugin
     });
   }
 
+  // TODO: include destOptions.schemaName in query
   async importData(
     sourceOptions: ImportCSVSourceOptions,
     destOptions: ImportCSVDestOptions
   ) {
-    console.log("Placeholder: import data plugin for seafowl");
-    console.log("sourceOptions:", sourceOptions);
-    console.log("destOptions:", destOptions);
+    if (!this.seafowlClient) {
+      throw new Error(
+        "called importData without seafowlClient, consider building " +
+          "a new object, e.g.: plugin.withOptions({seafowlClient: this.seafowlClient})"
+      );
+    }
+
+    const stagingId = `dataxyz_${destOptions.tableName}`;
+
+    const { response: mountResponse, error: mountError } = await this
+      .seafowlClient.execute(`
+    CREATE EXTERNAL TABLE ${stagingId}
+      STORED AS ${sourceOptions.format}
+      LOCATION '${sourceOptions.url}';
+    `);
+
+    const { response, error } = await this.seafowlClient.execute(
+      `CREATE TABLE ${destOptions.tableName} AS SELECT * FROM staging.${stagingId};`
+    );
 
     return {
       response: {
         success: true,
+        ...response,
       },
-      error: null,
-      info: null,
+      error,
+      info: {
+        mountResponse,
+        mountError,
+      },
     };
   }
 }

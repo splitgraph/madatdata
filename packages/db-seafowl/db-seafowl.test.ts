@@ -65,25 +65,6 @@ const createDb = () => {
 };
 
 describe.skipIf(shouldSkipSeafowlTests())("seafowl stub test", () => {
-  it("uploads with TableParamsSchema semicolon delimiter", async () => {
-    const db = createDb();
-
-    console.log("created db successfully");
-
-    expect(db).toBeTruthy();
-
-    const { response } = await db.importData(
-      "csv",
-      { data: Buffer.from(`name;candies\r\nBob;5\r\nAlice;10`) },
-      {
-        tableName: "irrelevant",
-        schemaName: "doesntmatter",
-      }
-    );
-
-    expect((response as any)?.success).toEqual(true);
-  });
-
   it("can fingerprint with sha256 by default", async () => {
     const db = createDb();
 

@@ -2,10 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import { makeSeafowlHTTPContext } from "./seafowl";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
-import {
-  shouldSkipIntegrationTests,
-  shouldSkipSeafowlTests,
-} from "@madatdata/test-helpers/env-config";
+import { shouldSkipSeafowlTests } from "@madatdata/test-helpers/env-config";
 
 // @ts-expect-error https://stackoverflow.com/a/70711231
 const SEAFOWL_SECRET = import.meta.env.VITE_TEST_SEAFOWL_SECRET;
@@ -209,11 +206,4 @@ describe.skipIf(shouldSkipSeafowlTests())("can query local seafowl", () => {
       }
     `);
   });
-
-  it.skipIf(shouldSkipIntegrationTests())(
-    "can export data from splitrgaph, import it into seafowl",
-    async () => {
-      const { db } = createDataContext();
-    }
-  );
 });

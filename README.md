@@ -461,6 +461,7 @@ so create a file `.env.integration.local` to hold any env keys:
 VITE_TEST_INTEGRATION=1
 VITE_TEST_DDN_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 VITE_TEST_DDN_API_SECRET=yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
+VITE_TEST_SEAFOWL_SECRET=zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 ```
 
 Then simply append `--mode integration` flag to any variant of `yarn test` that

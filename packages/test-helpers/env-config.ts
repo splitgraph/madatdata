@@ -1,4 +1,4 @@
-const environmentHasCredential = () => {
+const environmentHasSplitgraphCredential = () => {
   return (
     // @ts-expect-error https://stackoverflow.com/a/70711231
     !!import.meta.env.VITE_TEST_DDN_API_KEY &&
@@ -7,9 +7,19 @@ const environmentHasCredential = () => {
   );
 };
 
+// Seafowl tests will only run if environment has this credential
+const environmentHasSeafowlCredential = () => {
+  return (
+    // @ts-expect-error https://stackoverflow.com/a/70711231
+    !!import.meta.env.VITE_TEST_SEAFOWL_SECRET
+  );
+};
+
+// TODO: Once Seafowl integration tests can run in CI, add condition
+// here that integration tests also require seafowl secret to be defined
 const shouldIncludeIntegrationTests = () => {
   return (
-    environmentHasCredential() &&
+    environmentHasSplitgraphCredential() &&
     // @ts-expect-error https://stackoverflow.com/a/70711231
     !!import.meta.env.VITE_TEST_INTEGRATION
   );
@@ -63,7 +73,5 @@ export const shouldSkipIntegrationTests = () => {
 };
 
 export const shouldSkipSeafowlTests = () => {
-  // TEMP: true for commit in CI (uncomment for local dev)
-  // (because there is no seafowl setup in CI yet)
-  return true;
+  return !environmentHasSeafowlCredential();
 };
