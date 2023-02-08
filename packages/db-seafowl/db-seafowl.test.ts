@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { makeDb } from "./db-seafowl";
-import { ImportCSVPlugin } from "./plugins/importers/import-csv-seafowl-plugin";
+import { SeafowlImportFilePlugin } from "./plugins/importers/seafowl-import-file-plugin";
 
 import { shouldSkipSeafowlTests } from "@madatdata/test-helpers/env-config";
 
@@ -55,7 +55,7 @@ const createDb = () => {
     },
     plugins: {
       importers: {
-        csv: new ImportCSVPlugin({}),
+        csv: new SeafowlImportFilePlugin({}),
       },
       exporters: {},
     },

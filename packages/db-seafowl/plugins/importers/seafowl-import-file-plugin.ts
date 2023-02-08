@@ -2,45 +2,34 @@ import type { ImportPlugin, WithOptionsInterface } from "@madatdata/base-db";
 import type { SeafowlDestOptions } from "./base-seafowl-import-plugin";
 import type { Client } from "@madatdata/base-client";
 
-interface ImportCSVDestOptions extends SeafowlDestOptions {
+interface ImportFileDestOptions extends SeafowlDestOptions {
   tableName: SeafowlDestOptions["tableName"];
   schemaName: SeafowlDestOptions["schemaName"];
 }
 
-interface ImportCSVPluginOptions {
+interface ImportFilePluginOptions {
   seafowlClient: Client;
 }
 
-interface ImportCSVBaseOptions {
-  // _type: "import-csv-base";
-  // importType: "csv";
-}
-
-interface ImportCSVFromURLOptions extends ImportCSVBaseOptions {
+interface ImportFileFromURLOptions {
   data?: never;
   url: string;
   format: "csv" | "parquet";
 }
 
-interface ImportCSVFromDataOptions extends ImportCSVBaseOptions {
-  data: BodyInit;
-  url?: never;
-  format: "csv" | "parquet";
-}
+// NOTE: Reason for indirection is that eventually the same method might support
+// ImportFileFromDataOptions (pass blob, not URL), same as SplitgraphImportCSVPlugin
+type ImportFileOptions = ImportFileFromURLOptions;
 
-type ImportCSVSourceOptions =
-  | ImportCSVFromURLOptions
-  | ImportCSVFromDataOptions;
+type DbInjectedOptions = Partial<ImportFilePluginOptions>;
 
-type DbInjectedOptions = Partial<ImportCSVPluginOptions>;
-
-export class ImportCSVPlugin
-  implements ImportPlugin, WithOptionsInterface<ImportCSVPlugin>
+export class SeafowlImportFilePlugin
+  implements ImportPlugin, WithOptionsInterface<SeafowlImportFilePlugin>
 {
-  public readonly opts: Partial<ImportCSVPluginOptions>;
+  public readonly opts: Partial<ImportFilePluginOptions>;
   private readonly seafowlClient?: Client;
 
-  constructor(opts: Partial<ImportCSVPluginOptions>) {
+  constructor(opts: Partial<ImportFilePluginOptions>) {
     this.opts = opts;
 
     if (opts.seafowlClient) {
@@ -48,22 +37,21 @@ export class ImportCSVPlugin
     }
   }
 
-  // TODO: improve it (e.g. allow either mutation or copy), and/or generalize it
   withOptions(injectOpts: DbInjectedOptions) {
     if (!this.seafowlClient && !injectOpts.seafowlClient) {
       throw new Error("refusing to inject opts while missing seafowlClient");
     }
 
-    return new ImportCSVPlugin({
+    return new SeafowlImportFilePlugin({
       ...this.opts,
       ...injectOpts,
     });
   }
 
-  // TODO: include destOptions.schemaName in query
+  // TODO: actually include destOptions.schemaName in query (schema is noop atm)
   async importData(
-    sourceOptions: ImportCSVSourceOptions,
-    destOptions: ImportCSVDestOptions
+    sourceOptions: ImportFileOptions,
+    destOptions: ImportFileDestOptions
   ) {
     if (!this.seafowlClient) {
       throw new Error(

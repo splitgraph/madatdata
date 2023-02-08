@@ -6,7 +6,7 @@ import type {
 } from "./plugins/importers";
 
 // TODO: This sould be injected in the constructor as the actual plugin map
-import { ImportCSVPlugin } from "./plugins/importers/import-csv-seafowl-plugin";
+import { SeafowlImportFilePlugin } from "./plugins/importers/seafowl-import-file-plugin";
 
 // TODO: It's not ideal for db-splitgraph to depend on base-client
 import {
@@ -29,7 +29,7 @@ interface DbSeafowlOptions
 // this is because the type is self referential (config object needs class instantiated)
 const makeDefaultPluginMap = (opts: { seafowlClient?: Client }) => ({
   importers: {
-    csv: new ImportCSVPlugin({ seafowlClient: opts.seafowlClient }),
+    csv: new SeafowlImportFilePlugin({ seafowlClient: opts.seafowlClient }),
   },
   exporters: {},
 });

@@ -177,7 +177,7 @@ describe("makeSeafowlHTTPContext", () => {
             "plugins": {
               "exporters": {},
               "importers": {
-                "csv": ImportCSVPlugin {
+                "csv": SeafowlImportFilePlugin {
                   "opts": {
                     "seafowlClient": undefined,
                   },
@@ -188,7 +188,7 @@ describe("makeSeafowlHTTPContext", () => {
           "plugins": {
             "exporters": {},
             "importers": {
-              "csv": ImportCSVPlugin {
+              "csv": SeafowlImportFilePlugin {
                 "opts": {
                   "seafowlClient": undefined,
                 },
