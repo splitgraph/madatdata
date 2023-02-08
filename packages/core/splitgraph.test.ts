@@ -3,17 +3,37 @@ import { describe, it, expect } from "vitest";
 import { makeSplitgraphHTTPContext } from "./splitgraph";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
 
+export const createDataContext = () => {
+  return makeSplitgraphHTTPContext({
+    authenticatedCredential: {
+      apiKey: "xxx",
+      apiSecret: "yyy",
+      anonymous: false,
+    },
+  });
+};
+
+export const createRealDataContext = () => {
+  const credential = {
+    // @ts-expect-error https://stackoverflow.com/a/70711231
+    apiKey: import.meta.env.VITE_TEST_DDN_API_KEY,
+    // @ts-expect-error https://stackoverflow.com/a/70711231
+    apiSecret: import.meta.env.VITE_TEST_DDN_API_SECRET,
+  };
+  return makeSplitgraphHTTPContext({
+    authenticatedCredential: {
+      apiKey: credential.apiKey,
+      apiSecret: credential.apiSecret,
+      anonymous: false,
+    },
+  });
+};
+
 describe("makeSplitgraphHTTPContext", () => {
   setupMswServerTestHooks();
 
   it("initializes as expected", async () => {
-    const ctx = makeSplitgraphHTTPContext({
-      authenticatedCredential: {
-        apiKey: "xxx",
-        apiSecret: "yyy",
-        anonymous: false,
-      },
-    });
+    const ctx = createDataContext();
 
     expect(ctx.client).toBeTruthy();
     expect(ctx.db).toBeTruthy();

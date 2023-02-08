@@ -2,18 +2,50 @@ import { describe, it, expect } from "vitest";
 
 import { makeSeafowlHTTPContext } from "./seafowl";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
-import { shouldSkipSeafowlTests } from "@madatdata/test-helpers/env-config";
+import {
+  shouldSkipIntegrationTests,
+  shouldSkipSeafowlTests,
+} from "@madatdata/test-helpers/env-config";
 
 // @ts-expect-error https://stackoverflow.com/a/70711231
 const SEAFOWL_SECRET = import.meta.env.VITE_TEST_SEAFOWL_SECRET;
 
-const createDataContext = () => {
+export const createDataContext = () => {
   return makeSeafowlHTTPContext({
     database: {
       dbname: "seafowl", // arbitrary
     },
     authenticatedCredential: {
       token: SEAFOWL_SECRET,
+      anonymous: false,
+    },
+    host: {
+      // temporary hacky mess
+      dataHost: "127.0.0.1:8080",
+      apexDomain: "bogus",
+      apiHost: "bogus",
+      baseUrls: {
+        gql: "bogus",
+        sql: "http://127.0.0.1:8080/q",
+        auth: "bogus",
+      },
+      postgres: {
+        host: "127.0.0.1",
+        port: 6432,
+        ssl: false,
+      },
+    },
+  });
+};
+
+export const createRealDataContext = () => {
+  return makeSeafowlHTTPContext({
+    database: {
+      dbname: "seafowl", // arbitrary
+    },
+    authenticatedCredential: {
+      // @ts-expect-error https://stackoverflow.com/a/70711231
+      token: import.meta.env.VITE_TEST_SEAFOWL_SECRET,
       anonymous: false,
     },
     host: {
@@ -177,4 +209,11 @@ describe.skipIf(shouldSkipSeafowlTests())("can query local seafowl", () => {
       }
     `);
   });
+
+  it.skipIf(shouldSkipIntegrationTests())(
+    "can export data from splitrgaph, import it into seafowl",
+    async () => {
+      const { db } = createDataContext();
+    }
+  );
 });
