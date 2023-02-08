@@ -7,15 +7,22 @@ import { shouldSkipSeafowlTests } from "@madatdata/test-helpers/env-config";
 // @ts-expect-error https://stackoverflow.com/a/70711231
 const SEAFOWL_SECRET = import.meta.env.VITE_TEST_SEAFOWL_SECRET;
 
+// Depending on whether SEAFOWL_SECRET is defined (might not be in CI), we expect
+// serialized credentials to include different values
+const expectAnonymous = !SEAFOWL_SECRET;
+const expectToken = SEAFOWL_SECRET ?? "anonymous-token";
+
 export const createDataContext = () => {
   return makeSeafowlHTTPContext({
     database: {
       dbname: "seafowl", // arbitrary
     },
-    authenticatedCredential: {
-      token: SEAFOWL_SECRET,
-      anonymous: false,
-    },
+    authenticatedCredential: SEAFOWL_SECRET
+      ? {
+          token: SEAFOWL_SECRET,
+          anonymous: false,
+        }
+      : undefined,
     host: {
       // temporary hacky mess
       dataHost: "127.0.0.1:8080",
@@ -73,19 +80,30 @@ describe("makeSeafowlHTTPContext", () => {
     expect(ctx.client).toBeTruthy();
     expect(ctx.db).toBeTruthy();
 
+    expect(typeof ctx.db["authenticatedCredential"] === "undefined").toEqual(
+      expectAnonymous
+    );
+
     // NOTE: seafowlClient is expected to be undefined because we don't set it
     // in the constructor (since it depends on the instantiated class). Instead
     // we set it via a builder like withOptions (in other words, the instance
     // created via `new DbSeafowl()` cannot control a seafowlClient, and must create
     // a new instance from one of its builder methods to use a seafowlClient)
     //    (this is not necessarily a desirable state of affairs)
-    expect(ctx).toMatchInlineSnapshot(`
+    expect({
+      ...ctx,
+      db: (({
+        // @ts-expect-error Protected member, but it gets serialized and we want to remove it
+        authenticatedCredential: _removeHardToSnapshotAuthenticatedCredential,
+        ...dbCtx
+      }: typeof ctx.db) => dbCtx)(ctx.db),
+    }).toMatchInlineSnapshot(`
       {
         "client": SqlHTTPClient {
           "bodyMode": "jsonl",
           "credential": {
-            "anonymous": false,
-            "token": "${SEAFOWL_SECRET}",
+            "anonymous": ${expectAnonymous},
+            "token": "${expectToken}",
           },
           "database": {
             "dbname": "seafowl",
@@ -110,11 +128,7 @@ describe("makeSeafowlHTTPContext", () => {
             "makeQueryURL": [Function],
           },
         },
-        "db": DbSeafowl {
-          "authenticatedCredential": {
-            "anonymous": false,
-            "token": "${SEAFOWL_SECRET}",
-          },
+        "db": {
           "database": {
             "dbname": "seafowl",
           },
@@ -134,9 +148,13 @@ describe("makeSeafowlHTTPContext", () => {
             },
           },
           "opts": {
-            "authenticatedCredential": {
-              "anonymous": false,
-              "token": "${SEAFOWL_SECRET}",
+            "authenticatedCredential": ${
+              expectAnonymous
+                ? "undefined"
+                : `{
+              "anonymous": ${expectAnonymous},
+              "token": "${expectToken}",
+            }`
             },
             "database": {
               "dbname": "seafowl",
