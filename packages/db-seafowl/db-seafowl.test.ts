@@ -32,6 +32,11 @@ const createDb = () => {
     database: {
       dbname: "seafowl", // arbitrary
     },
+    authenticatedCredential: {
+      // @ts-expect-error https://stackoverflow.com/a/70711231
+      token: import.meta.env.VITE_TEST_SEAFOWL_SECRET,
+      anonymous: false,
+    },
     host: {
       // temporary hacky mess
       dataHost: "127.0.0.1:8080",
@@ -91,9 +96,4 @@ describe.skipIf(shouldSkipSeafowlTests())("seafowl stub test", () => {
       }
     `);
   });
-
-  // it("can make a query to localhost", async () => {
-  //   const db = createDb();
-
-  // });
 });

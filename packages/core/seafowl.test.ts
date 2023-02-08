@@ -4,10 +4,17 @@ import { makeSeafowlHTTPContext } from "./seafowl";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
 import { shouldSkipSeafowlTests } from "@madatdata/test-helpers/env-config";
 
+// @ts-expect-error https://stackoverflow.com/a/70711231
+const SEAFOWL_SECRET = import.meta.env.VITE_TEST_SEAFOWL_SECRET;
+
 const createDataContext = () => {
   return makeSeafowlHTTPContext({
     database: {
       dbname: "seafowl", // arbitrary
+    },
+    authenticatedCredential: {
+      token: SEAFOWL_SECRET,
+      anonymous: false,
     },
     host: {
       // temporary hacky mess
@@ -42,8 +49,8 @@ describe("makeSeafowlHTTPContext", () => {
         "client": SqlHTTPClient {
           "bodyMode": "jsonl",
           "credential": {
-            "anonymous": true,
-            "token": "anonymous-token",
+            "anonymous": false,
+            "token": "${SEAFOWL_SECRET}",
           },
           "database": {
             "dbname": "seafowl",
@@ -69,6 +76,10 @@ describe("makeSeafowlHTTPContext", () => {
           },
         },
         "db": DbSeafowl {
+          "authenticatedCredential": {
+            "anonymous": false,
+            "token": "${SEAFOWL_SECRET}",
+          },
           "database": {
             "dbname": "seafowl",
           },
@@ -88,7 +99,10 @@ describe("makeSeafowlHTTPContext", () => {
             },
           },
           "opts": {
-            "authenticatedCredential": undefined,
+            "authenticatedCredential": {
+              "anonymous": false,
+              "token": "${SEAFOWL_SECRET}",
+            },
             "database": {
               "dbname": "seafowl",
             },

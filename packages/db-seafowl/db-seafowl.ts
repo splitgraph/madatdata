@@ -12,6 +12,7 @@ import { ImportCSVPlugin } from "./plugins/importers/import-csv-seafowl-plugin";
 import {
   type Client,
   type ClientOptions,
+  type AuthenticatedCredential,
   makeAuthHeaders,
 } from "@madatdata/base-client";
 
@@ -23,21 +24,26 @@ interface DbSeafowlOptions
   extends DbOptions<OptionalPluginMap<SeafowlPluginMap>> {}
 
 const makeDefaultPluginMap = (opts: {
-  makeAuthHeaders: () => HeadersInit;
+  transformRequestHeaders: (headers: HeadersInit) => HeadersInit;
 }) => ({
   importers: {
     csv: new ImportCSVPlugin({
-      transformRequestHeaders: (reqHeaders) =>
-        opts.makeAuthHeaders
-          ? {
-              ...reqHeaders,
-              ...opts.makeAuthHeaders(),
-            }
-          : reqHeaders,
+      transformRequestHeaders: opts.transformRequestHeaders,
     }),
   },
   exporters: {},
 });
+
+type HeaderTransformer = (requestHeaders: HeadersInit) => HeadersInit;
+
+const makeTransformRequestHeadersForAuthenticatedRequest =
+  (maybeAuthenticatedCredential?: AuthenticatedCredential): HeaderTransformer =>
+  (reqHeaders) => ({
+    ...reqHeaders,
+    ...(maybeAuthenticatedCredential
+      ? makeAuthHeaders(maybeAuthenticatedCredential)
+      : {}),
+  });
 
 export class DbSeafowl extends BaseDb<OptionalPluginMap<SeafowlPluginMap>> {
   constructor(
@@ -49,11 +55,32 @@ export class DbSeafowl extends BaseDb<OptionalPluginMap<SeafowlPluginMap>> {
       plugins:
         opts.plugins ??
         makeDefaultPluginMap({
-          makeAuthHeaders: () =>
+          transformRequestHeaders: () =>
             this.authenticatedCredential
               ? makeAuthHeaders(this.authenticatedCredential)
               : {},
         }),
+    });
+  }
+
+  // NOTE: we want this to update when this.authenticatedCredential updates
+  private get pluginConfig(): {
+    transformRequestHeaders: HeaderTransformer;
+  } {
+    return {
+      transformRequestHeaders:
+        makeTransformRequestHeadersForAuthenticatedRequest(
+          this.authenticatedCredential
+        ),
+    };
+  }
+
+  async fetchCredentials() {
+    await Promise.resolve();
+    this.setAuthenticatedCredential({
+      // @ts-expect-error https://stackoverflow.com/a/70711231
+      token: import.meta.env.VITE_TEST_SEAFOWL_SECRET,
+      anonymous: false,
     });
   }
 
@@ -71,13 +98,15 @@ export class DbSeafowl extends BaseDb<OptionalPluginMap<SeafowlPluginMap>> {
       ...clientOptions,
       bodyMode: "jsonl",
       strategies: {
-        makeFetchOptions: ({ credential: _credential, query }) => {
+        makeFetchOptions: ({ credential, query }) => {
           return {
             method: "GET",
-            headers: {
+            headers: makeTransformRequestHeadersForAuthenticatedRequest(
+              credential as AuthenticatedCredential
+            )({
               "X-Seafowl-Query": this.normalizeQueryForHTTPHeader(query),
               "Content-Type": "application/json",
-            },
+            }),
           };
         },
         makeQueryURL: async ({ host, query }) => {
@@ -121,13 +150,10 @@ export class DbSeafowl extends BaseDb<OptionalPluginMap<SeafowlPluginMap>> {
     if (plugin) {
       return await plugin
         .withOptions({
-          transformRequestHeaders: (reqHeaders: any) =>
-            this.authenticatedCredential
-              ? {
-                  ...reqHeaders,
-                  ...makeAuthHeaders(this.authenticatedCredential),
-                }
-              : reqHeaders,
+          ...this.pluginConfig,
+          ...plugin,
+          // NOTE: If you're adding an acculumulated callback like transformRequestHeaders
+          // make sure to define it as a wrapper, similarly to how it is in db-splitgraph.ts
         })
         .importData(sourceOpts, destOpts);
     } else {
