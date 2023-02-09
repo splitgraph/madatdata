@@ -16,7 +16,7 @@ import type {
   RepositoryIngestionJobStatusQueryVariables,
   StartExternalRepositoryLoadMutation,
   StartExternalRepositoryLoadMutationVariables,
-} from "./import-csv-plugin.generated";
+} from "./splitgraph-import-csv-plugin.generated";
 
 interface ImportCSVDestOptions extends SplitgraphDestOptions {
   params?: CsvParamsSchema;
@@ -74,8 +74,8 @@ const retryOptions = {
   exponentialOption: { maxInterval: MAX_BACKOFF_INTERVAL, multiplier: 2 },
 };
 
-export class ImportCSVPlugin
-  implements ImportPlugin, WithOptionsInterface<ImportCSVPlugin>
+export class SplitgraphImportCSVPlugin
+  implements ImportPlugin, WithOptionsInterface<SplitgraphImportCSVPlugin>
 {
   public readonly opts: ImportCSVPluginOptions;
   public readonly graphqlEndpoint: ImportCSVPluginOptions["graphqlEndpoint"];
@@ -96,7 +96,7 @@ export class ImportCSVPlugin
 
   // TODO: improve it (e.g. allow either mutation or copy), and/or generalize it
   withOptions(injectOpts: DbInjectedOptions) {
-    return new ImportCSVPlugin({
+    return new SplitgraphImportCSVPlugin({
       ...this.opts,
       ...injectOpts,
       // TODO: replace transformer with some kind of chainable "link" plugin

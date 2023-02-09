@@ -6,7 +6,7 @@ import type {
 } from "./plugins/importers";
 
 // TODO: These could be injected in the constructor as the actual plugin map
-import { ImportCSVPlugin } from "./plugins/importers/import-csv-plugin";
+import { SplitgraphImportCSVPlugin } from "./plugins/importers/splitgraph-import-csv-plugin";
 import { ExportQueryPlugin } from "./plugins/exporters/export-query-plugin";
 
 // TODO: It's not ideal for db-splitgraph to depend on base-client
@@ -49,10 +49,10 @@ const makeDefaultPluginMap = (
 
   return {
     importers: {
-      csv: new ImportCSVPlugin({ ...graphqlOptions }),
+      csv: new SplitgraphImportCSVPlugin({ ...graphqlOptions }),
       // TODO: not real obviously
-      mysql: new ImportCSVPlugin({ ...graphqlOptions }),
-      postgres: new ImportCSVPlugin({ ...graphqlOptions }),
+      mysql: new SplitgraphImportCSVPlugin({ ...graphqlOptions }),
+      postgres: new SplitgraphImportCSVPlugin({ ...graphqlOptions }),
     },
     exporters: {
       exportQuery: new ExportQueryPlugin({ ...graphqlOptions }),

@@ -141,7 +141,7 @@ describe("makeSplitgraphHTTPContext", () => {
                 },
               },
               "importers": {
-                "csv": _ImportCSVPlugin {
+                "csv": _SplitgraphImportCSVPlugin {
                   "graphqlClient": SplitgraphGraphQLClient {
                     "graphqlClient": GraphQLClient {
                       "options": {
@@ -159,7 +159,7 @@ describe("makeSplitgraphHTTPContext", () => {
                   },
                   "transformRequestHeaders": [Function],
                 },
-                "mysql": _ImportCSVPlugin {
+                "mysql": _SplitgraphImportCSVPlugin {
                   "graphqlClient": SplitgraphGraphQLClient {
                     "graphqlClient": GraphQLClient {
                       "options": {
@@ -177,7 +177,7 @@ describe("makeSplitgraphHTTPContext", () => {
                   },
                   "transformRequestHeaders": [Function],
                 },
-                "postgres": _ImportCSVPlugin {
+                "postgres": _SplitgraphImportCSVPlugin {
                   "graphqlClient": SplitgraphGraphQLClient {
                     "graphqlClient": GraphQLClient {
                       "options": {
@@ -220,7 +220,7 @@ describe("makeSplitgraphHTTPContext", () => {
               },
             },
             "importers": {
-              "csv": _ImportCSVPlugin {
+              "csv": _SplitgraphImportCSVPlugin {
                 "graphqlClient": SplitgraphGraphQLClient {
                   "graphqlClient": GraphQLClient {
                     "options": {
@@ -238,7 +238,7 @@ describe("makeSplitgraphHTTPContext", () => {
                 },
                 "transformRequestHeaders": [Function],
               },
-              "mysql": _ImportCSVPlugin {
+              "mysql": _SplitgraphImportCSVPlugin {
                 "graphqlClient": SplitgraphGraphQLClient {
                   "graphqlClient": GraphQLClient {
                     "options": {
@@ -256,7 +256,7 @@ describe("makeSplitgraphHTTPContext", () => {
                 },
                 "transformRequestHeaders": [Function],
               },
-              "postgres": _ImportCSVPlugin {
+              "postgres": _SplitgraphImportCSVPlugin {
                 "graphqlClient": SplitgraphGraphQLClient {
                   "graphqlClient": GraphQLClient {
                     "options": {

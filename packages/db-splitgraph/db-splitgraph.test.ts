@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { randSuffix } from "@madatdata/test-helpers/rand-suffix";
 import { makeDb } from "./db-splitgraph";
-import { ImportCSVPlugin } from "./plugins/importers/import-csv-plugin";
+import { SplitgraphImportCSVPlugin } from "./plugins/importers/splitgraph-import-csv-plugin";
 import { ExportQueryPlugin } from "./plugins/exporters/export-query-plugin";
 
 import { shouldSkipIntegrationTests } from "@madatdata/test-helpers/env-config";
@@ -38,7 +38,7 @@ const createDb = () => {
     transformRequestHeaders,
     plugins: {
       importers: {
-        csv: new ImportCSVPlugin({
+        csv: new SplitgraphImportCSVPlugin({
           graphqlEndpoint: defaultHost.baseUrls.gql,
           transformRequestHeaders,
         }),
@@ -72,7 +72,7 @@ const createRealDb = () => {
     },
     plugins: {
       importers: {
-        csv: new ImportCSVPlugin({
+        csv: new SplitgraphImportCSVPlugin({
           graphqlEndpoint: defaultHost.baseUrls.gql,
         }),
       },
@@ -89,7 +89,7 @@ const createRealDb = () => {
 // const _makeAnonymousDb = () => {
 //   return makeDb({
 //     plugins: {
-//       csv: new ImportCSVPlugin({
+//       csv: new SplitgraphImportCSVPlugin({
 //         graphqlEndpoint: defaultHost.baseUrls.gql,
 //       }),
 //     },
@@ -97,7 +97,7 @@ const createRealDb = () => {
 // };
 
 // FIXME: most of this block is graphql client implementation details
-describe("importData for ImportCSVPlugin", () => {
+describe("importData for SplitgraphImportCSVPlugin", () => {
   setupMswServerTestHooks();
   setupMemo();
 
@@ -300,7 +300,7 @@ describe("importData for ImportCSVPlugin", () => {
               started: string;
               finished: string;
               isManual: boolean;
-              // FIXME: it's really TaskStatus (needs export from import-csv-plugin)
+              // FIXME: it's really TaskStatus (needs export from splitgraph-import-csv-plugin)
               status: string;
             }[];
           };
@@ -557,8 +557,6 @@ GROUP BY a ORDER BY a;`,
     expect(info).toBeDefined();
 
     expect(response?.output.url).toBeDefined();
-
-    console.log("output URL:", response?.output.url);
 
     expect(() => new URL(response?.output.url!)).not.toThrow();
 
