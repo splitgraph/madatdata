@@ -3,17 +3,37 @@ import { describe, it, expect } from "vitest";
 import { makeSplitgraphHTTPContext } from "./splitgraph";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
 
+export const createDataContext = () => {
+  return makeSplitgraphHTTPContext({
+    authenticatedCredential: {
+      apiKey: "xxx",
+      apiSecret: "yyy",
+      anonymous: false,
+    },
+  });
+};
+
+export const createRealDataContext = () => {
+  const credential = {
+    // @ts-expect-error https://stackoverflow.com/a/70711231
+    apiKey: import.meta.env.VITE_TEST_DDN_API_KEY,
+    // @ts-expect-error https://stackoverflow.com/a/70711231
+    apiSecret: import.meta.env.VITE_TEST_DDN_API_SECRET,
+  };
+  return makeSplitgraphHTTPContext({
+    authenticatedCredential: {
+      apiKey: credential.apiKey,
+      apiSecret: credential.apiSecret,
+      anonymous: false,
+    },
+  });
+};
+
 describe("makeSplitgraphHTTPContext", () => {
   setupMswServerTestHooks();
 
   it("initializes as expected", async () => {
-    const ctx = makeSplitgraphHTTPContext({
-      authenticatedCredential: {
-        apiKey: "xxx",
-        apiSecret: "yyy",
-        anonymous: false,
-      },
-    });
+    const ctx = createDataContext();
 
     expect(ctx.client).toBeTruthy();
     expect(ctx.db).toBeTruthy();
@@ -121,7 +141,7 @@ describe("makeSplitgraphHTTPContext", () => {
                 },
               },
               "importers": {
-                "csv": _ImportCSVPlugin {
+                "csv": _SplitgraphImportCSVPlugin {
                   "graphqlClient": SplitgraphGraphQLClient {
                     "graphqlClient": GraphQLClient {
                       "options": {
@@ -139,7 +159,7 @@ describe("makeSplitgraphHTTPContext", () => {
                   },
                   "transformRequestHeaders": [Function],
                 },
-                "mysql": _ImportCSVPlugin {
+                "mysql": _SplitgraphImportCSVPlugin {
                   "graphqlClient": SplitgraphGraphQLClient {
                     "graphqlClient": GraphQLClient {
                       "options": {
@@ -157,7 +177,7 @@ describe("makeSplitgraphHTTPContext", () => {
                   },
                   "transformRequestHeaders": [Function],
                 },
-                "postgres": _ImportCSVPlugin {
+                "postgres": _SplitgraphImportCSVPlugin {
                   "graphqlClient": SplitgraphGraphQLClient {
                     "graphqlClient": GraphQLClient {
                       "options": {
@@ -178,81 +198,84 @@ describe("makeSplitgraphHTTPContext", () => {
               },
             },
           },
-          "plugins": {
-            "exporters": {
-              "exportQuery": _ExportQueryPlugin {
-                "graphqlClient": SplitgraphGraphQLClient {
-                  "graphqlClient": GraphQLClient {
-                    "options": {
-                      "headers": [Function],
+          "plugins": PluginRegistry {
+            "hostContext": {},
+            "plugins": {
+              "exporters": {
+                "exportQuery": _ExportQueryPlugin {
+                  "graphqlClient": SplitgraphGraphQLClient {
+                    "graphqlClient": GraphQLClient {
+                      "options": {
+                        "headers": [Function],
+                      },
+                      "url": "https://api.splitgraph.com/gql/cloud/unified/graphql",
                     },
-                    "url": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                    "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                    "transformRequestHeaders": [Function],
                   },
                   "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                  "opts": {
+                    "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                    "transformRequestHeaders": [Function],
+                  },
                   "transformRequestHeaders": [Function],
                 },
-                "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
-                "opts": {
-                  "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
-                  "transformRequestHeaders": [Function],
-                },
-                "transformRequestHeaders": [Function],
               },
-            },
-            "importers": {
-              "csv": _ImportCSVPlugin {
-                "graphqlClient": SplitgraphGraphQLClient {
-                  "graphqlClient": GraphQLClient {
-                    "options": {
-                      "headers": [Function],
+              "importers": {
+                "csv": _SplitgraphImportCSVPlugin {
+                  "graphqlClient": SplitgraphGraphQLClient {
+                    "graphqlClient": GraphQLClient {
+                      "options": {
+                        "headers": [Function],
+                      },
+                      "url": "https://api.splitgraph.com/gql/cloud/unified/graphql",
                     },
-                    "url": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                    "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                    "transformRequestHeaders": [Function],
                   },
                   "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                  "opts": {
+                    "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                    "transformRequestHeaders": [Function],
+                  },
                   "transformRequestHeaders": [Function],
                 },
-                "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
-                "opts": {
-                  "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
-                  "transformRequestHeaders": [Function],
-                },
-                "transformRequestHeaders": [Function],
-              },
-              "mysql": _ImportCSVPlugin {
-                "graphqlClient": SplitgraphGraphQLClient {
-                  "graphqlClient": GraphQLClient {
-                    "options": {
-                      "headers": [Function],
+                "mysql": _SplitgraphImportCSVPlugin {
+                  "graphqlClient": SplitgraphGraphQLClient {
+                    "graphqlClient": GraphQLClient {
+                      "options": {
+                        "headers": [Function],
+                      },
+                      "url": "https://api.splitgraph.com/gql/cloud/unified/graphql",
                     },
-                    "url": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                    "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                    "transformRequestHeaders": [Function],
                   },
                   "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                  "opts": {
+                    "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                    "transformRequestHeaders": [Function],
+                  },
                   "transformRequestHeaders": [Function],
                 },
-                "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
-                "opts": {
-                  "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
-                  "transformRequestHeaders": [Function],
-                },
-                "transformRequestHeaders": [Function],
-              },
-              "postgres": _ImportCSVPlugin {
-                "graphqlClient": SplitgraphGraphQLClient {
-                  "graphqlClient": GraphQLClient {
-                    "options": {
-                      "headers": [Function],
+                "postgres": _SplitgraphImportCSVPlugin {
+                  "graphqlClient": SplitgraphGraphQLClient {
+                    "graphqlClient": GraphQLClient {
+                      "options": {
+                        "headers": [Function],
+                      },
+                      "url": "https://api.splitgraph.com/gql/cloud/unified/graphql",
                     },
-                    "url": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                    "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                    "transformRequestHeaders": [Function],
                   },
                   "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                  "opts": {
+                    "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                    "transformRequestHeaders": [Function],
+                  },
                   "transformRequestHeaders": [Function],
                 },
-                "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
-                "opts": {
-                  "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
-                  "transformRequestHeaders": [Function],
-                },
-                "transformRequestHeaders": [Function],
               },
             },
           },

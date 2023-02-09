@@ -4,10 +4,53 @@ import { makeSeafowlHTTPContext } from "./seafowl";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
 import { shouldSkipSeafowlTests } from "@madatdata/test-helpers/env-config";
 
-const createDataContext = () => {
+// @ts-expect-error https://stackoverflow.com/a/70711231
+const SEAFOWL_SECRET = import.meta.env.VITE_TEST_SEAFOWL_SECRET;
+
+// Depending on whether SEAFOWL_SECRET is defined (might not be in CI), we expect
+// serialized credentials to include different values
+const expectAnonymous = !SEAFOWL_SECRET;
+const expectToken = SEAFOWL_SECRET ?? "anonymous-token";
+
+export const createDataContext = () => {
   return makeSeafowlHTTPContext({
     database: {
       dbname: "seafowl", // arbitrary
+    },
+    authenticatedCredential: SEAFOWL_SECRET
+      ? {
+          token: SEAFOWL_SECRET,
+          anonymous: false,
+        }
+      : undefined,
+    host: {
+      // temporary hacky mess
+      dataHost: "127.0.0.1:8080",
+      apexDomain: "bogus",
+      apiHost: "bogus",
+      baseUrls: {
+        gql: "bogus",
+        sql: "http://127.0.0.1:8080/q",
+        auth: "bogus",
+      },
+      postgres: {
+        host: "127.0.0.1",
+        port: 6432,
+        ssl: false,
+      },
+    },
+  });
+};
+
+export const createRealDataContext = () => {
+  return makeSeafowlHTTPContext({
+    database: {
+      dbname: "seafowl", // arbitrary
+    },
+    authenticatedCredential: {
+      // @ts-expect-error https://stackoverflow.com/a/70711231
+      token: import.meta.env.VITE_TEST_SEAFOWL_SECRET,
+      anonymous: false,
     },
     host: {
       // temporary hacky mess
@@ -37,13 +80,30 @@ describe("makeSeafowlHTTPContext", () => {
     expect(ctx.client).toBeTruthy();
     expect(ctx.db).toBeTruthy();
 
-    expect(ctx).toMatchInlineSnapshot(`
+    expect(typeof ctx.db["authenticatedCredential"] === "undefined").toEqual(
+      expectAnonymous
+    );
+
+    // NOTE: seafowlClient is expected to be undefined because we don't set it
+    // in the constructor (since it depends on the instantiated class). Instead
+    // we set it via a builder like withOptions (in other words, the instance
+    // created via `new DbSeafowl()` cannot control a seafowlClient, and must create
+    // a new instance from one of its builder methods to use a seafowlClient)
+    //    (this is not necessarily a desirable state of affairs)
+    expect({
+      ...ctx,
+      db: (({
+        // @ts-expect-error Protected member, but it gets serialized and we want to remove it
+        authenticatedCredential: _removeHardToSnapshotAuthenticatedCredential,
+        ...dbCtx
+      }: typeof ctx.db) => dbCtx)(ctx.db),
+    }).toMatchInlineSnapshot(`
       {
         "client": SqlHTTPClient {
           "bodyMode": "jsonl",
           "credential": {
-            "anonymous": true,
-            "token": "anonymous-token",
+            "anonymous": ${expectAnonymous},
+            "token": "${expectToken}",
           },
           "database": {
             "dbname": "seafowl",
@@ -68,7 +128,7 @@ describe("makeSeafowlHTTPContext", () => {
             "makeQueryURL": [Function],
           },
         },
-        "db": DbSeafowl {
+        "db": {
           "database": {
             "dbname": "seafowl",
           },
@@ -88,7 +148,14 @@ describe("makeSeafowlHTTPContext", () => {
             },
           },
           "opts": {
-            "authenticatedCredential": undefined,
+            "authenticatedCredential": ${
+              expectAnonymous
+                ? "undefined"
+                : `{
+              "anonymous": ${expectAnonymous},
+              "token": "${expectToken}",
+            }`
+            },
             "database": {
               "dbname": "seafowl",
             },
@@ -110,25 +177,24 @@ describe("makeSeafowlHTTPContext", () => {
             "plugins": {
               "exporters": {},
               "importers": {
-                "csv": ImportCSVPlugin {
-                  "graphqlEndpoint": "http://todo.test/should-not-be-required-property",
+                "csv": SeafowlImportFilePlugin {
                   "opts": {
-                    "transformRequestHeaders": [Function],
+                    "seafowlClient": undefined,
                   },
-                  "transformRequestHeaders": [Function],
                 },
               },
             },
           },
-          "plugins": {
-            "exporters": {},
-            "importers": {
-              "csv": ImportCSVPlugin {
-                "graphqlEndpoint": "http://todo.test/should-not-be-required-property",
-                "opts": {
-                  "transformRequestHeaders": [Function],
+          "plugins": PluginRegistry {
+            "hostContext": {},
+            "plugins": {
+              "exporters": {},
+              "importers": {
+                "csv": SeafowlImportFilePlugin {
+                  "opts": {
+                    "seafowlClient": undefined,
+                  },
                 },
-                "transformRequestHeaders": [Function],
               },
             },
           },

@@ -1,4 +1,5 @@
 import type { PluginMap, OptionalPluginMap } from "./plugin-bindings";
+import { WithPluginRegistry, PluginRegistry } from "./plugin-registry";
 import { webcrypto } from "crypto";
 
 import {
@@ -14,7 +15,6 @@ import {
 } from "@madatdata/base-client";
 
 export interface Db<ConcretePluginMap extends PluginMap> {
-  plugins: OptionalPluginMap<ConcretePluginMap>;
   importData: <PluginName extends keyof ConcretePluginMap["importers"]>(
     pluginName: PluginName,
     ...rest: Parameters<
@@ -40,10 +40,14 @@ export interface DbOptions<ConcretePluginMap extends PluginMap> {
   host?: Host;
   database?: Database;
 }
-export abstract class BaseDb<ConcretePluginMap extends PluginMap>
-  implements Db<ConcretePluginMap>
+export abstract class BaseDb<
+  ConcretePluginMap extends PluginMap,
+  PluginHostContext extends object
+> implements
+    Db<ConcretePluginMap>,
+    WithPluginRegistry<ConcretePluginMap, PluginHostContext>
 {
-  public plugins: OptionalPluginMap<ConcretePluginMap>;
+  public plugins: PluginRegistry<ConcretePluginMap, PluginHostContext>;
   protected authenticatedCredential?: AuthenticatedCredential;
   protected host: Host;
   protected database: Database;
@@ -53,14 +57,17 @@ export abstract class BaseDb<ConcretePluginMap extends PluginMap>
     this.setAuthenticatedCredential(opts?.authenticatedCredential);
     this.host = opts?.host ?? defaultHost;
     this.database = opts?.database ?? defaultDatabase;
-    this.plugins = {
-      importers: {
-        ...opts?.plugins.importers,
+    this.plugins = new PluginRegistry(
+      {
+        importers: {
+          ...opts?.plugins.importers,
+        },
+        exporters: {
+          ...opts?.plugins.exporters,
+        },
       },
-      exporters: {
-        ...opts?.plugins.exporters,
-      },
-    };
+      {} as PluginHostContext
+    );
     this.opts = opts;
   }
 
@@ -76,11 +83,13 @@ export abstract class BaseDb<ConcretePluginMap extends PluginMap>
     }
   }
 
-  public makeClient<ImplementationSpecificClientOptions>(
+  public makeClient<ImplementationSpecificClientOptions, Strategies>(
     makeClientForProtocol: (
-      wrappedOptions: ImplementationSpecificClientOptions & ClientOptions
+      wrappedOptions: ImplementationSpecificClientOptions &
+        ClientOptions<Strategies>
     ) => Client,
-    clientOptions: ImplementationSpecificClientOptions & ClientOptions
+    clientOptions: ImplementationSpecificClientOptions &
+      ClientOptions<Strategies>
   ) {
     return makeClientForProtocol({
       database: this.database,
@@ -114,7 +123,7 @@ export abstract class BaseDb<ConcretePluginMap extends PluginMap>
     normalizeQuery: (sql: string) => string = this.normalizeQueryForHTTPHeader
   ) {
     // In a browser, window.webcrypto.subtle should be available
-    // In node, we need to use the import from the ambient node: module
+    // In node, we (used to need?) to use the import from the ambient node: module
     // In vitest, really JSDOM, it's a bit of a mix between the two (window is available?)
     // NOTE: Need to test how this will work in a browser bundle which we don't even have yet
     const subtle = (() => {

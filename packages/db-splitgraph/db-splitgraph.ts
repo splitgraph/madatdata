@@ -1,4 +1,9 @@
-import { BaseDb, type DbOptions, OptionalPluginMap } from "@madatdata/base-db";
+import {
+  BaseDb,
+  type DbOptions,
+  OptionalPluginMap,
+  WithPluginRegistry,
+} from "@madatdata/base-db";
 import type {
   SplitgraphPluginMap,
   SplitgraphImportPluginMap,
@@ -6,13 +11,14 @@ import type {
 } from "./plugins/importers";
 
 // TODO: These could be injected in the constructor as the actual plugin map
-import { ImportCSVPlugin } from "./plugins/importers/import-csv-plugin";
+import { SplitgraphImportCSVPlugin } from "./plugins/importers/splitgraph-import-csv-plugin";
 import { ExportQueryPlugin } from "./plugins/exporters/export-query-plugin";
 
 // TODO: It's not ideal for db-splitgraph to depend on base-client
 import {
   type Client,
   type ClientOptions,
+  type AuthenticatedCredential,
   makeAuthHeaders,
   defaultHost,
 } from "@madatdata/base-client";
@@ -20,46 +26,40 @@ import {
 import type { HTTPStrategies, HTTPClientOptions } from "@madatdata/client-http";
 import type { GraphQLClientOptions } from "./plugins";
 
+interface DbSplitgraphPluginHostContext extends GraphQLClientOptions {}
+
 interface DbSplitgraphOptions
-  extends DbOptions<OptionalPluginMap<SplitgraphPluginMap>> {}
+  extends DbOptions<OptionalPluginMap<SplitgraphPluginMap>>,
+    Partial<GraphQLClientOptions> {}
 
-const makeGraphQLOptions = (
-  opts: Partial<GraphQLClientOptions> &
-    Required<Pick<GraphQLClientOptions, "graphqlEndpoint">>
-): Pick<
-  ConstructorParameters<typeof ImportCSVPlugin>[0],
-  "graphqlEndpoint" | "transformRequestHeaders"
-> => {
-  return {
-    graphqlEndpoint: opts.graphqlEndpoint,
-    transformRequestHeaders: opts.transformRequestHeaders,
-  };
-};
-
-const makeDefaultPluginMap = (opts: {
-  graphqlEndpoint: GraphQLClientOptions["graphqlEndpoint"];
-  makeAuthHeaders: () => HeadersInit;
-}) => {
-  const graphqlOptions: Pick<
-    ConstructorParameters<typeof ImportCSVPlugin>[0],
-    "graphqlEndpoint" | "transformRequestHeaders"
-  > = makeGraphQLOptions({
-    graphqlEndpoint: opts.graphqlEndpoint,
-    transformRequestHeaders: (reqHeaders) =>
-      opts.makeAuthHeaders
-        ? {
-            ...reqHeaders,
-            ...opts.makeAuthHeaders(),
-          }
-        : reqHeaders,
+const makeTransformRequestHeadersForAuthenticatedRequest =
+  (
+    maybeAuthenticatedCredential?: AuthenticatedCredential
+  ): Required<GraphQLClientOptions>["transformRequestHeaders"] =>
+  (reqHeaders) => ({
+    ...reqHeaders,
+    ...(maybeAuthenticatedCredential
+      ? makeAuthHeaders(maybeAuthenticatedCredential)
+      : {}),
   });
+
+const makeDefaultPluginMap = (
+  opts: Pick<Required<DbSplitgraphOptions>, "graphqlEndpoint"> &
+    Pick<Partial<DbSplitgraphOptions>, "authenticatedCredential">
+) => {
+  const graphqlOptions: GraphQLClientOptions = {
+    graphqlEndpoint: opts.graphqlEndpoint,
+    transformRequestHeaders: makeTransformRequestHeadersForAuthenticatedRequest(
+      opts.authenticatedCredential
+    ),
+  };
 
   return {
     importers: {
-      csv: new ImportCSVPlugin({ ...graphqlOptions }),
+      csv: new SplitgraphImportCSVPlugin({ ...graphqlOptions }),
       // TODO: not real obviously
-      mysql: new ImportCSVPlugin({ ...graphqlOptions }),
-      postgres: new ImportCSVPlugin({ ...graphqlOptions }),
+      mysql: new SplitgraphImportCSVPlugin({ ...graphqlOptions }),
+      postgres: new SplitgraphImportCSVPlugin({ ...graphqlOptions }),
     },
     exporters: {
       exportQuery: new ExportQueryPlugin({ ...graphqlOptions }),
@@ -67,29 +67,54 @@ const makeDefaultPluginMap = (opts: {
   };
 };
 
-export class DbSplitgraph extends BaseDb<
-  OptionalPluginMap<SplitgraphPluginMap>
-> {
+// HACK: Necessary because of some missing type inference
+type PluginWithTransformRequestHeadersOption<Plugin> = Plugin & {
+  transformRequestHeaders: (headers: HeadersInit) => HeadersInit;
+};
+
+export class DbSplitgraph
+  extends BaseDb<
+    OptionalPluginMap<SplitgraphPluginMap>,
+    DbSplitgraphPluginHostContext
+  >
+  implements
+    WithPluginRegistry<SplitgraphPluginMap, DbSplitgraphPluginHostContext>
+{
   private graphqlEndpoint: string;
 
   constructor(
     opts: Omit<DbSplitgraphOptions, "plugins"> &
       Pick<Partial<DbSplitgraphOptions>, "plugins">
   ) {
+    const graphqlEndpoint =
+      opts.graphqlEndpoint ?? (opts.host ?? defaultHost).baseUrls.gql;
+    const plugins =
+      opts.plugins ??
+      makeDefaultPluginMap({
+        graphqlEndpoint,
+        authenticatedCredential: opts.authenticatedCredential,
+      });
+
     super({
       ...opts,
-      plugins:
-        opts.plugins ??
-        makeDefaultPluginMap({
-          graphqlEndpoint: (opts.host ?? defaultHost).baseUrls.gql,
-          makeAuthHeaders: () =>
-            this.authenticatedCredential
-              ? makeAuthHeaders(this.authenticatedCredential)
-              : {},
-        }),
+      plugins,
     });
 
-    this.graphqlEndpoint = this.host.baseUrls.gql;
+    this.graphqlEndpoint = graphqlEndpoint;
+  }
+
+  // NOTE: we want this to update when this.authenticatedCredential updates
+  private get pluginConfig(): Pick<
+    Required<DbSplitgraphOptions>,
+    "graphqlEndpoint" | "transformRequestHeaders"
+  > {
+    return {
+      graphqlEndpoint: this.graphqlEndpoint,
+      transformRequestHeaders:
+        makeTransformRequestHeadersForAuthenticatedRequest(
+          this.authenticatedCredential
+        ),
+    };
   }
 
   public makeHTTPClient(
@@ -98,35 +123,37 @@ export class DbSplitgraph extends BaseDb<
   ) {
     // FIXME: do we need to depend on all of client-http just for `strategies` type?
     // FIXME: this pattern would probably work better as a user-provided Class
-    // nb: careful to keep parity with (intentionally) same code in db-splitgraph.ts
-    return super.makeClient<HTTPClientOptions>(makeClientForProtocol, {
-      ...clientOptions,
-      bodyMode: "json",
-      strategies: {
-        makeFetchOptions: ({ credential, query, execOptions }) => {
-          // HACKY: atm, splitgraph API does not accept "object" as valid param
-          // so remove it from execOptions (hacky because ideal is `...execOptions`)
-          const httpExecOptions =
-            execOptions?.rowMode === "object"
-              ? (({ rowMode, ...rest }) => rest)(execOptions)
-              : execOptions;
+    // nb: careful to keep parity with (intentionally) same code in db-seafowl.ts
+    return super.makeClient<HTTPClientOptions, HTTPStrategies>(
+      makeClientForProtocol,
+      {
+        ...clientOptions,
+        bodyMode: "json",
+        strategies: {
+          makeFetchOptions: ({ credential, query, execOptions }) => {
+            // HACKY: atm, splitgraph API does not accept "object" as valid param
+            // so remove it from execOptions (hacky because ideal is `...execOptions`)
+            const httpExecOptions =
+              execOptions?.rowMode === "object"
+                ? (({ rowMode, ...rest }) => rest)(execOptions)
+                : execOptions;
 
-          return {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              ...makeAuthHeaders(
-                credential
-              ) /* fixme: smell? prefer `this.credential`? */,
-            },
-            body: JSON.stringify({ sql: query, ...httpExecOptions }),
-          };
+            return {
+              method: "POST",
+              headers: makeTransformRequestHeadersForAuthenticatedRequest(
+                credential as AuthenticatedCredential
+              )({
+                "Content-Type": "application/json",
+              }),
+              body: JSON.stringify({ sql: query, ...httpExecOptions }),
+            };
+          },
+          makeQueryURL: async ({ host, database }) => {
+            return Promise.resolve(host.baseUrls.sql + "/" + database.dbname);
+          },
         },
-        makeQueryURL: async ({ host, database }) => {
-          return Promise.resolve(host.baseUrls.sql + "/" + database.dbname);
-        },
-      } as HTTPStrategies,
-    });
+      }
+    );
   }
 
   // TODO: doesn't belong here (or does it? maybe credential doesn't belong _there_)
@@ -217,14 +244,13 @@ export class DbSplitgraph extends BaseDb<
 
     return await plugin
       .withOptions({
-        graphqlEndpoint: plugin.graphqlEndpoint ?? this.graphqlEndpoint,
-        transformRequestHeaders: (reqHeaders) =>
-          this.authenticatedCredential
-            ? {
-                ...reqHeaders,
-                ...makeAuthHeaders(this.authenticatedCredential),
-              }
-            : reqHeaders,
+        ...this.pluginConfig,
+        ...plugin,
+        transformRequestHeaders: (headers: HeadersInit) =>
+          (
+            (plugin as PluginWithTransformRequestHeadersOption<typeof plugin>)
+              .transformRequestHeaders ?? IdentityFunc
+          )(this.pluginConfig.transformRequestHeaders(headers)),
       })
       .exportData(sourceOpts, destOpts);
   }
@@ -240,14 +266,13 @@ export class DbSplitgraph extends BaseDb<
 
       return await plugin
         .withOptions({
-          graphqlEndpoint: plugin.graphqlEndpoint ?? this.graphqlEndpoint,
-          transformRequestHeaders: (reqHeaders) =>
-            this.authenticatedCredential
-              ? {
-                  ...reqHeaders,
-                  ...makeAuthHeaders(this.authenticatedCredential),
-                }
-              : reqHeaders,
+          ...this.pluginConfig,
+          ...plugin,
+          transformRequestHeaders: (headers: HeadersInit) =>
+            (
+              (plugin as PluginWithTransformRequestHeadersOption<typeof plugin>)
+                .transformRequestHeaders ?? IdentityFunc
+            )(this.pluginConfig.transformRequestHeaders(headers)),
         })
         .importData(sourceOpts, destOpts);
     } else {
@@ -268,3 +293,5 @@ export const makeDb = (...args: ConstructorParameters<typeof DbSplitgraph>) => {
   const db = new DbSplitgraph(...args);
   return db;
 };
+
+const IdentityFunc = <T>(x: T) => x;

@@ -182,7 +182,7 @@ export class ExportQueryPlugin
     );
   }
 
-  // TODO: DRY (with at least import-csv-plugin)
+  // TODO: DRY (with at least splitgraph-import-csv-plugin)
   @Retryable({
     ...retryOptions,
     doRetry: ({ type }) => type === "retry",

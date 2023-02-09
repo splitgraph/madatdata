@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { randSuffix } from "@madatdata/test-helpers/rand-suffix";
 import { makeDb } from "./db-splitgraph";
-import { ImportCSVPlugin } from "./plugins/importers/import-csv-plugin";
+import { SplitgraphImportCSVPlugin } from "./plugins/importers/splitgraph-import-csv-plugin";
 import { ExportQueryPlugin } from "./plugins/exporters/export-query-plugin";
 
 import { shouldSkipIntegrationTests } from "@madatdata/test-helpers/env-config";
@@ -33,9 +34,11 @@ const createDb = () => {
       apiSecret: "yyy",
       anonymous: false,
     },
+    graphqlEndpoint: defaultHost.baseUrls.gql,
+    transformRequestHeaders,
     plugins: {
       importers: {
-        csv: new ImportCSVPlugin({
+        csv: new SplitgraphImportCSVPlugin({
           graphqlEndpoint: defaultHost.baseUrls.gql,
           transformRequestHeaders,
         }),
@@ -69,7 +72,7 @@ const createRealDb = () => {
     },
     plugins: {
       importers: {
-        csv: new ImportCSVPlugin({
+        csv: new SplitgraphImportCSVPlugin({
           graphqlEndpoint: defaultHost.baseUrls.gql,
         }),
       },
@@ -86,7 +89,7 @@ const createRealDb = () => {
 // const _makeAnonymousDb = () => {
 //   return makeDb({
 //     plugins: {
-//       csv: new ImportCSVPlugin({
+//       csv: new SplitgraphImportCSVPlugin({
 //         graphqlEndpoint: defaultHost.baseUrls.gql,
 //       }),
 //     },
@@ -94,7 +97,7 @@ const createRealDb = () => {
 // };
 
 // FIXME: most of this block is graphql client implementation details
-describe("importData for ImportCSVPlugin", () => {
+describe("importData for SplitgraphImportCSVPlugin", () => {
   setupMswServerTestHooks();
   setupMemo();
 
@@ -297,7 +300,7 @@ describe("importData for ImportCSVPlugin", () => {
               started: string;
               finished: string;
               isManual: boolean;
-              // FIXME: it's really TaskStatus (needs export from import-csv-plugin)
+              // FIXME: it's really TaskStatus (needs export from splitgraph-import-csv-plugin)
               status: string;
             }[];
           };
@@ -533,7 +536,7 @@ describe("importData for ImportCSVPlugin", () => {
 
 // TODO: Make a mocked version of this test
 describe.skipIf(shouldSkipIntegrationTests())("real export query", () => {
-  it("exports a basic postgres query to CSV", async () => {
+  it("exports a basic postgres query to parquet", async () => {
     const db = createRealDb();
 
     const { response, error, info } = await db.exportData(
@@ -545,7 +548,7 @@ GROUP BY a ORDER BY a;`,
         vdbId: "ddn",
       },
       {
-        format: "csv",
+        format: "parquet",
         filename: "random-series",
       }
     );
@@ -568,8 +571,8 @@ GROUP BY a ORDER BY a;`,
         : { url: "error-in-url" },
     }).toMatchInlineSnapshot(`
       {
-        "exportFormat": "csv",
-        "filename": "random-series.csv",
+        "exportFormat": "parquet",
+        "filename": "random-series.parquet",
         "finished": "finished-ok",
         "output": {
           "url": "url-ok",
@@ -594,7 +597,7 @@ describe.skipIf(shouldSkipIntegrationTests())("real DDN", () => {
       "csv",
       { data: Buffer.from(`name;candies\r\nBob;5\r\nAlice;10`) },
       {
-        tableName: "irrelevant",
+        tableName: `irrelevant-${randSuffix()}`,
         namespace,
         repository: "dunno",
         tableParams: {

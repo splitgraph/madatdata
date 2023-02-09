@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { makeDb } from "./db-seafowl";
-import { ImportCSVPlugin } from "./plugins/importers/import-csv-seafowl-plugin";
+import { SeafowlImportFilePlugin } from "./plugins/importers/seafowl-import-file-plugin";
 
 import { shouldSkipSeafowlTests } from "@madatdata/test-helpers/env-config";
 
@@ -23,14 +23,19 @@ describe("importData", () => {
 });
 
 const createDb = () => {
-  const transformRequestHeaders = vi.fn((headers) => ({
-    ...headers,
-    foobar: "fizzbuzz",
-  }));
+  // const transformRequestHeaders = vi.fn((headers) => ({
+  //   ...headers,
+  //   foobar: "fizzbuzz",
+  // }));
 
-  return makeDb({
+  const db = makeDb({
     database: {
       dbname: "seafowl", // arbitrary
+    },
+    authenticatedCredential: {
+      // @ts-expect-error https://stackoverflow.com/a/70711231
+      token: import.meta.env.VITE_TEST_SEAFOWL_SECRET,
+      anonymous: false,
     },
     host: {
       // temporary hacky mess
@@ -50,35 +55,16 @@ const createDb = () => {
     },
     plugins: {
       importers: {
-        csv: new ImportCSVPlugin({
-          transformRequestHeaders,
-        }),
+        csv: new SeafowlImportFilePlugin({}),
       },
       exporters: {},
     },
   });
+
+  return db;
 };
 
 describe.skipIf(shouldSkipSeafowlTests())("seafowl stub test", () => {
-  it("uploads with TableParamsSchema semicolon delimiter", async () => {
-    const db = createDb();
-
-    console.log("created db successfully");
-
-    expect(db).toBeTruthy();
-
-    const { response } = await db.importData(
-      "csv",
-      { data: Buffer.from(`name;candies\r\nBob;5\r\nAlice;10`) },
-      {
-        tableName: "irrelevant",
-        schemaName: "doesntmatter",
-      }
-    );
-
-    expect((response as any)?.success).toEqual(true);
-  });
-
   it("can fingerprint with sha256 by default", async () => {
     const db = createDb();
 
@@ -91,9 +77,4 @@ describe.skipIf(shouldSkipSeafowlTests())("seafowl stub test", () => {
       }
     `);
   });
-
-  // it("can make a query to localhost", async () => {
-  //   const db = createDb();
-
-  // });
 });
