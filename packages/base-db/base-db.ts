@@ -66,7 +66,7 @@ export abstract class BaseDb<
           ...opts?.plugins.exporters,
         },
       },
-      {}
+      {} as PluginHostContext
     );
     this.opts = opts;
   }

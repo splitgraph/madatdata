@@ -186,6 +186,7 @@ describe("makeSeafowlHTTPContext", () => {
             },
           },
           "plugins": PluginRegistry {
+            "hostContext": {},
             "plugins": {
               "exporters": {},
               "importers": {

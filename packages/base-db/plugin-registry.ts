@@ -10,52 +10,50 @@ export interface WithPluginRegistry<
 export class PluginRegistry<
   ConcretePluginMap extends PluginMap,
   PluginHostContext extends object
-> implements PluginMap
+> implements OptionalPluginMap<ConcretePluginMap>
 {
   public plugins: OptionalPluginMap<ConcretePluginMap>;
+  public hostContext: PluginHostContext;
 
   constructor(
     plugins: OptionalPluginMap<ConcretePluginMap>,
-    { helpers: _helpers }: { helpers?: any }
+    hostContext: PluginHostContext
   ) {
     this.plugins = registerPlugins<ConcretePluginMap, PluginHostContext>(
       this,
       plugins
     );
 
-    // const _importers = Object.entries(this.plugins.importers).map(
-    //   ([_, v]) => v
-    // );
+    this.hostContext = hostContext;
   }
 
-  public get importers(): PluginMap["importers"] {
-    const rval = Object.entries(this.plugins.importers)
-      .filter(([_, plugin]) => plugin.importData)
-      .reduce(
-        (acc, [pluginName, plugin]) => ({
-          ...acc,
-          [pluginName]: plugin,
-        }),
-        {}
-      );
+  public get importers(): OptionalPluginMap<ConcretePluginMap>["importers"] {
+    const pluginsWithImportDataMethod: OptionalPluginMap<ConcretePluginMap>["importers"] =
+      Object.entries(this.plugins.importers)
+        .filter(([_, plugin]) => plugin.importData)
+        .reduce(
+          (acc, [pluginName, plugin]) => ({
+            ...acc,
+            [pluginName]: plugin,
+          }),
+          {}
+        );
 
-    return rval;
-
-    // for (const [pluginName, plugin] of Object.entries(this.plugins.importers)) {
-    // }
+    return pluginsWithImportDataMethod;
   }
 
-  public get exporters(): PluginMap["exporters"] {
-    const rval = Object.entries(this.plugins.exporters)
-      .filter(([_, plugin]) => plugin.exportData)
-      .reduce(
-        (acc, [pluginName, plugin]) => ({
-          ...acc,
-          [pluginName]: plugin,
-        }),
-        {}
-      );
-    return rval;
+  public get exporters(): OptionalPluginMap<ConcretePluginMap>["exporters"] {
+    const pluginsWithExportDataMethod: OptionalPluginMap<ConcretePluginMap>["exporters"] =
+      Object.entries(this.plugins.exporters)
+        .filter(([_, plugin]) => plugin.exportData)
+        .reduce(
+          (acc, [pluginName, plugin]) => ({
+            ...acc,
+            [pluginName]: plugin,
+          }),
+          {}
+        );
+    return pluginsWithExportDataMethod;
   }
 
   public get helpers() {
@@ -69,7 +67,7 @@ const registerPlugins = <
 >(
   _pluginRegistry: PluginRegistry<ConcretePluginMap, PluginHostContext>,
   pluginMap: OptionalPluginMap<ConcretePluginMap>
-) => {
+): OptionalPluginMap<ConcretePluginMap> => {
   return {
     importers: {
       ...pluginMap.importers,

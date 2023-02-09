@@ -278,6 +278,7 @@ describe("makeDefaultAnonymousContext", () => {
             },
           },
           "plugins": PluginRegistry {
+            "hostContext": {},
             "plugins": {
               "exporters": {
                 "exportQuery": _ExportQueryPlugin {

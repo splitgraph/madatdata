@@ -199,6 +199,7 @@ describe("makeSplitgraphHTTPContext", () => {
             },
           },
           "plugins": PluginRegistry {
+            "hostContext": {},
             "plugins": {
               "exporters": {
                 "exportQuery": _ExportQueryPlugin {
