@@ -135,7 +135,7 @@ export class DbSeafowl
             ? host.baseUrls.sql + "/" + fingerprint
             : host.baseUrls.sql;
         },
-      } as HTTPStrategies,
+      },
     };
   }
 
@@ -149,7 +149,7 @@ export class DbSeafowl
     // FIXME: do we need to depend on all of client-http just for `strategies` type?
     // FIXME: this pattern would probably work better as a user-provided Class
     // nb: careful to keep parity with (intentionally) same code in db-splitgraph.ts
-    return super.makeClient<HTTPClientOptions>(
+    return super.makeClient<HTTPClientOptions, HTTPStrategies>(
       makeClientForProtocol ?? makeHTTPClient,
       {
         ...clientOptions,

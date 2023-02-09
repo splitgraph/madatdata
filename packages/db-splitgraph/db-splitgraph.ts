@@ -124,33 +124,36 @@ export class DbSplitgraph
     // FIXME: do we need to depend on all of client-http just for `strategies` type?
     // FIXME: this pattern would probably work better as a user-provided Class
     // nb: careful to keep parity with (intentionally) same code in db-seafowl.ts
-    return super.makeClient<HTTPClientOptions>(makeClientForProtocol, {
-      ...clientOptions,
-      bodyMode: "json",
-      strategies: {
-        makeFetchOptions: ({ credential, query, execOptions }) => {
-          // HACKY: atm, splitgraph API does not accept "object" as valid param
-          // so remove it from execOptions (hacky because ideal is `...execOptions`)
-          const httpExecOptions =
-            execOptions?.rowMode === "object"
-              ? (({ rowMode, ...rest }) => rest)(execOptions)
-              : execOptions;
+    return super.makeClient<HTTPClientOptions, HTTPStrategies>(
+      makeClientForProtocol,
+      {
+        ...clientOptions,
+        bodyMode: "json",
+        strategies: {
+          makeFetchOptions: ({ credential, query, execOptions }) => {
+            // HACKY: atm, splitgraph API does not accept "object" as valid param
+            // so remove it from execOptions (hacky because ideal is `...execOptions`)
+            const httpExecOptions =
+              execOptions?.rowMode === "object"
+                ? (({ rowMode, ...rest }) => rest)(execOptions)
+                : execOptions;
 
-          return {
-            method: "POST",
-            headers: makeTransformRequestHeadersForAuthenticatedRequest(
-              credential as AuthenticatedCredential
-            )({
-              "Content-Type": "application/json",
-            }),
-            body: JSON.stringify({ sql: query, ...httpExecOptions }),
-          };
+            return {
+              method: "POST",
+              headers: makeTransformRequestHeadersForAuthenticatedRequest(
+                credential as AuthenticatedCredential
+              )({
+                "Content-Type": "application/json",
+              }),
+              body: JSON.stringify({ sql: query, ...httpExecOptions }),
+            };
+          },
+          makeQueryURL: async ({ host, database }) => {
+            return Promise.resolve(host.baseUrls.sql + "/" + database.dbname);
+          },
         },
-        makeQueryURL: async ({ host, database }) => {
-          return Promise.resolve(host.baseUrls.sql + "/" + database.dbname);
-        },
-      } as HTTPStrategies,
-    });
+      }
+    );
   }
 
   // TODO: doesn't belong here (or does it? maybe credential doesn't belong _there_)

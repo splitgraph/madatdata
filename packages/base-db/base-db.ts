@@ -83,11 +83,13 @@ export abstract class BaseDb<
     }
   }
 
-  public makeClient<ImplementationSpecificClientOptions>(
+  public makeClient<ImplementationSpecificClientOptions, Strategies>(
     makeClientForProtocol: (
-      wrappedOptions: ImplementationSpecificClientOptions & ClientOptions
+      wrappedOptions: ImplementationSpecificClientOptions &
+        ClientOptions<Strategies>
     ) => Client,
-    clientOptions: ImplementationSpecificClientOptions & ClientOptions
+    clientOptions: ImplementationSpecificClientOptions &
+      ClientOptions<Strategies>
   ) {
     return makeClientForProtocol({
       database: this.database,
