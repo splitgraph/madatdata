@@ -1,4 +1,5 @@
 import type { PluginMap, OptionalPluginMap } from "./plugin-bindings";
+import { WithPluginRegistry, PluginRegistry } from "./plugin-registry";
 import { webcrypto } from "crypto";
 
 import {
@@ -14,7 +15,6 @@ import {
 } from "@madatdata/base-client";
 
 export interface Db<ConcretePluginMap extends PluginMap> {
-  plugins: OptionalPluginMap<ConcretePluginMap>;
   importData: <PluginName extends keyof ConcretePluginMap["importers"]>(
     pluginName: PluginName,
     ...rest: Parameters<
@@ -40,10 +40,14 @@ export interface DbOptions<ConcretePluginMap extends PluginMap> {
   host?: Host;
   database?: Database;
 }
-export abstract class BaseDb<ConcretePluginMap extends PluginMap>
-  implements Db<ConcretePluginMap>
+export abstract class BaseDb<
+  ConcretePluginMap extends PluginMap,
+  PluginHostContext extends object
+> implements
+    Db<ConcretePluginMap>,
+    WithPluginRegistry<ConcretePluginMap, PluginHostContext>
 {
-  public plugins: OptionalPluginMap<ConcretePluginMap>;
+  public plugins: PluginRegistry<ConcretePluginMap, PluginHostContext>;
   protected authenticatedCredential?: AuthenticatedCredential;
   protected host: Host;
   protected database: Database;
@@ -53,14 +57,17 @@ export abstract class BaseDb<ConcretePluginMap extends PluginMap>
     this.setAuthenticatedCredential(opts?.authenticatedCredential);
     this.host = opts?.host ?? defaultHost;
     this.database = opts?.database ?? defaultDatabase;
-    this.plugins = {
-      importers: {
-        ...opts?.plugins.importers,
+    this.plugins = new PluginRegistry(
+      {
+        importers: {
+          ...opts?.plugins.importers,
+        },
+        exporters: {
+          ...opts?.plugins.exporters,
+        },
       },
-      exporters: {
-        ...opts?.plugins.exporters,
-      },
-    };
+      {}
+    );
     this.opts = opts;
   }
 

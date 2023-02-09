@@ -5,11 +5,12 @@ type DEFAULT_IMPORT_PLUGINS = "csv";
 
 type DefaultPluginMap = {
   // NOTE: hacky, only works for one plugin really
-  importers: {
-    [k in DEFAULT_IMPORT_PLUGINS]: k extends "csv" | "parquet"
-      ? SeafowlImportFilePlugin
-      : ImportPlugin;
-  };
+  importers:
+    | {
+        [k in DEFAULT_IMPORT_PLUGINS]: k extends "csv" | "parquet"
+          ? SeafowlImportFilePlugin
+          : ImportPlugin;
+      };
   exporters: {};
 };
 

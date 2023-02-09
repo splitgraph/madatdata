@@ -17,12 +17,12 @@ export type PluginMap<
   }
 > = {
   importers: {
-    [pluginName in keyof ConcretePluginMap["importers"]]: ConcretePluginMap["importers"] extends never
+    [pluginName in keyof ConcretePluginMap["importers"]]: ConcretePluginMap["importers"][pluginName] extends never
       ? ImportPlugin
       : ConcretePluginMap["importers"][pluginName];
   };
   exporters: {
-    [pluginName in keyof ConcretePluginMap["exporters"]]: ConcretePluginMap["exporters"] extends never
+    [pluginName in keyof ConcretePluginMap["exporters"]]: ConcretePluginMap["exporters"][pluginName] extends never
       ? ExportPlugin
       : ConcretePluginMap["exporters"][pluginName];
   };
@@ -30,8 +30,8 @@ export type PluginMap<
 
 export type OptionalPluginMap<
   ConcretePluginMap extends PluginMapShape = {
-    importers: any;
-    exporters: any;
+    importers: Record<string, ImportPlugin>;
+    exporters: Record<string, ExportPlugin>;
   },
   Importers = PluginMap<ConcretePluginMap>["importers"],
   Exporters = PluginMap<ConcretePluginMap>["exporters"]
@@ -49,10 +49,6 @@ export type WithOptions<OuterClassT> = <
 
 export interface WithOptionsInterface<ClassT> {
   withOptions: WithOptions<ClassT>;
-}
-
-export interface WithPlugins<ConcretePluginMap extends PluginMap> {
-  plugins: OptionalPluginMap<ConcretePluginMap>;
 }
 
 export interface BasePlugin {

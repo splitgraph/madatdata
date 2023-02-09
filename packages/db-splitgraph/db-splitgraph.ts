@@ -1,4 +1,9 @@
-import { BaseDb, type DbOptions, OptionalPluginMap } from "@madatdata/base-db";
+import {
+  BaseDb,
+  type DbOptions,
+  OptionalPluginMap,
+  WithPluginRegistry,
+} from "@madatdata/base-db";
 import type {
   SplitgraphPluginMap,
   SplitgraphImportPluginMap,
@@ -20,6 +25,8 @@ import {
 
 import type { HTTPStrategies, HTTPClientOptions } from "@madatdata/client-http";
 import type { GraphQLClientOptions } from "./plugins";
+
+interface DbSplitgraphPluginHostContext extends GraphQLClientOptions {}
 
 interface DbSplitgraphOptions
   extends DbOptions<OptionalPluginMap<SplitgraphPluginMap>>,
@@ -60,9 +67,19 @@ const makeDefaultPluginMap = (
   };
 };
 
-export class DbSplitgraph extends BaseDb<
-  OptionalPluginMap<SplitgraphPluginMap>
-> {
+// HACK: Necessary because of some missing type inference
+type PluginWithTransformRequestHeadersOption<Plugin> = Plugin & {
+  transformRequestHeaders: (headers: HeadersInit) => HeadersInit;
+};
+
+export class DbSplitgraph
+  extends BaseDb<
+    OptionalPluginMap<SplitgraphPluginMap>,
+    DbSplitgraphPluginHostContext
+  >
+  implements
+    WithPluginRegistry<SplitgraphPluginMap, DbSplitgraphPluginHostContext>
+{
   private graphqlEndpoint: string;
 
   constructor(
@@ -226,10 +243,11 @@ export class DbSplitgraph extends BaseDb<
       .withOptions({
         ...this.pluginConfig,
         ...plugin,
-        transformRequestHeaders: (headers) =>
-          plugin.transformRequestHeaders(
-            this.pluginConfig.transformRequestHeaders(headers)
-          ),
+        transformRequestHeaders: (headers: HeadersInit) =>
+          (
+            (plugin as PluginWithTransformRequestHeadersOption<typeof plugin>)
+              .transformRequestHeaders ?? IdentityFunc
+          )(this.pluginConfig.transformRequestHeaders(headers)),
       })
       .exportData(sourceOpts, destOpts);
   }
@@ -247,10 +265,11 @@ export class DbSplitgraph extends BaseDb<
         .withOptions({
           ...this.pluginConfig,
           ...plugin,
-          transformRequestHeaders: (headers) =>
-            plugin.transformRequestHeaders(
-              this.pluginConfig.transformRequestHeaders(headers)
-            ),
+          transformRequestHeaders: (headers: HeadersInit) =>
+            (
+              (plugin as PluginWithTransformRequestHeadersOption<typeof plugin>)
+                .transformRequestHeaders ?? IdentityFunc
+            )(this.pluginConfig.transformRequestHeaders(headers)),
         })
         .importData(sourceOpts, destOpts);
     } else {
@@ -271,3 +290,5 @@ export const makeDb = (...args: ConstructorParameters<typeof DbSplitgraph>) => {
   const db = new DbSplitgraph(...args);
   return db;
 };
+
+const IdentityFunc = <T>(x: T) => x;

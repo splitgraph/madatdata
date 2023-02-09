@@ -185,12 +185,14 @@ describe("makeSeafowlHTTPContext", () => {
               },
             },
           },
-          "plugins": {
-            "exporters": {},
-            "importers": {
-              "csv": SeafowlImportFilePlugin {
-                "opts": {
-                  "seafowlClient": undefined,
+          "plugins": PluginRegistry {
+            "plugins": {
+              "exporters": {},
+              "importers": {
+                "csv": SeafowlImportFilePlugin {
+                  "opts": {
+                    "seafowlClient": undefined,
+                  },
                 },
               },
             },
