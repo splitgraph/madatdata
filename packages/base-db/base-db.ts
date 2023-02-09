@@ -114,7 +114,7 @@ export abstract class BaseDb<ConcretePluginMap extends PluginMap>
     normalizeQuery: (sql: string) => string = this.normalizeQueryForHTTPHeader
   ) {
     // In a browser, window.webcrypto.subtle should be available
-    // In node, we need to use the import from the ambient node: module
+    // In node, we (used to need?) to use the import from the ambient node: module
     // In vitest, really JSDOM, it's a bit of a mix between the two (window is available?)
     // NOTE: Need to test how this will work in a browser bundle which we don't even have yet
     const subtle = (() => {
