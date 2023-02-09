@@ -40,11 +40,11 @@ GROUP BY a ORDER BY a;`,
 
       const seafowlResp = await seafowl.db.importData(
         "csv",
-        { url: exportURL, format: "parquet" },
+        { url: exportURL!, format: "parquet" },
         seafowlDestOpts
       );
 
-      expect(seafowlResp.response.success).toBe(true);
+      expect(seafowlResp.response?.success).toBe(true);
 
       expect(seafowlResp).toMatchInlineSnapshot(`
       {

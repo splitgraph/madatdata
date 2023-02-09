@@ -1,4 +1,9 @@
-import { BaseDb, OptionalPluginMap, type DbOptions } from "@madatdata/base-db";
+import {
+  BaseDb,
+  OptionalPluginMap,
+  type DbOptions,
+  type WithPlugins,
+} from "@madatdata/base-db";
 import type {
   SeafowlPluginMap,
   SeafowlExportPluginMap,
@@ -52,7 +57,10 @@ const guessMethodForQuery = (query: string) => {
     : "GET";
 };
 
-export class DbSeafowl extends BaseDb<OptionalPluginMap<SeafowlPluginMap>> {
+export class DbSeafowl
+  extends BaseDb<OptionalPluginMap<SeafowlPluginMap>>
+  implements WithPlugins<SeafowlPluginMap>
+{
   constructor(
     opts: Omit<DbSeafowlOptions, "plugins"> &
       Pick<Partial<DbSeafowlOptions>, "plugins">

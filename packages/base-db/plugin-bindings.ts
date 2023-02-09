@@ -51,6 +51,10 @@ export interface WithOptionsInterface<ClassT> {
   withOptions: WithOptions<ClassT>;
 }
 
+export interface WithPlugins<ConcretePluginMap extends PluginMap> {
+  plugins: OptionalPluginMap<ConcretePluginMap>;
+}
+
 export interface BasePlugin {
   // importData: <
   //   SourceOptions extends Record<PropertyKey, unknown>,
