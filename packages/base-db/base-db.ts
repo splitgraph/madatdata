@@ -1,5 +1,9 @@
 import type { PluginMap, OptionalPluginMap } from "./plugin-bindings";
-import { WithPluginRegistry, PluginRegistry } from "./plugin-registry";
+import {
+  WithPluginRegistry,
+  PluginRegistry,
+  PluggableInterfaceShape,
+} from "./plugin-registry";
 import { webcrypto } from "crypto";
 
 import {
@@ -14,18 +18,31 @@ import {
   defaultHost,
 } from "@madatdata/base-client";
 
-export interface Db<ConcretePluginMap extends PluginMap> {
+export interface DbPluggableInterface<ConcretePluginMap extends PluginMap>
+  extends PluggableInterfaceShape {
   importData: <PluginName extends keyof ConcretePluginMap["importers"]>(
-    pluginName: PluginName,
-    ...rest: Parameters<
+    ...importDataArgsForPlugin: Parameters<
       ConcretePluginMap["importers"][PluginName]["importData"]
     >
   ) => Promise<unknown>;
   exportData: <PluginName extends keyof ConcretePluginMap["exporters"]>(
-    pluginName: PluginName,
-    ...rest: Parameters<
+    ...exportDataArgsForPlugin: Parameters<
       ConcretePluginMap["exporters"][PluginName]["exportData"]
     >
+  ) => Promise<unknown>;
+}
+
+export interface Db<
+  ConcretePluginMap extends PluginMap,
+  PluggableInterface extends DbPluggableInterface<ConcretePluginMap> = DbPluggableInterface<ConcretePluginMap>
+> {
+  importData: <PluginName extends keyof ConcretePluginMap["importers"]>(
+    pluginName: PluginName,
+    ...rest: Parameters<PluggableInterface["importData"]>
+  ) => Promise<unknown>;
+  exportData: <PluginName extends keyof ConcretePluginMap["exporters"]>(
+    pluginName: PluginName,
+    ...rest: Parameters<PluggableInterface["exportData"]>
   ) => Promise<unknown>;
   makeClient: <ImplementationSpecificClientOptions extends ClientOptions>(
     makeClientForProtocol: (
@@ -34,6 +51,7 @@ export interface Db<ConcretePluginMap extends PluginMap> {
     opts: ImplementationSpecificClientOptions
   ) => Client;
 }
+
 export interface DbOptions<ConcretePluginMap extends PluginMap> {
   plugins: OptionalPluginMap<ConcretePluginMap>;
   authenticatedCredential?: AuthenticatedCredential;
@@ -45,9 +63,17 @@ export abstract class BaseDb<
   PluginHostContext extends object
 > implements
     Db<ConcretePluginMap>,
-    WithPluginRegistry<ConcretePluginMap, PluginHostContext>
+    WithPluginRegistry<
+      ConcretePluginMap,
+      PluginHostContext,
+      DbPluggableInterface<ConcretePluginMap>
+    >
 {
-  public plugins: PluginRegistry<ConcretePluginMap, PluginHostContext>;
+  public plugins: PluginRegistry<
+    ConcretePluginMap,
+    PluginHostContext,
+    DbPluggableInterface<ConcretePluginMap>
+  >;
   protected authenticatedCredential?: AuthenticatedCredential;
   protected host: Host;
   protected database: Database;

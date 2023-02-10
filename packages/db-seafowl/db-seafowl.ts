@@ -2,6 +2,7 @@ import {
   BaseDb,
   OptionalPluginMap,
   type DbOptions,
+  type DbPluggableInterface,
   type WithPluginRegistry,
 } from "@madatdata/base-db";
 import type {
@@ -66,7 +67,12 @@ export class DbSeafowl
     OptionalPluginMap<SeafowlPluginMap>,
     DbSeafowlPluginHostContext
   >
-  implements WithPluginRegistry<SeafowlPluginMap, DbSeafowlPluginHostContext>
+  implements
+    WithPluginRegistry<
+      SeafowlPluginMap,
+      DbSeafowlPluginHostContext,
+      DbPluggableInterface<SeafowlPluginMap>
+    >
 {
   constructor(
     opts: Omit<DbSeafowlOptions, "plugins"> &

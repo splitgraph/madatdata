@@ -1,15 +1,38 @@
 import type { OptionalPluginMap, PluginMap } from "./plugin-bindings";
 
+// type PluggableInterfaceShape = {
+//   [k: string | number | symbol]: (...args: any) => any;
+// };
+// type PluggableInterfaceShape = Record<any, (...args: any) => any>;
+
+export type PluggableInterfaceShape<
+  T extends Record<any, (...args: unknown[]) => unknown> = Record<
+    any,
+    (...args: any[]) => any
+  >
+> = {
+  [k in keyof T]: T[k] extends Function ? T[k] : never;
+};
+
 export interface WithPluginRegistry<
   ConcretePluginMap extends PluginMap,
-  PluginHostContext extends object
+  PluginHostContext extends object,
+  PluggableInterface extends PluggableInterfaceShape
 > {
-  plugins: PluginRegistry<ConcretePluginMap, PluginHostContext>;
+  plugins: PluginRegistry<
+    ConcretePluginMap,
+    PluginHostContext,
+    PluggableInterface
+  >;
 }
+
+type ValidPluginName<ConcretePluginMap extends PluginMap> =
+  keyof (ConcretePluginMap["exporters"] & ConcretePluginMap["importers"]);
 
 export class PluginRegistry<
   ConcretePluginMap extends PluginMap,
-  PluginHostContext extends object
+  PluginHostContext extends object,
+  PluggableInterface extends PluggableInterfaceShape
 > implements OptionalPluginMap<ConcretePluginMap>
 {
   public plugins: OptionalPluginMap<ConcretePluginMap>;
@@ -19,12 +42,25 @@ export class PluginRegistry<
     plugins: OptionalPluginMap<ConcretePluginMap>,
     hostContext: PluginHostContext
   ) {
-    this.plugins = registerPlugins<ConcretePluginMap, PluginHostContext>(
-      this,
-      plugins
-    );
+    this.plugins = registerPlugins<
+      ConcretePluginMap,
+      PluginHostContext,
+      PluggableInterface
+    >(this, plugins);
 
     this.hostContext = hostContext;
+  }
+
+  public async callFunction<FunctionName extends keyof PluggableInterface>(
+    pluginName: ValidPluginName<ConcretePluginMap>,
+    functionName: FunctionName,
+    ...rest: Parameters<PluggableInterface[FunctionName]>
+  ) {
+    console.log(
+      `<pluginName=${String(pluginName)}> CALL <functionName=${String(
+        functionName
+      )}> with ARGS <${JSON.stringify({ rest })}>`
+    );
   }
 
   public get importers(): OptionalPluginMap<ConcretePluginMap>["importers"] {
@@ -63,9 +99,14 @@ export class PluginRegistry<
 
 const registerPlugins = <
   ConcretePluginMap extends PluginMap,
-  PluginHostContext extends object
+  PluginHostContext extends object,
+  PluggableInterface extends PluggableInterfaceShape
 >(
-  _pluginRegistry: PluginRegistry<ConcretePluginMap, PluginHostContext>,
+  _pluginRegistry: PluginRegistry<
+    ConcretePluginMap,
+    PluginHostContext,
+    PluggableInterface
+  >,
   pluginMap: OptionalPluginMap<ConcretePluginMap>
 ): OptionalPluginMap<ConcretePluginMap> => {
   return {

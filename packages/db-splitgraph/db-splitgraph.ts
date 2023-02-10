@@ -1,6 +1,7 @@
 import {
   BaseDb,
   type DbOptions,
+  type DbPluggableInterface,
   OptionalPluginMap,
   WithPluginRegistry,
 } from "@madatdata/base-db";
@@ -78,7 +79,11 @@ export class DbSplitgraph
     DbSplitgraphPluginHostContext
   >
   implements
-    WithPluginRegistry<SplitgraphPluginMap, DbSplitgraphPluginHostContext>
+    WithPluginRegistry<
+      SplitgraphPluginMap,
+      DbSplitgraphPluginHostContext,
+      DbPluggableInterface<SplitgraphPluginMap>
+    >
 {
   private graphqlEndpoint: string;
 
@@ -259,6 +264,8 @@ export class DbSplitgraph
     pluginName: PluginName,
     ...rest: Parameters<SplitgraphImportPluginMap[PluginName]["importData"]>
   ) {
+    this.plugins.callFunction(pluginName, "importData", ...rest);
+
     const [sourceOpts, destOpts] = rest;
 
     if (pluginName === "csv" && this.plugins["importers"]["csv"]) {
