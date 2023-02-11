@@ -1,15 +1,13 @@
 import {
   BaseDb,
-  OptionalPluginMap,
   type DbOptions,
   type DbPluggableInterface,
   type WithPluginRegistry,
+  type ImportPlugin,
+  type ExportPlugin,
 } from "@madatdata/base-db";
-import type {
-  SeafowlPluginMap,
-  SeafowlExportPluginMap,
-  SeafowlImportPluginMap,
-} from "./plugins/importers";
+
+import type { ValidPluginNameFromListMatchingType } from "@madatdata/base-db/plugin-registry";
 
 // TODO: This sould be injected in the constructor as the actual plugin map
 import { SeafowlImportFilePlugin } from "./plugins/importers/seafowl-import-file-plugin";
@@ -28,17 +26,28 @@ import { makeClient as makeHTTPClient } from "@madatdata/client-http";
 // they be in a separate package from the actual http-client?
 import type { HTTPStrategies, HTTPClientOptions } from "@madatdata/client-http";
 
-interface DbSeafowlOptions
-  extends DbOptions<OptionalPluginMap<SeafowlPluginMap>> {}
+type SeafowlPluginList<
+  ConcretePluginList extends (ImportPlugin | ExportPlugin)[] = (
+    | ImportPlugin
+    | ExportPlugin
+  )[]
+> = ConcretePluginList;
+
+interface DbSeafowlOptions extends DbOptions<SeafowlPluginList> {}
 
 // NOTE: optional here because we don't set in constructor but we do in withOptions
 // this is because the type is self referential (config object needs class instantiated)
-const makeDefaultPluginMap = (opts: { seafowlClient?: Client }) => ({
-  importers: {
-    csv: new SeafowlImportFilePlugin({ seafowlClient: opts.seafowlClient }),
-  },
-  exporters: {},
-});
+const makeDefaultPluginList = (opts: {
+  seafowlClient?: Client;
+}): SeafowlPluginList => [
+  new SeafowlImportFilePlugin({ seafowlClient: opts.seafowlClient }),
+  // {
+  //   __name: "csv", // NOTE: duplicate names intentional, they implement different interfaces
+  //   withOptions: (opts: any): any => {},
+  //   exportData: () =>
+  //     Promise.resolve({ response: "export-ok", error: null, info: null }),
+  // },
+];
 
 type HeaderTransformer = (requestHeaders: HeadersInit) => HeadersInit;
 
@@ -63,15 +72,24 @@ interface DbSeafowlPluginHostContext {
 }
 
 export class DbSeafowl
-  extends BaseDb<
-    OptionalPluginMap<SeafowlPluginMap>,
-    DbSeafowlPluginHostContext
-  >
+  extends BaseDb<SeafowlPluginList, DbSeafowlPluginHostContext>
   implements
     WithPluginRegistry<
-      SeafowlPluginMap,
+      SeafowlPluginList,
       DbSeafowlPluginHostContext,
-      DbPluggableInterface<SeafowlPluginMap>
+      DbPluggableInterface<SeafowlPluginList>,
+      {
+        exporters: Extract<SeafowlPluginList[number], ExportPlugin>;
+        importers: Extract<SeafowlPluginList[number], ImportPlugin>;
+      },
+      {
+        importers: (
+          plugin: SeafowlPluginList[number]
+        ) => plugin is Extract<SeafowlPluginList[number], ImportPlugin>;
+        exporters: (
+          plugin: SeafowlPluginList[number]
+        ) => plugin is Extract<SeafowlPluginList[number], ExportPlugin>;
+      }
     >
 {
   constructor(
@@ -80,7 +98,7 @@ export class DbSeafowl
   ) {
     super({
       ...opts,
-      plugins: opts.plugins ?? makeDefaultPluginMap({}),
+      plugins: opts.plugins ?? makeDefaultPluginList({}),
     });
   }
 
@@ -164,9 +182,14 @@ export class DbSeafowl
     );
   }
 
-  async exportData<PluginName extends keyof SeafowlExportPluginMap>(
+  async exportData<
+    PluginName extends ValidPluginNameFromListMatchingType<
+      SeafowlPluginList,
+      ExportPlugin
+    >
+  >(
     _pluginName: PluginName,
-    ..._rest: Parameters<SeafowlExportPluginMap[PluginName]["exportData"]>
+    ..._rest: Parameters<ExportPlugin["exportData"]>
   ): Promise<unknown> {
     await Promise.resolve();
     return {
@@ -178,14 +201,16 @@ export class DbSeafowl
     };
   }
 
-  async importData<PluginName extends keyof SeafowlImportPluginMap>(
-    pluginName: PluginName,
-    ...rest: Parameters<SeafowlImportPluginMap[PluginName]["importData"]>
-  ) {
+  async importData<
+    PluginName extends ValidPluginNameFromListMatchingType<
+      SeafowlPluginList,
+      ImportPlugin
+    >
+  >(pluginName: PluginName, ...rest: Parameters<ImportPlugin["importData"]>) {
     const [sourceOpts, destOpts] = rest;
 
     // TODO: temporarily hardcode the plugin map
-    const plugin = this.plugins.importers[pluginName];
+    const plugin = this.plugins.pluginMap.importers[pluginName];
     if (!plugin) {
       throw new Error(`plugin not found: ${pluginName}`);
     }

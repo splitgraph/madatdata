@@ -1,8 +1,10 @@
-import type { PluginMap, OptionalPluginMap } from "./plugin-bindings";
+import type { ImportPlugin, ExportPlugin, Plugin } from "./plugin-bindings";
 import {
   WithPluginRegistry,
   PluginRegistry,
   PluggableInterfaceShape,
+  PluginList,
+  ValidPluginNameFromListMatchingType,
 } from "./plugin-registry";
 import { webcrypto } from "crypto";
 
@@ -18,8 +20,25 @@ import {
   defaultHost,
 } from "@madatdata/base-client";
 
-export interface DbPluggableInterface<ConcretePluginMap extends PluginMap>
-  extends PluggableInterfaceShape {
+type ConcretePluginMapFromList<ConcretePluginList extends PluginList> = {
+  importers: {
+    [k in Extract<ConcretePluginList[number], ImportPlugin>["__name"]]: Extract<
+      ConcretePluginList[number],
+      { __name: k } & ImportPlugin
+    >;
+  };
+  exporters: {
+    [k in Extract<ConcretePluginList[number], ExportPlugin>["__name"]]: Extract<
+      ConcretePluginList[number],
+      { __name: k } & ExportPlugin
+    >;
+  };
+};
+
+export interface DbPluggableInterface<
+  ConcretePluginList extends PluginList,
+  ConcretePluginMap extends ConcretePluginMapFromList<ConcretePluginList> = ConcretePluginMapFromList<ConcretePluginList>
+> extends PluggableInterfaceShape {
   importData: <PluginName extends keyof ConcretePluginMap["importers"]>(
     ...importDataArgsForPlugin: Parameters<
       ConcretePluginMap["importers"][PluginName]["importData"]
@@ -33,8 +52,9 @@ export interface DbPluggableInterface<ConcretePluginMap extends PluginMap>
 }
 
 export interface Db<
-  ConcretePluginMap extends PluginMap,
-  PluggableInterface extends DbPluggableInterface<ConcretePluginMap> = DbPluggableInterface<ConcretePluginMap>
+  ConcretePluginList extends PluginList,
+  PluggableInterface extends DbPluggableInterface<PluginList> = DbPluggableInterface<PluginList>,
+  ConcretePluginMap extends ConcretePluginMapFromList<ConcretePluginList> = ConcretePluginMapFromList<ConcretePluginList>
 > {
   importData: <PluginName extends keyof ConcretePluginMap["importers"]>(
     pluginName: PluginName,
@@ -52,53 +72,63 @@ export interface Db<
   ) => Client;
 }
 
-export interface DbOptions<ConcretePluginMap extends PluginMap> {
-  plugins: OptionalPluginMap<ConcretePluginMap>;
+export type DbPluginKindMap = {
+  importers: ImportPlugin;
+  exporters: ExportPlugin;
+};
+
+export type DbPluginSelectors<ConcretePluginList extends PluginList> = {
+  importers: (plugin: ConcretePluginList[number]) => plugin is ImportPlugin;
+  exporters: (plugin: ConcretePluginList[number]) => plugin is ExportPlugin;
+};
+
+export interface DbOptions<ConcretePluginList extends PluginList> {
+  plugins: ConcretePluginList;
   authenticatedCredential?: AuthenticatedCredential;
   host?: Host;
   database?: Database;
 }
 export abstract class BaseDb<
-  ConcretePluginMap extends PluginMap,
+  ConcretePluginList extends PluginList,
   PluginHostContext extends object
 > implements
-    Db<ConcretePluginMap>,
+    Db<ConcretePluginList>,
     WithPluginRegistry<
-      ConcretePluginMap,
+      ConcretePluginList,
       PluginHostContext,
-      DbPluggableInterface<ConcretePluginMap>
+      DbPluggableInterface<ConcretePluginList>,
+      DbPluginKindMap,
+      DbPluginSelectors<ConcretePluginList>
     >
 {
   public plugins: PluginRegistry<
-    ConcretePluginMap,
+    ConcretePluginList,
     PluginHostContext,
-    DbPluggableInterface<ConcretePluginMap>
+    DbPluggableInterface<ConcretePluginList>,
+    DbPluginKindMap,
+    DbPluginSelectors<ConcretePluginList>
   >;
   protected authenticatedCredential?: AuthenticatedCredential;
   protected host: Host;
   protected database: Database;
-  protected opts: DbOptions<ConcretePluginMap>;
+  protected opts: DbOptions<ConcretePluginList>;
 
-  constructor(opts: DbOptions<ConcretePluginMap>) {
+  constructor(opts: DbOptions<ConcretePluginList>) {
     this.setAuthenticatedCredential(opts?.authenticatedCredential);
     this.host = opts?.host ?? defaultHost;
     this.database = opts?.database ?? defaultDatabase;
-    this.plugins = new PluginRegistry(
-      {
-        importers: {
-          ...opts?.plugins.importers,
-        },
-        exporters: {
-          ...opts?.plugins.exporters,
-        },
-      },
-      {} as PluginHostContext
-    );
+
+    this.plugins = new PluginRegistry(opts.plugins, {} as PluginHostContext, {
+      importers: (plugin: Plugin): plugin is ImportPlugin =>
+        plugin.hasOwnProperty("importData"),
+      exporters: (plugin: Plugin): plugin is ExportPlugin =>
+        plugin.hasOwnProperty("exportData"),
+    });
     this.opts = opts;
   }
 
   public setAuthenticatedCredential(
-    maybeAuthenticatedCredential: DbOptions<ConcretePluginMap>["authenticatedCredential"]
+    maybeAuthenticatedCredential: DbOptions<ConcretePluginList>["authenticatedCredential"]
   ) {
     if (typeof maybeAuthenticatedCredential !== "undefined") {
       const parsedCredential = Credential(maybeAuthenticatedCredential);
@@ -125,18 +155,24 @@ export abstract class BaseDb<
     });
   }
 
-  abstract importData<PluginName extends keyof ConcretePluginMap["importers"]>(
-    pluginName: PluginName,
-    ...rest: Parameters<
-      ConcretePluginMap["importers"][PluginName]["importData"]
+  abstract importData<
+    PluginName extends ValidPluginNameFromListMatchingType<
+      ConcretePluginList,
+      ImportPlugin
     >
+  >(
+    pluginName: PluginName,
+    ...rest: Parameters<ImportPlugin["importData"]>
   ): Promise<unknown>;
 
-  abstract exportData<PluginName extends keyof ConcretePluginMap["exporters"]>(
-    pluginName: PluginName,
-    ...rest: Parameters<
-      ConcretePluginMap["exporters"][PluginName]["exportData"]
+  abstract exportData<
+    PluginName extends ValidPluginNameFromListMatchingType<
+      ConcretePluginList,
+      ExportPlugin
     >
+  >(
+    pluginName: PluginName,
+    ...rest: Parameters<ExportPlugin["exportData"]>
   ): Promise<unknown>;
 
   /**

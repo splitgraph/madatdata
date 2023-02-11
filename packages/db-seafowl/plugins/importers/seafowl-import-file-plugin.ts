@@ -29,6 +29,8 @@ export class SeafowlImportFilePlugin
   public readonly opts: Partial<ImportFilePluginOptions>;
   private readonly seafowlClient?: Client;
 
+  public readonly __name = "csv";
+
   constructor(opts: Partial<ImportFilePluginOptions>) {
     this.opts = opts;
 

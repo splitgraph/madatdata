@@ -57,6 +57,8 @@ export class ExportQueryPlugin
   public readonly graphqlClient: SplitgraphGraphQLClient;
   public readonly transformRequestHeaders: Required<ExportQueryPluginOptions>["transformRequestHeaders"];
 
+  public readonly __name = "exportQuery";
+
   constructor(opts: ExportQueryPluginOptions) {
     this.opts = opts;
 

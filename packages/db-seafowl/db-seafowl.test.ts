@@ -53,12 +53,7 @@ const createDb = () => {
         ssl: false,
       },
     },
-    plugins: {
-      importers: {
-        csv: new SeafowlImportFilePlugin({}),
-      },
-      exporters: {},
-    },
+    plugins: [new SeafowlImportFilePlugin({})],
   });
 
   return db;

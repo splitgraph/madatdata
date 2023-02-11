@@ -36,16 +36,14 @@ const createDb = () => {
     },
     graphqlEndpoint: defaultHost.baseUrls.gql,
     transformRequestHeaders,
-    plugins: {
-      importers: {
-        csv: new SplitgraphImportCSVPlugin({
-          graphqlEndpoint: defaultHost.baseUrls.gql,
-          transformRequestHeaders,
-        }),
-      },
-      // NOTE: exportQuery is not mocked yet
-      exporters: {},
-    },
+
+    // NOTE: exportQuery is not mocked yet
+    plugins: [
+      new SplitgraphImportCSVPlugin({
+        graphqlEndpoint: defaultHost.baseUrls.gql,
+        transformRequestHeaders,
+      }),
+    ],
   });
 };
 
@@ -70,18 +68,15 @@ const createRealDb = () => {
       apiSecret: credential.apiSecret,
       anonymous: false,
     },
-    plugins: {
-      importers: {
-        csv: new SplitgraphImportCSVPlugin({
-          graphqlEndpoint: defaultHost.baseUrls.gql,
-        }),
-      },
-      exporters: {
-        exportQuery: new ExportQueryPlugin({
-          graphqlEndpoint: defaultHost.baseUrls.gql,
-        }),
-      },
-    },
+    plugins: [
+      new SplitgraphImportCSVPlugin({
+        graphqlEndpoint: defaultHost.baseUrls.gql,
+      }),
+
+      new ExportQueryPlugin({
+        graphqlEndpoint: defaultHost.baseUrls.gql,
+      }),
+    ],
   });
 };
 

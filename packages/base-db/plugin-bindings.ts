@@ -65,7 +65,7 @@ export interface BasePlugin {
   //   destOptions: DestOptions
   // ) => Promise<{ response: ResultShape | null; error: ErrorShape | null }>;
 
-  __name?: string;
+  __name: string;
 
   graphqlEndpoint?: string;
 }

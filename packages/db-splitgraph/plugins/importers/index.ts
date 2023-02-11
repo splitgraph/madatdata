@@ -1,5 +1,8 @@
 import type { SplitgraphImportCSVPlugin } from "./splitgraph-import-csv-plugin";
-import type { /*ExportPlugin,*/ ImportPlugin } from "@madatdata/base-db";
+import type {
+  /*ExportPlugin,*/ ExportPlugin,
+  ImportPlugin,
+} from "@madatdata/base-db";
 import type { ExportQueryPlugin } from "../exporters/export-query-plugin";
 
 // NOTE: In theory this will be auto-generated
@@ -15,8 +18,16 @@ export type SplitgraphPluginMap = {
   };
   exporters: {
     exportQuery: ExportQueryPlugin;
+
+    // This is here just to make sure ExportPlugin is part of the types
+    defaultExport: ExportPlugin;
   };
 };
+
+export type SplitgraphPluginList = (
+  | SplitgraphPluginMap["exporters"][keyof SplitgraphPluginMap["exporters"]]
+  | SplitgraphPluginMap["importers"][keyof SplitgraphPluginMap["importers"]]
+)[];
 
 export type SplitgraphImportPluginMap = SplitgraphPluginMap["importers"];
 export type SplitgraphExportPluginMap = SplitgraphPluginMap["exporters"];

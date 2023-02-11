@@ -77,6 +77,8 @@ const retryOptions = {
 export class SplitgraphImportCSVPlugin
   implements ImportPlugin, WithOptionsInterface<SplitgraphImportCSVPlugin>
 {
+  public readonly __name = "csv";
+
   public readonly opts: ImportCSVPluginOptions;
   public readonly graphqlEndpoint: ImportCSVPluginOptions["graphqlEndpoint"];
   public readonly graphqlClient: SplitgraphGraphQLClient;
