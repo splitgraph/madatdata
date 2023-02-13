@@ -10,11 +10,6 @@ type PluginMapShape = {
   exporters: Record<string, ExportPlugin>;
 };
 
-type OptionalPluginMapShape = {
-  importers: Record<string, ImportPlugin | undefined>;
-  exporters: Record<string, ExportPlugin | undefined>;
-};
-
 export type PluginMap<
   ConcretePluginMap extends PluginMapShape = {
     importers: PluginMapShape["importers"];
@@ -31,16 +26,6 @@ export type PluginMap<
       ? ExportPlugin
       : ConcretePluginMap["exporters"][pluginName];
   };
-};
-
-export type OptionalPluginMap<
-  ConcretePluginMap extends OptionalPluginMapShape = {
-    importers: OptionalPluginMapShape["importers"];
-    exporters: OptionalPluginMapShape["exporters"];
-  }
-> = {
-  importers: Partial<ConcretePluginMap["importers"]>;
-  exporters: Partial<ConcretePluginMap["exporters"]>;
 };
 
 export type WithOptions<OuterClassT> = <
