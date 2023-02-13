@@ -120,9 +120,9 @@ export abstract class BaseDb<
 
     this.plugins = new PluginRegistry(opts.plugins, {} as PluginHostContext, {
       importers: (plugin: Plugin): plugin is ImportPlugin =>
-        plugin.hasOwnProperty("importData"),
+        "importData" in Object.getPrototypeOf(plugin),
       exporters: (plugin: Plugin): plugin is ExportPlugin =>
-        plugin.hasOwnProperty("exportData"),
+        "exportData" in Object.getPrototypeOf(plugin),
     });
     this.opts = opts;
   }

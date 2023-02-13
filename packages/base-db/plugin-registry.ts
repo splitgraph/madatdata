@@ -170,7 +170,7 @@ export class PluginRegistry<
         [selectorName]: selectPlugins(
           plugins,
           selector as Parameters<typeof selectPlugins>[1]
-        ),
+        ).reduce((acc, plug) => ({ [plug.__name]: plug, ...acc }), {}),
       }),
       {} as ConcretePluginMap
     );
