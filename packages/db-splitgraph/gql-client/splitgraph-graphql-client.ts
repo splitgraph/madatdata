@@ -19,7 +19,10 @@ export class SplitgraphGraphQLClient {
     });
   }
 
-  public async send<T = any, V = Variables>(query: string, variables?: V) {
+  public async send<T = any, V extends Variables = Variables>(
+    query: string,
+    variables?: V
+  ) {
     const { response, error, info } = await this.graphqlClient
       .rawRequest<{
         upload: string;
