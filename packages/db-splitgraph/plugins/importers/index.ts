@@ -12,7 +12,7 @@ type SPECIAL_IMPORT_PLUGINS = {
 };
 export type SplitgraphPluginMap = {
   importers: {
-    [k in DEFAULT_IMPORT_PLUGINS]: ImportPlugin;
+    [k in DEFAULT_IMPORT_PLUGINS]: ImportPlugin<k>;
   } & {
     [k in keyof SPECIAL_IMPORT_PLUGINS]: SPECIAL_IMPORT_PLUGINS[k];
   };
@@ -20,13 +20,13 @@ export type SplitgraphPluginMap = {
     exportQuery: ExportQueryPlugin;
 
     // This is here just to make sure ExportPlugin is part of the types
-    defaultExport: ExportPlugin;
+    defaultExport: ExportPlugin<string>;
   };
 };
 
-export type SplitgraphPluginList = (
-  | SplitgraphPluginMap["exporters"][keyof SplitgraphPluginMap["exporters"]]
-  | SplitgraphPluginMap["importers"][keyof SplitgraphPluginMap["importers"]]
+export type DefaultSplitgraphPluginList = (
+  | SplitgraphImportCSVPlugin
+  | ExportQueryPlugin
 )[];
 
 export type SplitgraphImportPluginMap = SplitgraphPluginMap["importers"];

@@ -7,6 +7,8 @@ export {
   type DbPluggableInterface,
   type DbPluginKindMap,
   type DbPluginSelectors,
+  type ExportPluginFromList,
+  type ImportPluginFromList,
 } from "./base-db";
 
 export {

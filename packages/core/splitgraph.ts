@@ -1,6 +1,6 @@
 import type { DataContext } from "./data-context";
 import { makeClient } from "@madatdata/client-http";
-import { makeDb } from "@madatdata/db-splitgraph";
+import { makeDb, SplitgraphPluginList } from "@madatdata/db-splitgraph";
 import { defaultDatabase, defaultHost } from "@madatdata/base-client";
 export { makeClient as makeSplitgraphClient };
 export { makeDb as makeSplitgraphDb };
@@ -56,7 +56,7 @@ export const makeSplitgraphHTTPContext = (
   const splitgraphHTTPContext = {
     client,
     db,
-  } as DataContext<typeof db>;
+  } as DataContext<typeof db, SplitgraphPluginList>;
 
   return splitgraphHTTPContext;
 };

@@ -5,8 +5,13 @@ import {
   WithPluginRegistry,
   ImportPlugin,
   ExportPlugin,
+  ExportPluginFromList,
+  ImportPluginFromList,
+  DbPluginKindMap,
+  DbPluginSelectors,
+  PluginList,
 } from "@madatdata/base-db";
-import type { SplitgraphPluginList } from "./plugins/importers";
+import type { DefaultSplitgraphPluginList } from "./plugins/importers";
 
 // TODO: These could be injected in the constructor as the actual plugin map
 import { SplitgraphImportCSVPlugin } from "./plugins/importers/splitgraph-import-csv-plugin";
@@ -23,12 +28,11 @@ import {
 
 import type { HTTPStrategies, HTTPClientOptions } from "@madatdata/client-http";
 import type { GraphQLClientOptions } from "./plugins";
-import type { ValidPluginNameFromListMatchingType } from "@madatdata/base-db/plugin-registry";
 
 interface DbSplitgraphPluginHostContext extends GraphQLClientOptions {}
 
-interface DbSplitgraphOptions
-  extends DbOptions<SplitgraphPluginList>,
+interface DbSplitgraphOptions<ConcretePluginList extends PluginList>
+  extends DbOptions<ConcretePluginList>,
     Partial<GraphQLClientOptions> {}
 
 const makeTransformRequestHeadersForAuthenticatedRequest =
@@ -43,8 +47,14 @@ const makeTransformRequestHeadersForAuthenticatedRequest =
   });
 
 const makeDefaultPluginList = (
-  opts: Pick<Required<DbSplitgraphOptions>, "graphqlEndpoint"> &
-    Pick<Partial<DbSplitgraphOptions>, "authenticatedCredential">
+  opts: Pick<
+    Required<DbSplitgraphOptions<DefaultSplitgraphPluginList>>,
+    "graphqlEndpoint"
+  > &
+    Pick<
+      Partial<DbSplitgraphOptions<DefaultSplitgraphPluginList>>,
+      "authenticatedCredential"
+    >
 ) => {
   const graphqlOptions: GraphQLClientOptions = {
     graphqlEndpoint: opts.graphqlEndpoint,
@@ -64,32 +74,34 @@ type PluginWithTransformRequestHeadersOption<Plugin> = Plugin & {
   transformRequestHeaders: (headers: HeadersInit) => HeadersInit;
 };
 
-export class DbSplitgraph
+export class DbSplitgraph<SplitgraphPluginList extends PluginList>
   extends BaseDb<SplitgraphPluginList, DbSplitgraphPluginHostContext>
   implements
     WithPluginRegistry<
       SplitgraphPluginList,
       DbSplitgraphPluginHostContext,
       DbPluggableInterface<SplitgraphPluginList>,
-      {
-        exporters: Extract<SplitgraphPluginList[number], ExportPlugin>;
-        importers: Extract<SplitgraphPluginList[number], ImportPlugin>;
-      },
-      {
-        importers: (
-          plugin: SplitgraphPluginList[number]
-        ) => plugin is Extract<SplitgraphPluginList[number], ImportPlugin>;
-        exporters: (
-          plugin: SplitgraphPluginList[number]
-        ) => plugin is Extract<SplitgraphPluginList[number], ExportPlugin>;
-      }
+      DbPluginKindMap<SplitgraphPluginList>,
+      DbPluginSelectors<SplitgraphPluginList>
     >
 {
   private graphqlEndpoint: string;
 
   constructor(
-    opts: Omit<DbSplitgraphOptions, "plugins"> &
-      Pick<Partial<DbSplitgraphOptions>, "plugins">
+    opts: DbOptions<SplitgraphPluginList> &
+      Pick<
+        DbSplitgraphOptions<SplitgraphPluginList>,
+        | "graphqlEndpoint"
+        | "transformRequestHeaders"
+        | "authenticatedCredential"
+        | "database"
+        | "host"
+      >
+    // opts: Omit<DbSplitgraphOptions<SplitgraphPluginList>, "plugins"> &
+    //   Pick<Partial<DbSplitgraphOptions<SplitgraphPluginList>>, "plugins">
+    // opts: DbSplitgraphOptions<SplitgraphPluginList> & {
+    //   plugins?: DbSplitgraphOptions<SplitgraphPluginList>["plugins"];
+    // }
   ) {
     const graphqlEndpoint =
       opts.graphqlEndpoint ?? (opts.host ?? defaultHost).baseUrls.gql;
@@ -110,7 +122,7 @@ export class DbSplitgraph
 
   // NOTE: we want this to update when this.authenticatedCredential updates
   private get pluginConfig(): Pick<
-    Required<DbSplitgraphOptions>,
+    Required<DbSplitgraphOptions<SplitgraphPluginList>>,
     "graphqlEndpoint" | "transformRequestHeaders"
   > {
     return {
@@ -237,11 +249,11 @@ export class DbSplitgraph
   }
 
   async exportData<
-    PluginName extends ValidPluginNameFromListMatchingType<
-      SplitgraphPluginList,
-      ExportPlugin
-    >
-  >(pluginName: PluginName, ...rest: Parameters<ExportPlugin["exportData"]>) {
+    MatchingPlugin extends ExportPluginFromList<SplitgraphPluginList>
+  >(
+    pluginName: MatchingPlugin["__name"],
+    ...rest: Parameters<MatchingPlugin["exportData"]>
+  ) {
     const [sourceOpts, destOpts] = rest;
 
     const plugin = this.plugins.pluginMap.exporters[pluginName];
@@ -262,12 +274,12 @@ export class DbSplitgraph
       .exportData(sourceOpts, destOpts);
   }
 
-  async importData<
-    PluginName extends ValidPluginNameFromListMatchingType<
-      SplitgraphPluginList,
-      ImportPlugin
+  async importData(
+    pluginName: ImportPluginFromList<SplitgraphPluginList>["__name"],
+    ...rest: Parameters<
+      ImportPluginFromList<SplitgraphPluginList>["importData"]
     >
-  >(pluginName: PluginName, ...rest: Parameters<ImportPlugin["importData"]>) {
+  ) {
     // TODO: type error in ...rest
     // this.plugins.callFunction(pluginName, "importData", ...rest);
 

@@ -1,33 +1,3 @@
-// export interface PluginMap<ConcretePluginMap = Record<string,never>> {
-//   [pluginName: keyof ConcretePluginMap]: PluginMap[pluginName] extends never
-//     ? Plugin
-//   : PluginMap[pluginName];
-
-// }
-
-type PluginMapShape = {
-  importers: Record<string, ImportPlugin>;
-  exporters: Record<string, ExportPlugin>;
-};
-
-export type PluginMap<
-  ConcretePluginMap extends PluginMapShape = {
-    importers: PluginMapShape["importers"];
-    exporters: PluginMapShape["exporters"];
-  }
-> = {
-  importers: {
-    [pluginName in keyof ConcretePluginMap["importers"]]: ConcretePluginMap["importers"][pluginName] extends never
-      ? ImportPlugin
-      : ConcretePluginMap["importers"][pluginName];
-  };
-  exporters: {
-    [pluginName in keyof ConcretePluginMap["exporters"]]: ConcretePluginMap["exporters"][pluginName] extends never
-      ? ExportPlugin
-      : ConcretePluginMap["exporters"][pluginName];
-  };
-};
-
 export type WithOptions<OuterClassT> = <
   InjectedOpts extends {},
   InnerClassT extends OuterClassT
@@ -39,7 +9,7 @@ export interface WithOptionsInterface<ClassT> {
   withOptions: WithOptions<ClassT>;
 }
 
-export interface BasePlugin {
+export interface BasePlugin<PluginName extends string> {
   // importData: <
   //   SourceOptions extends Record<PropertyKey, unknown>,
   //   DestOptions extends Record<PropertyKey, unknown>,
@@ -50,29 +20,33 @@ export interface BasePlugin {
   //   destOptions: DestOptions
   // ) => Promise<{ response: ResultShape | null; error: ErrorShape | null }>;
 
-  readonly __name: string;
+  readonly __name: PluginName;
 
   graphqlEndpoint?: string;
+
+  // withOptions: WithOptions<BasePlugin>;
 }
 
 // export abstract class
 
-export interface ImportPlugin extends BasePlugin {
-  withOptions: WithOptions<ImportPlugin>;
+export interface ImportPlugin<PluginName extends string>
+  extends BasePlugin<PluginName> {
+  withOptions: WithOptions<ImportPlugin<PluginName>>;
   importData: (
     sourceOptions: any,
     destOptions: any
   ) => Promise<{ response: any | null; error: any | null; info?: any | null }>;
 }
 
-export interface ExportPlugin extends BasePlugin {
-  withOptions: WithOptions<ExportPlugin>;
+export interface ExportPlugin<PluginName extends string>
+  extends BasePlugin<PluginName> {
+  withOptions: WithOptions<ExportPlugin<PluginName>>;
   exportData: (
     sourceOptions: any,
     destOptions: any
   ) => Promise<{ response: any | null; error: any | null; info?: any | null }>;
 }
 
-export type Plugin = ImportPlugin | ExportPlugin;
+// export type Plugin = ImportPlugin | ExportPlugin;
 
-// export type PluginMap = Map<string, Plugin>;
+export type Plugin = BasePlugin<string>;

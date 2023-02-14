@@ -1,4 +1,20 @@
-import type { PluginMap, Plugin } from "./plugin-bindings";
+import type { Plugin } from "./plugin-bindings";
+
+export type PluginList = Plugin[];
+
+export type PluginMap<
+  ConcretePluginList extends PluginList,
+  PluginKindMap extends {
+    [k in keyof PluginKindMap]: PluginKindMap[k];
+  }
+> = {
+  [k in keyof PluginKindMap]: {
+    [pluginName in ValidPluginNameFromListMatchingType<
+      ConcretePluginList,
+      PluginKindMap[k]
+    >]: ExtractPlugin<ConcretePluginList, PluginKindMap[k]>;
+  };
+};
 
 export type PluggableInterfaceShape<
   T extends Record<any, (...args: unknown[]) => unknown> = Record<
@@ -8,13 +24,6 @@ export type PluggableInterfaceShape<
 > = {
   [k in keyof T]: T[k] extends Function ? T[k] : never;
 };
-
-export type PluginList = Plugin[];
-
-export type PluginListFromMap<ConcretePluginMap extends PluginMap> = (
-  | ConcretePluginMap["exporters"][keyof ConcretePluginMap["exporters"]]
-  | ConcretePluginMap["importers"][keyof ConcretePluginMap["importers"]]
-)[];
 
 export interface WithPluginRegistry<
   ConcretePluginList extends PluginList,
@@ -37,23 +46,15 @@ export interface WithPluginRegistry<
     PluginSelectors
   >;
 }
-// NOTE: We're moving away from map, plugins should be unique
-// But until then there is a potential for conflict (e.g.: importers.csv and exporters.csv)
-// type ValidPluginName<ConcretePluginMap extends PluginMap> =
-//   keyof (ConcretePluginMap["exporters"] & ConcretePluginMap["importers"]);
+export type ExtractPlugin<
+  ConcretePluginList extends PluginList,
+  MatchingPluginType extends Plugin
+> = Extract<ConcretePluginList[number], MatchingPluginType>;
 
 export type ValidPluginNameFromListMatchingType<
   ConcretePluginList extends PluginList,
   MatchingPluginType extends Plugin
-> = Extract<ConcretePluginList[number], MatchingPluginType>["__name"];
-
-export const pluginMapToList = <ConcretePluginMap extends PluginMap>(
-  pluginMap: ConcretePluginMap
-) =>
-  [
-    ...Object.entries(pluginMap.importers).map(([_, plugin]) => plugin),
-    ...Object.entries(pluginMap.exporters).map(([_, plugin]) => plugin),
-  ] as ExpandRecursively<PluginListFromMap<ConcretePluginMap>>;
+> = ExtractPlugin<ConcretePluginList, MatchingPluginType>["__name"];
 
 export type PluginsMatchingSelector<
   MatchingPluginType extends Plugin,
@@ -137,10 +138,10 @@ export class PluginRegistry<
 }
 
 // type Expand<T> = T extends infer O ? { [K in keyof O]: O[K] } : never;
-type ExpandRecursively<T> = T extends object
-  ? T extends infer O
-    ? { [K in keyof O]: ExpandRecursively<O[K]> }
-    : never
-  : T;
+// type ExpandRecursively<T> = T extends object
+//   ? T extends infer O
+//     ? { [K in keyof O]: ExpandRecursively<O[K]> }
+//     : never
+//   : T;
 // type ExpandFunction<F extends Function> = F extends
 //   (...args: infer A) => infer R ? (...args: Expand<A>) => Expand<R> : never;

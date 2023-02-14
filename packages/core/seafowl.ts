@@ -3,6 +3,7 @@ import { makeClient } from "@madatdata/client-http";
 import { makeDb } from "@madatdata/db-seafowl";
 // TODO: these are splitgraph specific defaults
 import { defaultDatabase, defaultHost } from "@madatdata/base-client";
+import type { SeafowlPluginList } from "packages/db-seafowl/db-seafowl";
 export { makeDb as makeSeafowlDb };
 
 // note: "default" is redundant given base-client, but it's a TODO to extract it
@@ -54,7 +55,7 @@ export const makeSeafowlHTTPContext = (
   const seafowlHTTPContext = {
     client,
     db,
-  } as DataContext<typeof db>;
+  } as DataContext<typeof db, SeafowlPluginList>;
 
   return seafowlHTTPContext;
 };

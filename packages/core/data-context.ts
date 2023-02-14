@@ -3,7 +3,7 @@ import type { BaseDb, PluginList } from "@madatdata/base-db";
 
 export interface DataContext<
   Db extends BaseDb<ConcretePluginList, {}>,
-  ConcretePluginList extends PluginList = PluginList
+  ConcretePluginList extends PluginList
 > {
   client: Client;
   db: Db;

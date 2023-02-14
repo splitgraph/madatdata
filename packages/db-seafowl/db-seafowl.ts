@@ -5,6 +5,10 @@ import {
   type WithPluginRegistry,
   type ImportPlugin,
   type ExportPlugin,
+  DbPluginKindMap,
+  DbPluginSelectors,
+  ExportPluginFromList,
+  ImportPluginFromList,
 } from "@madatdata/base-db";
 
 import type { ValidPluginNameFromListMatchingType } from "@madatdata/base-db/plugin-registry";
@@ -26,10 +30,10 @@ import { makeClient as makeHTTPClient } from "@madatdata/client-http";
 // they be in a separate package from the actual http-client?
 import type { HTTPStrategies, HTTPClientOptions } from "@madatdata/client-http";
 
-type SeafowlPluginList<
-  ConcretePluginList extends (ImportPlugin | ExportPlugin)[] = (
-    | ImportPlugin
-    | ExportPlugin
+export type SeafowlPluginList<
+  ConcretePluginList extends (ImportPlugin<string> | ExportPlugin<string>)[] = (
+    | ImportPlugin<string>
+    | ExportPlugin<string>
   )[]
 > = ConcretePluginList[number][];
 
@@ -76,18 +80,8 @@ export class DbSeafowl
       SeafowlPluginList,
       DbSeafowlPluginHostContext,
       DbPluggableInterface<SeafowlPluginList>,
-      {
-        exporters: Extract<SeafowlPluginList[number], ExportPlugin>;
-        importers: Extract<SeafowlPluginList[number], ImportPlugin>;
-      },
-      {
-        importers: (
-          plugin: SeafowlPluginList[number]
-        ) => plugin is Extract<SeafowlPluginList[number], ImportPlugin>;
-        exporters: (
-          plugin: SeafowlPluginList[number]
-        ) => plugin is Extract<SeafowlPluginList[number], ExportPlugin>;
-      }
+      DbPluginKindMap<SeafowlPluginList>,
+      DbPluginSelectors<SeafowlPluginList>
     >
 {
   constructor(
@@ -182,14 +176,9 @@ export class DbSeafowl
     );
   }
 
-  async exportData<
-    PluginName extends ValidPluginNameFromListMatchingType<
-      SeafowlPluginList,
-      ExportPlugin
-    >
-  >(
-    _pluginName: PluginName,
-    ..._rest: Parameters<ExportPlugin["exportData"]>
+  async exportData(
+    _pluginName: ExportPluginFromList<SeafowlPluginList>["__name"],
+    ..._rest: Parameters<ExportPluginFromList<SeafowlPluginList>["exportData"]>
   ): Promise<unknown> {
     await Promise.resolve();
     return {
@@ -202,8 +191,8 @@ export class DbSeafowl
   }
 
   async importData(
-    pluginName: Extract<SeafowlPluginList[number], ImportPlugin>["__name"],
-    ...rest: Parameters<ImportPlugin["importData"]>
+    pluginName: ImportPluginFromList<SeafowlPluginList>["__name"],
+    ...rest: Parameters<ImportPluginFromList<SeafowlPluginList>["importData"]>
   ) {
     const [sourceOpts, destOpts] = rest;
 

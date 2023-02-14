@@ -11,40 +11,49 @@ import { compose, graphql, rest, type DefaultBodyType } from "msw";
 
 import { defaultHost } from "@madatdata/base-client/host";
 
-// import { Plugin, ImportPlugin } from "@madatdata/base-db";
+import type { ImportPlugin, ExportPlugin } from "@madatdata/base-db";
 
 import { faker } from "@faker-js/faker";
 
 describe("importData", () => {
   it("returns false for unknown plugin", async () => {
-    // const examplePlugins: Plugin[] = [
-    //   {
-    //     __name: "csv",
-    //     withOptions: (opts: any): any => {},
-    //     importData: () =>
-    //       Promise.resolve({ response: "import-ok", error: null, info: null }),
-    //   } as ImportPlugin,
-    //   {
-    //     __name: "csv", // NOTE: duplicate names intentional, they implement different interfaces
-    //     withOptions: (opts: any): any => {},
-    //     exportData: () =>
-    //       Promise.resolve({ response: "export-ok", error: null, info: null }),
-    //   },
-    //   {
-    //     __name: "mongo",
-    //     withOptions: (opts: any): any => {},
-    //     importData: ({ blah: string }) =>
-    //       Promise.resolve({ response: "import-ok", error: null, info: null }),
-    //   },
-    // ];
-
+    const examplePlugins = [
+      {
+        __name: "not-csv",
+        withOptions: (opts: any): any => {},
+        importData: () =>
+          Promise.resolve({ response: "import-ok", error: null, info: null }),
+      } as ImportPlugin<"not-csv">,
+      {
+        __name: "export-csv", // NOTE: duplicate names intentional, they implement different interfaces
+        withOptions: (opts: any): any => {},
+        exportData: () =>
+          Promise.resolve({ response: "export-ok", error: null, info: null }),
+      } as ExportPlugin<"export-csv">,
+      {
+        __name: "mongo",
+        withOptions: (opts: any): any => {},
+        importData: ({ blah: string }) =>
+          Promise.resolve({ response: "import-ok", error: null, info: null }),
+      } as ImportPlugin<"mongo">,
+    ];
     const db = makeDb({
-      // plugins: examplePlugins,
+      plugins: examplePlugins,
     });
+
+    // db.exportData("exportQuery", {}, {})
+
+    // db.exportData("")
+
+    // db.exportData("export-csv", {}, {});
+
+    // db.importData("csv", )
+
+    // db.exportData("")
 
     // TODO: PUT THIS EXPECT ERROR BACK
     // TODO @ts-expect-error not a key in SplitgraphPluginMap
-    await db.importData("unknown-doesnotexist", {}, {});
+    // await db.importData("unknown-doesnotexist", {}, {});
   });
 });
 

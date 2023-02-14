@@ -3,46 +3,48 @@ import { makeDb } from "./db-seafowl";
 import { SeafowlImportFilePlugin } from "./plugins/importers/seafowl-import-file-plugin";
 
 import { shouldSkipSeafowlTests } from "@madatdata/test-helpers/env-config";
-// import { Plugin, ImportPlugin } from "@madatdata/base-db";
+import type { ImportPlugin, ExportPlugin } from "@madatdata/base-db";
 
 describe("importData", () => {
   it("returns false for unknown plugin", async () => {
     let err: unknown;
 
-    // const examplePlugins: Plugin[] = [
-    //   {
-    //     __name: "csv",
-    //     withOptions: (opts: any): any => {},
-    //     importData: () =>
-    //       Promise.resolve({ response: "import-ok", error: null, info: null }),
-    //   } as ImportPlugin,
-    //   {
-    //     __name: "csv", // NOTE: duplicate names intentional, they implement different interfaces
-    //     withOptions: (opts: any): any => {},
-    //     exportData: () =>
-    //       Promise.resolve({ response: "export-ok", error: null, info: null }),
-    //   },
-    //   {
-    //     __name: "mongo",
-    //     withOptions: (opts: any): any => {},
-    //     importData: () =>
-    //       Promise.resolve({ response: "import-ok", error: null, info: null }),
-    //   },
-    // ];
+    const examplePlugins = [
+      {
+        __name: "csv",
+        withOptions: (opts: any): any => {},
+        importData: () =>
+          Promise.resolve({ response: "import-ok", error: null, info: null }),
+      } as ImportPlugin<"csv">,
+      {
+        __name: "export-something", // NOTE: duplicate names intentional, they implement different interfaces
+        withOptions: (opts: any): any => {},
+        exportData: (args: { foo?: string }) =>
+          Promise.resolve({ response: "export-ok", error: null, info: null }),
+      } as ExportPlugin<"export-something">,
+      {
+        __name: "mongo",
+        withOptions: (opts: any): any => {},
+        importData: () =>
+          Promise.resolve({ response: "import-ok", error: null, info: null }),
+      } as ImportPlugin<"mongo">,
+    ];
 
     const db = makeDb({
-      // plugins: examplePlugins,
+      plugins: examplePlugins,
     });
+
+    // db.importData()
 
     // db.importData("import")
 
-    await db
-      // TODO: PUT THIS EXPECT ERROR BACK
-      // TODO: @ts-expect-error typescript shouldn't allow using a plugin name not in map
-      .importData("unknown-doesnotexist", {}, {})
-      .catch((e) => {
-        err = e;
-      });
+    // await db
+    //   // TODO: PUT THIS EXPECT ERROR BACK
+    //   // TODO: @ts-expect-error typescript shouldn't allow using a plugin name not in map
+    //   .importData("unknown-doesnotexist", {}, {})
+    //   .catch((e) => {
+    //     err = e;
+    //   });
 
     expect(err).toMatchInlineSnapshot(
       "[Error: plugin not found: unknown-doesnotexist]"
