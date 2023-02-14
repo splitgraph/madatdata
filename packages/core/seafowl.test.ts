@@ -175,7 +175,7 @@ describe("makeSeafowlHTTPContext", () => {
               },
             },
             "plugins": [
-              SeafowlImportFilePlugin {
+              _SeafowlImportFilePlugin {
                 "__name": "csv",
                 "opts": {
                   "seafowlClient": undefined,
@@ -185,19 +185,8 @@ describe("makeSeafowlHTTPContext", () => {
           },
           "plugins": PluginRegistry {
             "hostContext": {},
-            "pluginMap": {
-              "exporters": {},
-              "importers": {
-                "csv": SeafowlImportFilePlugin {
-                  "__name": "csv",
-                  "opts": {
-                    "seafowlClient": undefined,
-                  },
-                },
-              },
-            },
             "plugins": [
-              SeafowlImportFilePlugin {
+              _SeafowlImportFilePlugin {
                 "__name": "csv",
                 "opts": {
                   "seafowlClient": undefined,

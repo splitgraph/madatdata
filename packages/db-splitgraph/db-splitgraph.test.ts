@@ -36,8 +36,14 @@ describe("importData", () => {
       plugins: examplePlugins,
     });
 
-    // @ts-expect-error not a key in SplitgraphPluginMap
-    await db.importData("unknown-doesnotexist", {}, {});
+    await expect(async () =>
+      // @ts-expect-error not a valid plugin
+      db.importData("unknown-doesnotexist", {}, {}).catch((err) => {
+        throw err;
+      })
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '"Plugin not found: unknown-doesnotexist"'
+    );
   });
 });
 

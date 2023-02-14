@@ -6,8 +6,6 @@ import { shouldSkipSeafowlTests } from "@madatdata/test-helpers/env-config";
 
 describe("importData", () => {
   it("returns false for unknown plugin", async () => {
-    let err: unknown;
-
     const examplePlugins = [
       {
         __name: "csv",
@@ -30,15 +28,13 @@ describe("importData", () => {
       plugins: examplePlugins,
     });
 
-    await db
-      // @ts-expect-error typescript shouldn't allow using a plugin name not in map
-      .importData("unknown-doesnotexist", {}, {})
-      .catch((e) => {
-        err = e;
-      });
-
-    expect(err).toMatchInlineSnapshot(
-      "[Error: plugin not found: unknown-doesnotexist]"
+    await expect(async () =>
+      // @ts-expect-error not a valid plugin
+      db.importData("unknown-doesnotexist", {}, {}).catch((err) => {
+        throw err;
+      })
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '"plugin not found: unknown-doesnotexist"'
     );
   });
 });
