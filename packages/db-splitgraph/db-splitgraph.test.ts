@@ -42,7 +42,8 @@ describe("importData", () => {
       // plugins: examplePlugins,
     });
 
-    // @ts-expect-error not a key in SplitgraphPluginMap
+    // TODO: PUT THIS EXPECT ERROR BACK
+    // TODO @ts-expect-error not a key in SplitgraphPluginMap
     await db.importData("unknown-doesnotexist", {}, {});
   });
 });

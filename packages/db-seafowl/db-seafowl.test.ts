@@ -37,7 +37,8 @@ describe("importData", () => {
     // db.importData("import")
 
     await db
-      // @ts-expect-error typescript shouldn't allow using a plugin name not in map
+      // TODO: PUT THIS EXPECT ERROR BACK
+      // TODO: @ts-expect-error typescript shouldn't allow using a plugin name not in map
       .importData("unknown-doesnotexist", {}, {})
       .catch((e) => {
         err = e;
