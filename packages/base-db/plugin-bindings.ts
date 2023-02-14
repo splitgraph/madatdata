@@ -29,7 +29,7 @@ export type PluginMap<
 };
 
 export type WithOptions<OuterClassT> = <
-  InjectedOpts,
+  InjectedOpts extends {},
   InnerClassT extends OuterClassT
 >(
   injectOpts: InjectedOpts
