@@ -11,8 +11,6 @@ import { compose, graphql, rest, type DefaultBodyType } from "msw";
 
 import { defaultHost } from "@madatdata/base-client/host";
 
-import type { ImportPlugin, ExportPlugin } from "@madatdata/base-db";
-
 import { faker } from "@faker-js/faker";
 
 describe("importData", () => {
@@ -20,40 +18,26 @@ describe("importData", () => {
     const examplePlugins = [
       {
         __name: "not-csv",
-        withOptions: (opts: any): any => {},
         importData: () =>
           Promise.resolve({ response: "import-ok", error: null, info: null }),
-      } as ImportPlugin<"not-csv">,
+      },
       {
         __name: "export-csv", // NOTE: duplicate names intentional, they implement different interfaces
-        withOptions: (opts: any): any => {},
         exportData: () =>
           Promise.resolve({ response: "export-ok", error: null, info: null }),
-      } as ExportPlugin<"export-csv">,
+      },
       {
         __name: "mongo",
-        withOptions: (opts: any): any => {},
-        importData: ({ blah: string }) =>
+        importData: ({ blah: _blah }: { blah: string }) =>
           Promise.resolve({ response: "import-ok", error: null, info: null }),
-      } as ImportPlugin<"mongo">,
-    ];
+      },
+    ] as const;
     const db = makeDb({
       plugins: examplePlugins,
     });
 
-    // db.exportData("exportQuery", {}, {})
-
-    // db.exportData("")
-
-    // db.exportData("export-csv", {}, {});
-
-    // db.importData("csv", )
-
-    // db.exportData("")
-
-    // TODO: PUT THIS EXPECT ERROR BACK
-    // TODO @ts-expect-error not a key in SplitgraphPluginMap
-    // await db.importData("unknown-doesnotexist", {}, {});
+    // @ts-expect-error not a key in SplitgraphPluginMap
+    await db.importData("unknown-doesnotexist", {}, {});
   });
 });
 
@@ -82,7 +66,9 @@ const createDb = () => {
   });
 };
 
-const fetchToken = async (db: ReturnType<typeof createDb>) => {
+const fetchToken = async (
+  db: ReturnType<typeof createDb> | ReturnType<typeof createRealDb>
+) => {
   const { username } = claimsFromJWT((await db.fetchAccessToken())?.token);
 
   return { username };

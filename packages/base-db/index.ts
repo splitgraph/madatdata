@@ -5,8 +5,8 @@ export {
   BaseDb,
   type DbOptions,
   type DbPluggableInterface,
-  type DbPluginKindMap,
-  type DbPluginSelectors,
+  type ImportPlugin,
+  type ExportPlugin,
   type ExportPluginFromList,
   type ImportPluginFromList,
 } from "./base-db";
@@ -15,4 +15,5 @@ export {
   type WithPluginRegistry,
   PluginRegistry,
   type PluginList,
+  type ExtractPlugin,
 } from "./plugin-registry";

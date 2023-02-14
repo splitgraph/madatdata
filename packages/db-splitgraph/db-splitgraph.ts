@@ -5,13 +5,11 @@ import {
   WithPluginRegistry,
   ImportPlugin,
   ExportPlugin,
-  ExportPluginFromList,
-  ImportPluginFromList,
-  DbPluginKindMap,
-  DbPluginSelectors,
   PluginList,
+  ExtractPlugin,
 } from "@madatdata/base-db";
 import type { DefaultSplitgraphPluginList } from "./plugins/importers";
+export type { DefaultSplitgraphPluginList };
 
 // TODO: These could be injected in the constructor as the actual plugin map
 import { SplitgraphImportCSVPlugin } from "./plugins/importers/splitgraph-import-csv-plugin";
@@ -46,7 +44,7 @@ const makeTransformRequestHeadersForAuthenticatedRequest =
       : {}),
   });
 
-const makeDefaultPluginList = (
+export const makeDefaultPluginList = (
   opts: Pick<
     Required<DbSplitgraphOptions<DefaultSplitgraphPluginList>>,
     "graphqlEndpoint"
@@ -80,23 +78,22 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
     WithPluginRegistry<
       SplitgraphPluginList,
       DbSplitgraphPluginHostContext,
-      DbPluggableInterface<SplitgraphPluginList>,
-      DbPluginKindMap<SplitgraphPluginList>,
-      DbPluginSelectors<SplitgraphPluginList>
+      DbPluggableInterface<SplitgraphPluginList>
     >
 {
   private graphqlEndpoint: string;
 
   constructor(
-    opts: DbOptions<SplitgraphPluginList> &
-      Pick<
-        DbSplitgraphOptions<SplitgraphPluginList>,
-        | "graphqlEndpoint"
-        | "transformRequestHeaders"
-        | "authenticatedCredential"
-        | "database"
-        | "host"
-      >
+    // opts: DbOptions<SplitgraphPluginList> &
+    //   Pick<
+    //     DbSplitgraphOptions<SplitgraphPluginList>,
+    //     | "graphqlEndpoint"
+    //     | "transformRequestHeaders"
+    //     | "authenticatedCredential"
+    //     | "database"
+    //     | "host"
+    //   >
+    opts: DbSplitgraphOptions<SplitgraphPluginList>
     // opts: Omit<DbSplitgraphOptions<SplitgraphPluginList>, "plugins"> &
     //   Pick<Partial<DbSplitgraphOptions<SplitgraphPluginList>>, "plugins">
     // opts: DbSplitgraphOptions<SplitgraphPluginList> & {
@@ -248,17 +245,31 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
     };
   }
 
-  async exportData<
-    MatchingPlugin extends ExportPluginFromList<SplitgraphPluginList>
-  >(
-    pluginName: MatchingPlugin["__name"],
-    ...rest: Parameters<MatchingPlugin["exportData"]>
+  async exportData(
+    pluginName: ExtractPlugin<SplitgraphPluginList, ExportPlugin>["__name"],
+    ...rest: Parameters<
+      ExtractPlugin<SplitgraphPluginList, ExportPlugin>["exportData"]
+    >
   ) {
     const [sourceOpts, destOpts] = rest;
 
-    const plugin = this.plugins.pluginMap.exporters[pluginName];
+    const plugin = this.plugins
+      .selectMatchingPlugins(
+        (
+          plugin
+        ): plugin is ExtractPlugin<
+          SplitgraphPluginList,
+          ExportPlugin & { __name: typeof pluginName }
+        > => "exportData" in Object.getPrototypeOf(plugin)
+      )
+      .pop();
+
     if (!plugin) {
       throw new Error(`plugin not found: ${pluginName}`);
+    }
+
+    if (!plugin.withOptions) {
+      throw new Error("plugin does not implement withOptions");
     }
 
     return await plugin
@@ -275,9 +286,9 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
   }
 
   async importData(
-    pluginName: ImportPluginFromList<SplitgraphPluginList>["__name"],
+    pluginName: ExtractPlugin<SplitgraphPluginList, ImportPlugin>["__name"],
     ...rest: Parameters<
-      ImportPluginFromList<SplitgraphPluginList>["importData"]
+      ExtractPlugin<SplitgraphPluginList, ImportPlugin>["importData"]
     >
   ) {
     // TODO: type error in ...rest
@@ -285,35 +296,42 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
 
     const [sourceOpts, destOpts] = rest;
 
-    if (pluginName === "csv" && this.plugins.pluginMap.importers["csv"]) {
-      const plugin = this.plugins.pluginMap["importers"]["csv"];
+    const plugin = this.plugins
+      .selectMatchingPlugins(
+        (
+          plugin
+        ): plugin is ExtractPlugin<
+          SplitgraphPluginList,
+          ImportPlugin & { __name: typeof pluginName }
+        > => "importData" in Object.getPrototypeOf(plugin)
+      )
+      .pop();
 
-      return await plugin
-        .withOptions({
-          ...this.pluginConfig,
-          ...plugin,
-          transformRequestHeaders: (headers: HeadersInit) =>
-            (
-              (plugin as PluginWithTransformRequestHeadersOption<typeof plugin>)
-                .transformRequestHeaders ?? IdentityFunc
-            )(this.pluginConfig.transformRequestHeaders(headers)),
-        })
-        .importData(sourceOpts, destOpts);
-    } else {
-      // const plugin = this.plugins.importers[pluginName];
-
-      return Promise.resolve({
-        response: null,
-        error: {
-          success: false,
-        },
-        info: null,
-      });
+    if (!plugin) {
+      throw new Error(`Plugin not found: ${pluginName}`);
     }
+
+    if (!plugin.withOptions) {
+      throw new Error("plugin does not implement withOptions");
+    }
+
+    return await plugin
+      .withOptions({
+        ...this.pluginConfig,
+        ...plugin,
+        transformRequestHeaders: (headers: HeadersInit) =>
+          (
+            (plugin as PluginWithTransformRequestHeadersOption<typeof plugin>)
+              .transformRequestHeaders ?? IdentityFunc
+          )(this.pluginConfig.transformRequestHeaders(headers)),
+      })
+      .importData(sourceOpts, destOpts);
   }
 }
 
-export const makeDb = (...args: ConstructorParameters<typeof DbSplitgraph>) => {
+export const makeDb = <SplitgraphPluginList extends PluginList>(
+  ...args: ConstructorParameters<typeof DbSplitgraph<SplitgraphPluginList>>
+) => {
   const db = new DbSplitgraph(...args);
   return db;
 };

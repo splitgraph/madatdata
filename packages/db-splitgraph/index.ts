@@ -1,2 +1,2 @@
-export { makeDb } from "./db-splitgraph";
-export type { SplitgraphPluginList } from "./plugins";
+export { makeDb, makeDefaultPluginList } from "./db-splitgraph";
+export type { DefaultSplitgraphPluginList } from "./db-splitgraph";

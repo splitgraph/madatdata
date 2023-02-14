@@ -75,9 +75,7 @@ const retryOptions = {
 };
 
 export class SplitgraphImportCSVPlugin
-  implements
-    ImportPlugin<"csv">,
-    WithOptionsInterface<SplitgraphImportCSVPlugin>
+  implements ImportPlugin, WithOptionsInterface<SplitgraphImportCSVPlugin>
 {
   public readonly __name = "csv";
   public static readonly __name = "csv";

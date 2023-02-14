@@ -1,6 +1,6 @@
 import type { Plugin } from "./plugin-bindings";
 
-export type PluginList = Plugin[];
+export type PluginList = readonly Plugin[];
 
 export type PluginMap<
   ConcretePluginList extends PluginList,
@@ -28,22 +28,12 @@ export type PluggableInterfaceShape<
 export interface WithPluginRegistry<
   ConcretePluginList extends PluginList,
   PluginHostContext extends object,
-  PluggableInterface extends PluggableInterfaceShape,
-  PluginKindMap extends {
-    [k in keyof PluginKindMap]: PluginKindMap[k];
-  },
-  PluginSelectors extends Readonly<{
-    [k in keyof PluginKindMap]: (
-      plugin: ConcretePluginList[number]
-    ) => plugin is PluginKindMap[k];
-  }>
+  PluggableInterface extends PluggableInterfaceShape
 > {
   plugins: PluginRegistry<
     ConcretePluginList,
     PluginHostContext,
-    PluggableInterface,
-    PluginKindMap,
-    PluginSelectors
+    PluggableInterface
   >;
 }
 export type ExtractPlugin<
@@ -66,58 +56,34 @@ export type PluginsMatchingSelector<
   ) => plugin is MatchingPluginType
 > = (plugins: PluginList, selector: Selector) => MatchingPluginType[];
 
-const selectPlugins = <MatchingType extends Plugin>(
-  plugins: Plugin[],
-  selector: (plugin: Plugin) => plugin is MatchingType
-): MatchingType[] => {
-  const matchingPlugins = plugins.filter(selector);
-  return matchingPlugins;
-};
+// const selectPlugins = <MatchingType extends Plugin>(
+//   plugins: Plugin[],
+//   selector: (plugin: Plugin) => plugin is MatchingType
+// ): MatchingType[] => {
+//   const matchingPlugins = plugins.filter(selector);
+//   return matchingPlugins;
+// };
+
+// const selectFirstMatchingPlugin
 
 export class PluginRegistry<
   ConcretePluginList extends PluginList,
   PluginHostContext extends object,
-  _PluggableInterface extends PluggableInterfaceShape,
-  PluginKindMap extends {
-    [k in keyof PluginKindMap]: ConcretePluginList[number];
-  },
-  PluginSelectors extends Readonly<{
-    [k in keyof PluginKindMap]: (
-      plugin: ConcretePluginList[number]
-    ) => plugin is PluginKindMap[k];
-  }>,
-  ConcretePluginMap extends {
-    [k in keyof PluginKindMap]: {
-      [j in ConcretePluginList[number]["__name"]]: PluginKindMap[k];
-    };
-  } = {
-    [k in keyof PluginKindMap]: {
-      [j in ConcretePluginList[number]["__name"]]: PluginKindMap[k];
-    };
-  }
+  _PluggableInterface extends PluggableInterfaceShape
 > {
-  public plugins: ConcretePluginList;
+  public readonly plugins: ConcretePluginList;
   public hostContext: PluginHostContext;
-  public pluginMap: ConcretePluginMap;
 
-  constructor(
-    plugins: ConcretePluginList,
-    hostContext: PluginHostContext,
-    pluginSelectors: PluginSelectors
-  ) {
+  constructor(plugins: ConcretePluginList, hostContext: PluginHostContext) {
     this.plugins = plugins;
     this.hostContext = hostContext;
+  }
 
-    this.pluginMap = Object.entries(pluginSelectors).reduce(
-      (acc, [selectorName, selector]) => ({
-        ...acc,
-        [selectorName]: selectPlugins(
-          plugins,
-          selector as Parameters<typeof selectPlugins>[1]
-        ).reduce((acc, plug) => ({ [plug.__name]: plug, ...acc }), {}),
-      }),
-      {} as ConcretePluginMap
-    );
+  selectMatchingPlugins<MatchingType extends ConcretePluginList[number]>(
+    selector: (plugin: ConcretePluginList[number]) => plugin is MatchingType
+  ): MatchingType[] {
+    const matchingPlugins = this.plugins.filter(selector);
+    return matchingPlugins;
   }
 
   // public async callFunction<FunctionName extends keyof PluggableInterface>(

@@ -50,9 +50,7 @@ const retryOptions = {
   exponentialOption: { maxInterval: MAX_BACKOFF_INTERVAL, multiplier: 2 },
 };
 export class ExportQueryPlugin
-  implements
-    ExportPlugin<"exportQuery">,
-    WithOptionsInterface<ExportQueryPlugin>
+  implements ExportPlugin, WithOptionsInterface<ExportQueryPlugin>
 {
   private readonly opts: ExportQueryPluginOptions;
   public readonly graphqlEndpoint: ExportQueryPluginOptions["graphqlEndpoint"];

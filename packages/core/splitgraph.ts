@@ -1,6 +1,6 @@
 import type { DataContext } from "./data-context";
 import { makeClient } from "@madatdata/client-http";
-import { makeDb, SplitgraphPluginList } from "@madatdata/db-splitgraph";
+import { makeDb, makeDefaultPluginList } from "@madatdata/db-splitgraph";
 import { defaultDatabase, defaultHost } from "@madatdata/base-client";
 export { makeClient as makeSplitgraphClient };
 export { makeDb as makeSplitgraphDb };
@@ -35,7 +35,14 @@ export const makeSplitgraphHTTPContext = (
         : undefined),
     database: opts?.db?.database ?? opts?.database ?? defaultDatabase,
     host: opts?.db?.host ?? opts?.host ?? defaultHost,
-    plugins: opts?.db?.plugins ?? opts?.plugins,
+    plugins:
+      opts?.db?.plugins ??
+      opts?.plugins ??
+      makeDefaultPluginList({
+        graphqlEndpoint: (opts?.db?.host ?? opts?.host ?? defaultHost).baseUrls
+          .gql,
+        authenticatedCredential: opts?.db?.authenticatedCredential,
+      }),
   };
 
   // TODO: Figure out where dbOpts and clientOpts should/shouldn't overlap
@@ -56,7 +63,7 @@ export const makeSplitgraphHTTPContext = (
   const splitgraphHTTPContext = {
     client,
     db,
-  } as DataContext<typeof db, SplitgraphPluginList>;
+  } as DataContext<typeof db>;
 
   return splitgraphHTTPContext;
 };
