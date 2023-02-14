@@ -21,7 +21,7 @@ export interface WithPluginRegistry<
   PluginHostContext extends object,
   PluggableInterface extends PluggableInterfaceShape,
   PluginKindMap extends {
-    [k in keyof PluginKindMap]: ConcretePluginList[number];
+    [k in keyof PluginKindMap]: PluginKindMap[k];
   },
   PluginSelectors extends Readonly<{
     [k in keyof PluginKindMap]: (
@@ -42,9 +42,6 @@ export interface WithPluginRegistry<
 // type ValidPluginName<ConcretePluginMap extends PluginMap> =
 //   keyof (ConcretePluginMap["exporters"] & ConcretePluginMap["importers"]);
 
-export type ValidPluginNameFromList<ConcretePluginList extends PluginList> =
-  ConcretePluginList[number]["__name"];
-
 export type ValidPluginNameFromListMatchingType<
   ConcretePluginList extends PluginList,
   MatchingPluginType extends Plugin
@@ -58,54 +55,6 @@ export const pluginMapToList = <ConcretePluginMap extends PluginMap>(
     ...Object.entries(pluginMap.exporters).map(([_, plugin]) => plugin),
   ] as ExpandRecursively<PluginListFromMap<ConcretePluginMap>>;
 
-// const examplePlugins: Plugin[] = [
-//   {
-//     __name: "csv",
-//     withOptions: (opts: any): any => {},
-//     importData: () =>
-//       Promise.resolve({ response: "import-ok", error: null, info: null }),
-//   },
-//   {
-//     __name: "csv", // NOTE: duplicate names intentional, they implement different interfaces
-//     withOptions: (opts: any): any => {},
-//     exportData: () =>
-//       Promise.resolve({ response: "export-ok", error: null, info: null }),
-//   },
-//   {
-//     __name: "mongo",
-//     withOptions: (opts: any): any => {},
-//     importData: () =>
-//       Promise.resolve({ response: "import-ok", error: null, info: null }),
-//   },
-// ];
-
-// const examplePluginMap = {
-//   importers: {
-//     csv: {
-//       __name: "csv",
-//       withOptions: (opts: any): any => {},
-//       importData: () =>
-//         Promise.resolve({ response: "import-ok", error: null, info: null }),
-//     },
-//     mongo: {
-//       __name: "mongo",
-//       withOptions: (opts: any): any => {},
-//       importData: () =>
-//         Promise.resolve({ response: "import-ok", error: null, info: null }),
-//     },
-//   },
-//   exporters: {
-//     csv: {
-//       __name: "csv", // NOTE: duplicate names intentional, they implement different interfaces
-//       withOptions: (opts: any): any => {},
-//       exportData: () =>
-//         Promise.resolve({ response: "export-ok", error: null, info: null }),
-//     },
-//   },
-// };
-
-// const mapAsList = pluginMapToList(examplePluginMap);
-
 export type PluginsMatchingSelector<
   MatchingPluginType extends Plugin,
   PluginList extends Plugin[],
@@ -116,18 +65,12 @@ export type PluginsMatchingSelector<
   ) => plugin is MatchingPluginType
 > = (plugins: PluginList, selector: Selector) => MatchingPluginType[];
 
-// const isExporter = (plugin: Plugin): plugin is ExportPlugin =>
-//   plugin.hasOwnProperty("exportData");
-
-// const isImporter = (plugin: Plugin): plugin is ImportPlugin =>
-//   plugin.hasOwnProperty("importData");
-
 const selectPlugins = <MatchingType extends Plugin>(
   plugins: Plugin[],
   selector: (plugin: Plugin) => plugin is MatchingType
 ): MatchingType[] => {
-  const exporters = plugins.filter(selector);
-  return exporters;
+  const matchingPlugins = plugins.filter(selector);
+  return matchingPlugins;
 };
 
 export class PluginRegistry<

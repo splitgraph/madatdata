@@ -72,14 +72,18 @@ export interface Db<
   ) => Client;
 }
 
-export type DbPluginKindMap = {
-  importers: ImportPlugin;
-  exporters: ExportPlugin;
+export type DbPluginKindMap<ConcretePluginList extends PluginList> = {
+  importers: Extract<ConcretePluginList[number], ImportPlugin>;
+  exporters: Extract<ConcretePluginList[number], ExportPlugin>;
 };
 
 export type DbPluginSelectors<ConcretePluginList extends PluginList> = {
-  importers: (plugin: ConcretePluginList[number]) => plugin is ImportPlugin;
-  exporters: (plugin: ConcretePluginList[number]) => plugin is ExportPlugin;
+  importers: (
+    plugin: ConcretePluginList[number]
+  ) => plugin is Extract<ConcretePluginList[number], ImportPlugin>;
+  exporters: (
+    plugin: ConcretePluginList[number]
+  ) => plugin is Extract<ConcretePluginList[number], ExportPlugin>;
 };
 
 export interface DbOptions<ConcretePluginList extends PluginList> {
@@ -97,7 +101,7 @@ export abstract class BaseDb<
       ConcretePluginList,
       PluginHostContext,
       DbPluggableInterface<ConcretePluginList>,
-      DbPluginKindMap,
+      DbPluginKindMap<ConcretePluginList>,
       DbPluginSelectors<ConcretePluginList>
     >
 {
@@ -105,7 +109,7 @@ export abstract class BaseDb<
     ConcretePluginList,
     PluginHostContext,
     DbPluggableInterface<ConcretePluginList>,
-    DbPluginKindMap,
+    DbPluginKindMap<ConcretePluginList>,
     DbPluginSelectors<ConcretePluginList>
   >;
   protected authenticatedCredential?: AuthenticatedCredential;
@@ -119,9 +123,13 @@ export abstract class BaseDb<
     this.database = opts?.database ?? defaultDatabase;
 
     this.plugins = new PluginRegistry(opts.plugins, {} as PluginHostContext, {
-      importers: (plugin: Plugin): plugin is ImportPlugin =>
+      importers: (
+        plugin: Plugin
+      ): plugin is Extract<ConcretePluginList[number], ImportPlugin> =>
         "importData" in Object.getPrototypeOf(plugin),
-      exporters: (plugin: Plugin): plugin is ExportPlugin =>
+      exporters: (
+        plugin: Plugin
+      ): plugin is Extract<ConcretePluginList[number], ExportPlugin> =>
         "exportData" in Object.getPrototypeOf(plugin),
     });
     this.opts = opts;

@@ -3,11 +3,38 @@ import { makeDb } from "./db-seafowl";
 import { SeafowlImportFilePlugin } from "./plugins/importers/seafowl-import-file-plugin";
 
 import { shouldSkipSeafowlTests } from "@madatdata/test-helpers/env-config";
+// import { Plugin, ImportPlugin } from "@madatdata/base-db";
 
 describe("importData", () => {
   it("returns false for unknown plugin", async () => {
     let err: unknown;
-    const db = makeDb({});
+
+    // const examplePlugins: Plugin[] = [
+    //   {
+    //     __name: "csv",
+    //     withOptions: (opts: any): any => {},
+    //     importData: () =>
+    //       Promise.resolve({ response: "import-ok", error: null, info: null }),
+    //   } as ImportPlugin,
+    //   {
+    //     __name: "csv", // NOTE: duplicate names intentional, they implement different interfaces
+    //     withOptions: (opts: any): any => {},
+    //     exportData: () =>
+    //       Promise.resolve({ response: "export-ok", error: null, info: null }),
+    //   },
+    //   {
+    //     __name: "mongo",
+    //     withOptions: (opts: any): any => {},
+    //     importData: () =>
+    //       Promise.resolve({ response: "import-ok", error: null, info: null }),
+    //   },
+    // ];
+
+    const db = makeDb({
+      // plugins: examplePlugins,
+    });
+
+    // db.importData("import")
 
     await db
       // @ts-expect-error typescript shouldn't allow using a plugin name not in map

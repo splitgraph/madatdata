@@ -31,15 +31,13 @@ type SeafowlPluginList<
     | ImportPlugin
     | ExportPlugin
   )[]
-> = ConcretePluginList;
+> = ConcretePluginList[number][];
 
 interface DbSeafowlOptions extends DbOptions<SeafowlPluginList> {}
 
 // NOTE: optional here because we don't set in constructor but we do in withOptions
 // this is because the type is self referential (config object needs class instantiated)
-const makeDefaultPluginList = (opts: {
-  seafowlClient?: Client;
-}): SeafowlPluginList => [
+const makeDefaultPluginList = (opts: { seafowlClient?: Client }) => [
   new SeafowlImportFilePlugin({ seafowlClient: opts.seafowlClient }),
   // {
   //   __name: "csv", // NOTE: duplicate names intentional, they implement different interfaces
@@ -96,9 +94,11 @@ export class DbSeafowl
     opts: Omit<DbSeafowlOptions, "plugins"> &
       Pick<Partial<DbSeafowlOptions>, "plugins">
   ) {
+    const plugins = opts.plugins ?? makeDefaultPluginList({});
+
     super({
       ...opts,
-      plugins: opts.plugins ?? makeDefaultPluginList({}),
+      plugins,
     });
   }
 
@@ -201,12 +201,10 @@ export class DbSeafowl
     };
   }
 
-  async importData<
-    PluginName extends ValidPluginNameFromListMatchingType<
-      SeafowlPluginList,
-      ImportPlugin
-    >
-  >(pluginName: PluginName, ...rest: Parameters<ImportPlugin["importData"]>) {
+  async importData(
+    pluginName: Extract<SeafowlPluginList[number], ImportPlugin>["__name"],
+    ...rest: Parameters<ImportPlugin["importData"]>
+  ) {
     const [sourceOpts, destOpts] = rest;
 
     // TODO: temporarily hardcode the plugin map

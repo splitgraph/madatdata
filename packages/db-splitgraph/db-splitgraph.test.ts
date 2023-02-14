@@ -11,14 +11,39 @@ import { compose, graphql, rest, type DefaultBodyType } from "msw";
 
 import { defaultHost } from "@madatdata/base-client/host";
 
+// import { Plugin, ImportPlugin } from "@madatdata/base-db";
+
 import { faker } from "@faker-js/faker";
 
 describe("importData", () => {
   it("returns false for unknown plugin", async () => {
-    const db = makeDb({});
+    // const examplePlugins: Plugin[] = [
+    //   {
+    //     __name: "csv",
+    //     withOptions: (opts: any): any => {},
+    //     importData: () =>
+    //       Promise.resolve({ response: "import-ok", error: null, info: null }),
+    //   } as ImportPlugin,
+    //   {
+    //     __name: "csv", // NOTE: duplicate names intentional, they implement different interfaces
+    //     withOptions: (opts: any): any => {},
+    //     exportData: () =>
+    //       Promise.resolve({ response: "export-ok", error: null, info: null }),
+    //   },
+    //   {
+    //     __name: "mongo",
+    //     withOptions: (opts: any): any => {},
+    //     importData: ({ blah: string }) =>
+    //       Promise.resolve({ response: "import-ok", error: null, info: null }),
+    //   },
+    // ];
+
+    const db = makeDb({
+      // plugins: examplePlugins,
+    });
 
     // @ts-expect-error not a key in SplitgraphPluginMap
-    const importResult = await db.importData("unknown-doesnotexist", {}, {});
+    await db.importData("unknown-doesnotexist", {}, {});
   });
 });
 
