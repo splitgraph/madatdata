@@ -9,7 +9,7 @@
     "@madatdata/base-db": "workspace:*",
     "@madatdata/client-http": "workspace:*",
     "graphql": "16.5.0",
-    "graphql-request": "4.3.0",
+    "graphql-request": "5.1.0",
     "typescript-retry-decorator": "2.0.5"
   },
   "devDependencies": {
