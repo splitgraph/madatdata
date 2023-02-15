@@ -1,4 +1,4 @@
-import type { Plugin, WithOptions } from "./plugin-bindings";
+import type { Plugin } from "./plugin-bindings";
 import {
   WithPluginRegistry,
   PluginRegistry,
@@ -21,20 +21,26 @@ import {
 } from "@madatdata/base-client";
 
 export interface ImportPlugin extends Plugin {
-  withOptions?: WithOptions<ImportPlugin>;
   importData: (
     sourceOptions: any,
     destOptions: any
   ) => Promise<{ response: any | null; error: any | null; info?: any | null }>;
 }
 
+// interface ImportPluginWithOptions extends ImportPlugin {
+//   withOptions: WithOptions<ImportPlugin>;
+// }
+
 export interface ExportPlugin extends Plugin {
-  withOptions?: WithOptions<ExportPlugin>;
   exportData: (
     sourceOptions: any,
     destOptions: any
   ) => Promise<{ response: any | null; error: any | null; info?: any | null }>;
 }
+
+// interface ExportPluginWithOptions extends ExportPlugin {
+//   withOptions: WithOptions<ExportPlugin>;
+// }
 
 export interface DbPluggableInterface<ConcretePluginList extends PluginList>
   extends PluggableInterfaceShape {

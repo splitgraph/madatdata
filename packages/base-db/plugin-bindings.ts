@@ -5,6 +5,9 @@ export type WithOptions<OuterClassT> = <
   injectOpts: InjectedOpts
 ) => InnerClassT | OuterClassT;
 
+// TODO: rename this to not be exclusive to just "withOptions" (and even if it
+// were limited to that, the accurate name would be `WithWithOptionsInterface`)
+
 export interface WithOptionsInterface<ClassT> {
   withOptions: WithOptions<ClassT>;
 }

@@ -7,6 +7,7 @@ import {
   type ExportPlugin,
   type ExtractPlugin,
   type PluginList,
+  WithOptionsInterface,
 } from "@madatdata/base-db";
 
 // TODO: This sould be injected in the constructor as the actual plugin map
@@ -198,7 +199,9 @@ export class DbSeafowl<SeafowlPluginList extends PluginList>
           plugin
         ): plugin is ExtractPlugin<
           SeafowlPluginList,
-          ImportPlugin & { __name: typeof pluginName }
+          ImportPlugin & { __name: typeof pluginName } & Partial<
+              WithOptionsInterface<ImportPlugin>
+            >
         > => "importData" in Object.getPrototypeOf(plugin)
       )
       .pop();

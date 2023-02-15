@@ -7,9 +7,8 @@ import {
   ExportPlugin,
   PluginList,
   ExtractPlugin,
+  type WithOptionsInterface,
 } from "@madatdata/base-db";
-import type { DefaultSplitgraphPluginList } from "./plugins/importers";
-export type { DefaultSplitgraphPluginList };
 
 // TODO: These could be injected in the constructor as the actual plugin map
 import { SplitgraphImportCSVPlugin } from "./plugins/importers/splitgraph-import-csv-plugin";
@@ -43,6 +42,11 @@ const makeTransformRequestHeadersForAuthenticatedRequest =
       ? makeAuthHeaders(maybeAuthenticatedCredential)
       : {}),
   });
+
+export type DefaultSplitgraphPluginList = (
+  | SplitgraphImportCSVPlugin
+  | ExportQueryPlugin
+)[];
 
 export const makeDefaultPluginList = (
   opts: Pick<
@@ -84,21 +88,8 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
   private graphqlEndpoint: string;
 
   constructor(
-    // opts: DbOptions<SplitgraphPluginList> &
-    //   Pick<
-    //     DbSplitgraphOptions<SplitgraphPluginList>,
-    //     | "graphqlEndpoint"
-    //     | "transformRequestHeaders"
-    //     | "authenticatedCredential"
-    //     | "database"
-    //     | "host"
-    //   >
+    // TODO: consider making opts.plugins optional [or maybe not, since it leads to stressed type inference]
     opts: DbSplitgraphOptions<SplitgraphPluginList>
-    // opts: Omit<DbSplitgraphOptions<SplitgraphPluginList>, "plugins"> &
-    //   Pick<Partial<DbSplitgraphOptions<SplitgraphPluginList>>, "plugins">
-    // opts: DbSplitgraphOptions<SplitgraphPluginList> & {
-    //   plugins?: DbSplitgraphOptions<SplitgraphPluginList>["plugins"];
-    // }
   ) {
     const graphqlEndpoint =
       opts.graphqlEndpoint ?? (opts.host ?? defaultHost).baseUrls.gql;
@@ -259,7 +250,9 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
           plugin
         ): plugin is ExtractPlugin<
           SplitgraphPluginList,
-          ExportPlugin & { __name: typeof pluginName }
+          ExportPlugin & { __name: typeof pluginName } & Partial<
+              WithOptionsInterface<ExportPlugin>
+            >
         > => "exportData" in Object.getPrototypeOf(plugin)
       )
       .pop();
@@ -302,7 +295,9 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
           plugin
         ): plugin is ExtractPlugin<
           SplitgraphPluginList,
-          ImportPlugin & { __name: typeof pluginName }
+          ImportPlugin & {
+            __name: typeof pluginName;
+          } & Partial<WithOptionsInterface<ImportPlugin>>
         > => "importData" in Object.getPrototypeOf(plugin)
       )
       .pop();
