@@ -4,7 +4,11 @@ import type {
   Equal,
   NotEqual,
 } from "@madatdata/test-helpers/type-test-utils";
-import { PluginList, PluginRegistry } from "./plugin-registry";
+import {
+  PluginList,
+  PluginRegistry,
+  WithPluginRegistry,
+} from "./plugin-registry";
 
 type SomeKindOfChampionPlugin = {
   __name: string;
@@ -162,6 +166,19 @@ describe("plugin registry", () => {
     >(fakePlugins, pluginHostContext);
 
     {
+      true as Expect<
+        Equal<
+          typeof pluggable["plugins"]["plugins"],
+          WithPluginRegistry<
+            ReturnType<typeof makeFakePlugins>,
+            typeof pluginHostContext,
+            {
+              celebrateVictory: (...args: any[]) => Promise<unknown>;
+            }
+          >["plugins"]["plugins"]
+        >
+      >;
+
       true as Expect<
         Equal<
           typeof pluggable["plugins"]["plugins"],
