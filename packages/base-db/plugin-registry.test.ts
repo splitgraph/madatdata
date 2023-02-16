@@ -44,7 +44,10 @@ const makeSomethingPluggable = <
         ConcretePluginList[number],
         SomeKindOfChampionPlugin
       >["__name"],
-      GoatPlugin extends SomeKindOfChampionPlugin & { __name: PluginName }
+      GoatPlugin extends Extract<
+        ConcretePluginList[number],
+        SomeKindOfChampionPlugin
+      > & { __name: PluginName }
     >(
       pluginName: PluginName,
       ...victoryArgs: Parameters<GoatPlugin["celebrateVictory"]>
@@ -222,12 +225,18 @@ describe("plugin registry", () => {
     }
 
     {
+      // IMPORTANT: This is the test for pass-through arguments, e.g. the ...rest
+      // in  db.importData("csv", ...rest) where ...rest should match parameters of
+      // the importData method on any plugin that implements it and also has the name of "csv"
       true as Expect<
         Equal<
           Parameters<typeof pluggable.celebrateVictory>,
-          // FIXME: victoryArgs should narrow to match those from the plugin
           Parameters<
-            (pluginName: "happy-winner", ...victoryArgs: any[]) => void
+            (
+              pluginName: "happy-winner",
+              name: string,
+              speechOpts: { thankParents: boolean }
+            ) => void
           >
         >
       >;
