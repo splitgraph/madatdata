@@ -44,8 +44,6 @@ describe("importData", () => {
       >;
     }
 
-    await db.importData("mongo", { blah: "fizz" });
-
     await expect(async () =>
       // @ts-expect-error not a valid plugin
       db.importData("unknown-doesnotexist", {}, {}).catch((err) => {
