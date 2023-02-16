@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { randSuffix } from "@madatdata/test-helpers/rand-suffix";
+import type { Expect, Equal } from "@madatdata/test-helpers/type-test-utils";
 import { makeDb } from "./db-splitgraph";
 import { SplitgraphImportCSVPlugin } from "./plugins/importers/splitgraph-import-csv-plugin";
 import { ExportQueryPlugin } from "./plugins/exporters/export-query-plugin";
@@ -35,6 +36,15 @@ describe("importData", () => {
     const db = makeDb({
       plugins: examplePlugins,
     });
+
+    // Make sure arguments narrow to the arguments in the "mongo" plugin from examplePlugins
+    {
+      true as Expect<
+        Equal<Parameters<typeof db.importData>[1], { blah: string } | undefined>
+      >;
+    }
+
+    await db.importData("mongo", { blah: "fizz" });
 
     await expect(async () =>
       // @ts-expect-error not a valid plugin
