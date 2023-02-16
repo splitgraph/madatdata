@@ -1,6 +1,7 @@
 import type { Plugin } from "./plugin-bindings";
 
-export type PluginList = readonly Plugin[];
+export type PluginList<PluginKind extends Plugin = Plugin> =
+  readonly PluginKind[];
 
 export type PluginMap<
   ConcretePluginList extends PluginList,
