@@ -6,7 +6,7 @@ import {
   PluginList,
   ExtractPlugin,
 } from "./plugin-registry";
-import { webcrypto } from "crypto";
+// import { webcrypto } from "crypto";
 
 import {
   type Client,
@@ -184,9 +184,18 @@ export abstract class BaseDb<
     // In node, we (used to need?) to use the import from the ambient node: module
     // In vitest, really JSDOM, it's a bit of a mix between the two (window is available?)
     // NOTE: Need to test how this will work in a browser bundle which we don't even have yet
-    const subtle = (() => {
+    const subtle = await (async () => {
       if (!window?.crypto?.subtle) {
-        if (webcrypto.subtle) {
+        const { webcrypto } = await (async () => {
+          try {
+            return await import("crypto");
+          } catch (err) {
+            console.warn("Faile to import crypto:", err);
+            return { webcrypto: null };
+          }
+        })();
+
+        if (webcrypto && webcrypto.subtle) {
           return webcrypto.subtle;
         } else {
           throw new Error("Missing webcrypto.subtle");

@@ -15,6 +15,7 @@ esbuild
     entryPoints: [
       "./pages/ast-debugger.tsx",
       "./pages/dsx.tsx",
+      "./pages/dsx-renderer.tsx",
       "./pages/ddn.tsx",
     ],
     bundle: true,
@@ -75,6 +76,7 @@ esbuild.serve({ servedir: "./www", host: "localhost" }, {}).then(() => {
     console.log("Listening on localhost:3000 ...");
     console.log(" http://localhost:3000/ast-debugger.html");
     console.log(" http://localhost:3000/dsx.html");
+    console.log(" http://localhost:3000/dsx-renderer.html");
     console.log(" http://localhost:3000/ddn.html");
   });
 });

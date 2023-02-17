@@ -8,11 +8,13 @@
     "@madatdata/client-http": "workspace:*",
     "@madatdata/react": "workspace:*",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "react-reconciler": "0.29.0"
   },
   "devDependencies": {
     "@types/react": "18.0.14",
     "@types/react-dom": "18.0.5",
+    "@types/react-reconciler": "0.28.2",
     "esbuild": "0.14.49"
   }
 }
