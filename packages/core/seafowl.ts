@@ -1,6 +1,6 @@
 import type { DataContext } from "./data-context";
 import { makeClient } from "@madatdata/client-http";
-import { makeDb } from "@madatdata/db-seafowl";
+import { makeDb, makeDefaultPluginList } from "@madatdata/db-seafowl";
 // TODO: these are splitgraph specific defaults
 import { defaultDatabase, defaultHost } from "@madatdata/base-client";
 export { makeDb as makeSeafowlDb };
@@ -33,7 +33,7 @@ export const makeSeafowlHTTPContext = (
         : undefined),
     database: opts?.db?.database ?? opts?.database ?? defaultDatabase,
     host: opts?.db?.host ?? opts?.host ?? defaultHost,
-    plugins: opts?.db?.plugins ?? opts?.plugins,
+    plugins: opts?.db?.plugins ?? opts?.plugins ?? makeDefaultPluginList({}),
   };
 
   // TODO: Figure out where dbOpts and clientOpts should/shouldn't overlap

@@ -15,5 +15,11 @@ type DefaultPluginMap = {
 };
 
 export type SeafowlPluginMap = DefaultPluginMap;
+
+export type SeafowlPluginList = (
+  | SeafowlPluginMap["exporters"][keyof SeafowlPluginMap["exporters"]]
+  | SeafowlPluginMap["importers"][keyof SeafowlPluginMap["importers"]]
+)[];
+
 export type SeafowlExportPluginMap = SeafowlPluginMap["exporters"];
 export type SeafowlImportPluginMap = SeafowlPluginMap["importers"];

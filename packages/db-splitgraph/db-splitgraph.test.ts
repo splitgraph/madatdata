@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { randSuffix } from "@madatdata/test-helpers/rand-suffix";
+import type { Expect, Equal } from "@madatdata/test-helpers/type-test-utils";
 import { makeDb } from "./db-splitgraph";
 import { SplitgraphImportCSVPlugin } from "./plugins/importers/splitgraph-import-csv-plugin";
 import { ExportQueryPlugin } from "./plugins/exporters/export-query-plugin";
@@ -15,10 +16,42 @@ import { faker } from "@faker-js/faker";
 
 describe("importData", () => {
   it("returns false for unknown plugin", async () => {
-    const db = makeDb({});
+    const examplePlugins = [
+      {
+        __name: "not-csv",
+        importData: () =>
+          Promise.resolve({ response: "import-ok", error: null, info: null }),
+      },
+      {
+        __name: "export-csv", // NOTE: duplicate names intentional, they implement different interfaces
+        exportData: () =>
+          Promise.resolve({ response: "export-ok", error: null, info: null }),
+      },
+      {
+        __name: "mongo",
+        importData: ({ blah: _blah }: { blah: string }) =>
+          Promise.resolve({ response: "import-ok", error: null, info: null }),
+      },
+    ] as const;
+    const db = makeDb({
+      plugins: examplePlugins,
+    });
 
-    // @ts-expect-error not a key in SplitgraphPluginMap
-    const importResult = await db.importData("unknown-doesnotexist", {}, {});
+    // Make sure arguments narrow to the arguments in the "mongo" plugin from examplePlugins
+    {
+      true as Expect<
+        Equal<Parameters<typeof db.importData>[1], { blah: string } | undefined>
+      >;
+    }
+
+    await expect(async () =>
+      // @ts-expect-error not a valid plugin
+      db.importData("unknown-doesnotexist", {}, {}).catch((err) => {
+        throw err;
+      })
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '"Plugin not found: unknown-doesnotexist"'
+    );
   });
 });
 
@@ -36,20 +69,20 @@ const createDb = () => {
     },
     graphqlEndpoint: defaultHost.baseUrls.gql,
     transformRequestHeaders,
-    plugins: {
-      importers: {
-        csv: new SplitgraphImportCSVPlugin({
-          graphqlEndpoint: defaultHost.baseUrls.gql,
-          transformRequestHeaders,
-        }),
-      },
-      // NOTE: exportQuery is not mocked yet
-      exporters: {},
-    },
+
+    // NOTE: exportQuery is not mocked yet
+    plugins: [
+      new SplitgraphImportCSVPlugin({
+        graphqlEndpoint: defaultHost.baseUrls.gql,
+        transformRequestHeaders,
+      }),
+    ],
   });
 };
 
-const fetchToken = async (db: ReturnType<typeof createDb>) => {
+const fetchToken = async (
+  db: ReturnType<typeof createDb> | ReturnType<typeof createRealDb>
+) => {
   const { username } = claimsFromJWT((await db.fetchAccessToken())?.token);
 
   return { username };
@@ -70,18 +103,15 @@ const createRealDb = () => {
       apiSecret: credential.apiSecret,
       anonymous: false,
     },
-    plugins: {
-      importers: {
-        csv: new SplitgraphImportCSVPlugin({
-          graphqlEndpoint: defaultHost.baseUrls.gql,
-        }),
-      },
-      exporters: {
-        exportQuery: new ExportQueryPlugin({
-          graphqlEndpoint: defaultHost.baseUrls.gql,
-        }),
-      },
-    },
+    plugins: [
+      new SplitgraphImportCSVPlugin({
+        graphqlEndpoint: defaultHost.baseUrls.gql,
+      }),
+
+      new ExportQueryPlugin({
+        graphqlEndpoint: defaultHost.baseUrls.gql,
+      }),
+    ],
   });
 };
 

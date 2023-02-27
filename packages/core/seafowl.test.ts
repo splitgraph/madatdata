@@ -174,29 +174,25 @@ describe("makeSeafowlHTTPContext", () => {
                 "ssl": false,
               },
             },
-            "plugins": {
-              "exporters": {},
-              "importers": {
-                "csv": SeafowlImportFilePlugin {
-                  "opts": {
-                    "seafowlClient": undefined,
-                  },
+            "plugins": [
+              _SeafowlImportFilePlugin {
+                "__name": "csv",
+                "opts": {
+                  "seafowlClient": undefined,
                 },
               },
-            },
+            ],
           },
           "plugins": PluginRegistry {
             "hostContext": {},
-            "plugins": {
-              "exporters": {},
-              "importers": {
-                "csv": SeafowlImportFilePlugin {
-                  "opts": {
-                    "seafowlClient": undefined,
-                  },
+            "plugins": [
+              _SeafowlImportFilePlugin {
+                "__name": "csv",
+                "opts": {
+                  "seafowlClient": undefined,
                 },
               },
-            },
+            ],
           },
         },
       }

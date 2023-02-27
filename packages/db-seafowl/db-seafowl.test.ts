@@ -6,18 +6,35 @@ import { shouldSkipSeafowlTests } from "@madatdata/test-helpers/env-config";
 
 describe("importData", () => {
   it("returns false for unknown plugin", async () => {
-    let err: unknown;
-    const db = makeDb({});
+    const examplePlugins = [
+      {
+        __name: "csv",
+        importData: () =>
+          Promise.resolve({ response: "import-ok", error: null, info: null }),
+      },
+      {
+        __name: "export-something", // NOTE: duplicate names intentional, they implement different interfaces
+        exportData: (_args: { foo?: string }) =>
+          Promise.resolve({ response: "export-ok", error: null, info: null }),
+      },
+      {
+        __name: "mongo",
+        importData: () =>
+          Promise.resolve({ response: "import-ok", error: null, info: null }),
+      },
+    ];
 
-    await db
-      // @ts-expect-error typescript shouldn't allow using a plugin name not in map
-      .importData("unknown-doesnotexist", {}, {})
-      .catch((e) => {
-        err = e;
-      });
+    const db = makeDb({
+      plugins: examplePlugins,
+    });
 
-    expect(err).toMatchInlineSnapshot(
-      "[Error: plugin not found: unknown-doesnotexist]"
+    await expect(async () =>
+      // @ts-expect-error not a valid plugin
+      db.importData("unknown-doesnotexist", {}, {}).catch((err) => {
+        throw err;
+      })
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '"plugin not found: unknown-doesnotexist"'
     );
   });
 });
@@ -53,12 +70,7 @@ const createDb = () => {
         ssl: false,
       },
     },
-    plugins: {
-      importers: {
-        csv: new SeafowlImportFilePlugin({}),
-      },
-      exporters: {},
-    },
+    plugins: [new SeafowlImportFilePlugin({})],
   });
 
   return db;

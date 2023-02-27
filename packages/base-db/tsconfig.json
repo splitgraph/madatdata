@@ -1,5 +1,8 @@
 {
   "extends": "../../tsconfig.base.json",
   "include": ["*.ts"],
-  "references": [{ "path": "../base-client/tsconfig.json" }]
+  "references": [
+    { "path": "../base-client/tsconfig.json" },
+    { "path": "../test-helpers" }
+  ]
 }

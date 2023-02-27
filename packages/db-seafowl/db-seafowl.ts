@@ -1,14 +1,14 @@
 import {
   BaseDb,
-  OptionalPluginMap,
   type DbOptions,
+  type DbPluggableInterface,
   type WithPluginRegistry,
+  type ImportPlugin,
+  type ExportPlugin,
+  type ExtractPlugin,
+  type PluginList,
+  WithOptionsInterface,
 } from "@madatdata/base-db";
-import type {
-  SeafowlPluginMap,
-  SeafowlExportPluginMap,
-  SeafowlImportPluginMap,
-} from "./plugins/importers";
 
 // TODO: This sould be injected in the constructor as the actual plugin map
 import { SeafowlImportFilePlugin } from "./plugins/importers/seafowl-import-file-plugin";
@@ -27,17 +27,27 @@ import { makeClient as makeHTTPClient } from "@madatdata/client-http";
 // they be in a separate package from the actual http-client?
 import type { HTTPStrategies, HTTPClientOptions } from "@madatdata/client-http";
 
-interface DbSeafowlOptions
-  extends DbOptions<OptionalPluginMap<SeafowlPluginMap>> {}
+export type DefaultSeafowlPluginList<
+  ConcretePluginList extends (ImportPlugin | ExportPlugin)[] = (
+    | ImportPlugin
+    | ExportPlugin
+  )[]
+> = ConcretePluginList[number][];
+
+interface DbSeafowlOptions<ConcretePluginList extends PluginList>
+  extends DbOptions<ConcretePluginList> {}
 
 // NOTE: optional here because we don't set in constructor but we do in withOptions
 // this is because the type is self referential (config object needs class instantiated)
-const makeDefaultPluginMap = (opts: { seafowlClient?: Client }) => ({
-  importers: {
-    csv: new SeafowlImportFilePlugin({ seafowlClient: opts.seafowlClient }),
-  },
-  exporters: {},
-});
+export const makeDefaultPluginList = (opts: { seafowlClient?: Client }) => [
+  new SeafowlImportFilePlugin({ seafowlClient: opts.seafowlClient }),
+  // {
+  //   __name: "csv", // NOTE: duplicate names intentional, they implement different interfaces
+  //   withOptions: (opts: any): any => {},
+  //   exportData: () =>
+  //     Promise.resolve({ response: "export-ok", error: null, info: null }),
+  // },
+];
 
 type HeaderTransformer = (requestHeaders: HeadersInit) => HeadersInit;
 
@@ -61,20 +71,21 @@ interface DbSeafowlPluginHostContext {
   seafowlClient: Client;
 }
 
-export class DbSeafowl
-  extends BaseDb<
-    OptionalPluginMap<SeafowlPluginMap>,
-    DbSeafowlPluginHostContext
-  >
-  implements WithPluginRegistry<SeafowlPluginMap, DbSeafowlPluginHostContext>
+export class DbSeafowl<SeafowlPluginList extends PluginList>
+  extends BaseDb<SeafowlPluginList, DbSeafowlPluginHostContext>
+  implements
+    WithPluginRegistry<
+      SeafowlPluginList,
+      DbSeafowlPluginHostContext,
+      DbPluggableInterface<SeafowlPluginList>
+    >
 {
-  constructor(
-    opts: Omit<DbSeafowlOptions, "plugins"> &
-      Pick<Partial<DbSeafowlOptions>, "plugins">
-  ) {
+  constructor(opts: DbSeafowlOptions<SeafowlPluginList>) {
+    const plugins = opts.plugins ?? makeDefaultPluginList({});
+
     super({
       ...opts,
-      plugins: opts.plugins ?? makeDefaultPluginMap({}),
+      plugins,
     });
   }
 
@@ -158,9 +169,11 @@ export class DbSeafowl
     );
   }
 
-  async exportData<PluginName extends keyof SeafowlExportPluginMap>(
-    _pluginName: PluginName,
-    ..._rest: Parameters<SeafowlExportPluginMap[PluginName]["exportData"]>
+  async exportData(
+    _pluginName: ExtractPlugin<SeafowlPluginList, ExportPlugin>["__name"],
+    ..._rest: Parameters<
+      ExtractPlugin<SeafowlPluginList, ExportPlugin>["exportData"]
+    >
   ): Promise<unknown> {
     await Promise.resolve();
     return {
@@ -172,16 +185,33 @@ export class DbSeafowl
     };
   }
 
-  async importData<PluginName extends keyof SeafowlImportPluginMap>(
-    pluginName: PluginName,
-    ...rest: Parameters<SeafowlImportPluginMap[PluginName]["importData"]>
+  async importData(
+    pluginName: ExtractPlugin<SeafowlPluginList, ImportPlugin>["__name"],
+    ...rest: Parameters<
+      ExtractPlugin<SeafowlPluginList, ImportPlugin>["importData"]
+    >
   ) {
     const [sourceOpts, destOpts] = rest;
 
-    // TODO: temporarily hardcode the plugin map
-    const plugin = this.plugins.importers[pluginName];
+    const plugin = this.plugins
+      .selectMatchingPlugins(
+        (
+          plugin
+        ): plugin is ExtractPlugin<
+          SeafowlPluginList,
+          ImportPlugin & { __name: typeof pluginName } & Partial<
+              WithOptionsInterface<ImportPlugin>
+            >
+        > => "importData" in Object.getPrototypeOf(plugin)
+      )
+      .pop();
+
     if (!plugin) {
       throw new Error(`plugin not found: ${pluginName}`);
+    }
+
+    if (!plugin.withOptions) {
+      throw new Error("plugin does not implement withOptions");
     }
 
     if (plugin) {
@@ -206,7 +236,9 @@ export class DbSeafowl
   }
 }
 
-export const makeDb = (...args: ConstructorParameters<typeof DbSeafowl>) => {
+export const makeDb = <SeafowlPluginList extends PluginList>(
+  ...args: ConstructorParameters<typeof DbSeafowl<SeafowlPluginList>>
+) => {
   const db = new DbSeafowl(...args);
   return db;
 };

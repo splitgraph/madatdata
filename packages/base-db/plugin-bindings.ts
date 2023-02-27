@@ -1,93 +1,25 @@
-// export interface PluginMap<ConcretePluginMap = Record<string,never>> {
-//   [pluginName: keyof ConcretePluginMap]: PluginMap[pluginName] extends never
-//     ? Plugin
-//   : PluginMap[pluginName];
-
-// }
-
-type PluginMapShape = {
-  importers: Record<string, ImportPlugin>;
-  exporters: Record<string, ExportPlugin>;
-};
-
-type OptionalPluginMapShape = {
-  importers: Record<string, ImportPlugin | undefined>;
-  exporters: Record<string, ExportPlugin | undefined>;
-};
-
-export type PluginMap<
-  ConcretePluginMap extends PluginMapShape = {
-    importers: PluginMapShape["importers"];
-    exporters: PluginMapShape["exporters"];
-  }
-> = {
-  importers: {
-    [pluginName in keyof ConcretePluginMap["importers"]]: ConcretePluginMap["importers"][pluginName] extends never
-      ? ImportPlugin
-      : ConcretePluginMap["importers"][pluginName];
-  };
-  exporters: {
-    [pluginName in keyof ConcretePluginMap["exporters"]]: ConcretePluginMap["exporters"][pluginName] extends never
-      ? ExportPlugin
-      : ConcretePluginMap["exporters"][pluginName];
-  };
-};
-
-export type OptionalPluginMap<
-  ConcretePluginMap extends OptionalPluginMapShape = {
-    importers: OptionalPluginMapShape["importers"];
-    exporters: OptionalPluginMapShape["exporters"];
-  }
-> = {
-  importers: Partial<ConcretePluginMap["importers"]>;
-  exporters: Partial<ConcretePluginMap["exporters"]>;
-};
-
 export type WithOptions<OuterClassT> = <
-  InjectedOpts,
+  InjectedOpts extends {},
   InnerClassT extends OuterClassT
 >(
   injectOpts: InjectedOpts
 ) => InnerClassT | OuterClassT;
+
+// TODO: rename this to not be exclusive to just "withOptions" (and even if it
+// were limited to that, the accurate name would be `WithWithOptionsInterface`)
 
 export interface WithOptionsInterface<ClassT> {
   withOptions: WithOptions<ClassT>;
 }
 
 export interface BasePlugin {
-  // importData: <
-  //   SourceOptions extends Record<PropertyKey, unknown>,
-  //   DestOptions extends Record<PropertyKey, unknown>,
-  //   ResultShape extends Record<PropertyKey, unknown>,
-  //   ErrorShape extends Record<PropertyKey, unknown>
-  // >(
-  //   sourceOptions: SourceOptions,
-  //   destOptions: DestOptions
-  // ) => Promise<{ response: ResultShape | null; error: ErrorShape | null }>;
-
-  __name?: string;
+  readonly __name: string;
 
   graphqlEndpoint?: string;
 }
 
 // export abstract class
 
-export interface ImportPlugin extends BasePlugin {
-  withOptions: WithOptions<ImportPlugin>;
-  importData: (
-    sourceOptions: any,
-    destOptions: any
-  ) => Promise<{ response: any | null; error: any | null; info?: any | null }>;
-}
+// export type Plugin = ImportPlugin | ExportPlugin;
 
-export interface ExportPlugin extends BasePlugin {
-  withOptions: WithOptions<ExportPlugin>;
-  exportData: (
-    sourceOptions: any,
-    destOptions: any
-  ) => Promise<{ response: any | null; error: any | null; info?: any | null }>;
-}
-
-export type Plugin = ImportPlugin | ExportPlugin;
-
-// export type PluginMap = Map<string, Plugin>;
+export type Plugin = BasePlugin;
