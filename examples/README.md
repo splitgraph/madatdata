@@ -44,14 +44,13 @@ cleanup (keeping in mind it will kill any process on machine matching
 # Modify the snippet accordingly depending on which example you're focused on
 
 echo "Start in root of repository" \
-  && { ( yarn verdaccio.start > verdaccio.log & export VERDACCIO_PID=$! ) ; } \
+  && { ( yarn node $(yarn bin verdaccio) --config ./verdaccio.yaml > verdaccio.log & export VERDACCIO_PID=$! ) ; } \
   && { echo "VERDACCIO_PID: $VERDACCIO_PID" ; } \
   && { yarn build && yarn verdaccio.reset ; } \
   && { yarn with-verdaccio publish-all ; } \
   && { cd examples ; yarn md.clear ; echo "Ignore above errors" ; VERDACCIO=http://localhost:4873 yarn install ; cd .. ; } \
   && { cd examples/react-nextjs-basic-hooks && rm -rf .next ; VERDACCIO=http://localhost:4873 yarn install ; cd ../.. ; } \
-  ; { echo "Kill $VERDACCIO_PID" ; kill -9 "$VERDACCIO_PID" ; ps aux | grep verdaccio ; } \
-  ; { ps aux | grep verdaccio | grep node | awk '{ print $2 }' | xargs kill -9 ; } \
+  ; { echo "Kill $VERDACCIO_PID" ; kill "$VERDACCIO_PID" ; ps aux | grep verdaccio ; } \
   ; { echo "Waiting" ; wait $(jobs -p) ; } \
   ; { echo "Verdaccio log: -----" ; cat verdaccio.log ; } \
   ; { echo ps aux | grep verdaccio ; } \
@@ -64,10 +63,10 @@ directories that need to be deleted - by the nature of having realistic
 examples, it can vary wildly and depends on the software being used.
 
 Note: Each test cycle will change `yarn.lock` (which is why we do `yarn install`
-and not `yarn --immutable` here), as the hash of each local package changes.
-It's best practice not to commit these changes into the repository, and leave
-`yarn.lock` referencing hashes of public versions of our packages. This way, the
-next developer starts from a known working state.
+and not `yarn install --immutable` here), as the hash of each local package
+changes. It's best practice not to commit these changes into the repository, and
+leave `yarn.lock` referencing hashes of public versions of our packages. This
+way, the next developer starts from a known working state.
 
 ## Verdaccio: Delete everything (not just our packages) in `./examples`
 
