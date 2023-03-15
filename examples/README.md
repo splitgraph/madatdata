@@ -46,6 +46,11 @@ cleanup (keeping in mind it will kill any process on machine matching
 ./build-examples.sh examples/react-nextjs-basic-hooks
 ```
 
+**WARNING**: After running this, if you are doing regular development (i.e. not
+including examples), you will probably need to run `yarn clean` in the repo root
+to make sure everything rebuilds properly (this especially applies to
+`@madatdata/react`)
+
 Note: this specific example also removes the `.next` directory in
 `examples/react-nextjs-basic-hooks`. Other examples might have similar
 directories that need to be deleted - by the nature of having realistic
