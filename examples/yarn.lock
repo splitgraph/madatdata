@@ -5,6 +5,15 @@ __metadata:
   version: 6
   cacheKey: 8
 
+"@graphql-typed-document-node/core@npm:^3.1.1":
+  version: 3.1.2
+  resolution: "@graphql-typed-document-node/core@npm:3.1.2"
+  peerDependencies:
+    graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
+  checksum: a61afa025acdabd7833e4f654a5802fc1a526171f81e0c435c8e651050a5a0682499a2c7a51304ceb61fde36cd69fc7975ce5e1b16b9ba7ea474c649f33eea8b
+  languageName: node
+  linkType: hard
+
 "@madatdata/base-client@npm:0.0.5":
   version: 0.0.5
   resolution: "@madatdata/base-client@npm:0.0.5"
@@ -13,7 +22,7 @@ __metadata:
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: c6addb686c17eb486337532b825030e68ec49a914d6a6c5246f5556837094015524cd104dcd42714320c473a19af1adea55c4879f0fa45c49ef7a21da14ffa2c
+  checksum: fdb0624769312de72536b8043788c234be6da03bdcbc7fa2ee1ee2f97248b6dca3f5bc87aacebc44464617d390886e317db477fcc3428514dc5c0fce2aadbe87
   languageName: node
   linkType: hard
 
@@ -27,7 +36,7 @@ __metadata:
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 77525f78cd72b556ee2b946ba4cf5f38e25010ef2db7d01888ea76e26f2878287175690b1894ea24987e9a88f7fb061168890fe7a90e216c0fe7ce9fb4777974
+  checksum: f771a21f1f6a13423037c13b4a6fae627e76f7f20206a0f779e86ef50c06cb34586ebb1b074a9438a49e3ada836a26495694e822532dd73f1ff75bc2553baa98
   languageName: node
   linkType: hard
 
@@ -41,7 +50,7 @@ __metadata:
   peerDependenciesMeta:
     cross-fetch:
       optional: true
-  checksum: 2b226d4acd75b4d5aaca48b79012b8219b8685d8a0d153c0ebf6ad8d022bcb5e508a84b21ab98db497f5023515b6d2b6982e5e945a27f2631fc377bc4ad205f8
+  checksum: 7c276bb550a881addbc66841fd644d64ca2e0dd302a291ce00ccbe3f5cbc3a5124b4a3fb9d0d4781fc3f3f819d5f1ad67bca613c9a4d59c079adceada7b7cadf
   languageName: node
   linkType: hard
 
@@ -54,7 +63,7 @@ __metadata:
     "@madatdata/client-http": 0.0.5
     "@madatdata/db-seafowl": 0.0.5
     "@madatdata/db-splitgraph": 0.0.5
-  checksum: 700bbd01e24ccccaf7f9471441c6088688e77d790a6b1d87739c5311a2592ac5eeb27b0b4853cf8986f3b2f2fe0db0f1bb8b3173545d33f3829a9dc67b1b44d7
+  checksum: 245786ab74342ab9314d07b118cc5fe1b9304c5d4d982216fef66556b31ca0696058f4046f9a138c719074f1b892d7d5de19951e2d33cf6db55ca4652934b317
   languageName: node
   linkType: hard
 
@@ -65,7 +74,7 @@ __metadata:
     "@madatdata/base-client": 0.0.5
     "@madatdata/base-db": 0.0.5
     "@madatdata/client-http": 0.0.5
-  checksum: 0a276cf0ddbd7545c7983e5ac28e845439d8e9259309258e05c409730c86ccd016d642527735baae0a6f0c814c2dbe31c9546d9590fe0f40021597d3c348b4e6
+  checksum: d0155c11dd610a9e326bd4cb7ee2128fc92e66d84abbf9bc2b479790140cb20954562d60f591f7838bd771f00291694ac61c2b53ca10a52cf0b302c32527d4ec
   languageName: node
   linkType: hard
 
@@ -77,9 +86,9 @@ __metadata:
     "@madatdata/base-db": 0.0.5
     "@madatdata/client-http": 0.0.5
     graphql: 16.5.0
-    graphql-request: 4.3.0
+    graphql-request: 5.1.0
     typescript-retry-decorator: 2.0.5
-  checksum: b5ce14369e8de32844fc9c9cb9ebcbadcb51fa67664290d618fce33d2270738d2f790199842e1c95041d1ac6c7b98d653257adc2b0be935083583b03d06defa3
+  checksum: 0d84461bba8b61408018d75f5d3f25475ba72a7c6de6faaa253273e16837c26cae90c015f64d2b3b8e8502eaae7e0b24095fad09ebfc87696c2ea495f76de02b
   languageName: node
   linkType: hard
 
@@ -91,7 +100,7 @@ __metadata:
   peerDependencies:
     react: ">=17 || >=18"
     react-dom: ">=17 || >=18"
-  checksum: 794318f56791c403ce11d57c736b989b8c5001194f56a940f66c8b4999099a2321a23bf6bd9f3b313928e67f967e2248a2c2c65b608e3ee14504547fa3b60e0f
+  checksum: 2b6f94babda42f3d24b2f0697ae54594518b4c01a5e1cebcda30dfa08273474ad43c3cd66f5d2382a49ccd4d3b577e9f28f7daed83a1ed59fb3a54f7c83505e8
   languageName: node
   linkType: hard
 
@@ -474,16 +483,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graphql-request@npm:4.3.0":
-  version: 4.3.0
-  resolution: "graphql-request@npm:4.3.0"
+"graphql-request@npm:5.1.0":
+  version: 5.1.0
+  resolution: "graphql-request@npm:5.1.0"
   dependencies:
+    "@graphql-typed-document-node/core": ^3.1.1
     cross-fetch: ^3.1.5
     extract-files: ^9.0.0
     form-data: ^3.0.0
   peerDependencies:
     graphql: 14 - 16
-  checksum: 3124afd01aee781cd5a2e9ac30063526b677a6754032566104fc36270b5f9be03f17a32e49f34c71ca968d533151550c37f7a0194d11c36ff59977bd73e2abc3
+  checksum: 8b65d5c1b0cad8996a843b52305b2712ffbf842c700487d4cee1ed719f22baacaacfddafb65572bcddd67d57fd1d2d389dee2430ffba4b34c3ab542d079446c7
   languageName: node
   linkType: hard
 
@@ -761,6 +771,20 @@ __metadata:
 "react-nextjs-basic-hooks-f9e769@workspace:react-nextjs-basic-hooks":
   version: 0.0.0-use.local
   resolution: "react-nextjs-basic-hooks-f9e769@workspace:react-nextjs-basic-hooks"
+  dependencies:
+    "@madatdata/react": latest
+    "@types/node": ^18.0.0
+    "@types/react": ^18.0.14
+    next: latest
+    react: 18.2.0
+    react-dom: 18.2.0
+    typescript: ^4.7.4
+  languageName: unknown
+  linkType: soft
+
+"react-nextjs-seafowl-efec31@workspace:react-nextjs-seafowl":
+  version: 0.0.0-use.local
+  resolution: "react-nextjs-seafowl-efec31@workspace:react-nextjs-seafowl"
   dependencies:
     "@madatdata/react": latest
     "@types/node": ^18.0.0
