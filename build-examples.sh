@@ -102,3 +102,5 @@ set +x
 echo "[+] READY TO GO: $WORKING_EXAMPLE"
 echo "[+] You can now cd into the example:"
 echo "cd $WORKING_EXAMPLE"
+echo "[+] NOTE: When you are done, if you want to go back to regular development"
+echo "    outside of the examples repo, you will probably want to run 'yarn clean'"
