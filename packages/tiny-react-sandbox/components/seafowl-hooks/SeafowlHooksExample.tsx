@@ -1,6 +1,8 @@
-import { SqlProvider, useSql } from "@madatdata/react/hooks-seafowl";
+import { useSqlProvider, makeSeafowlHTTPContext } from "@madatdata/react";
 
-const ExampleComponentUsingSQL = () => {
+const ExampleComponentUsingSQL = (
+  useSql: ReturnType<typeof useSqlProvider>["useSql"]
+) => {
   const { loading, error, response } = useSql<{
     total_impressions: number;
     total_clicks: number;
@@ -28,33 +30,37 @@ const ExampleComponentUsingSQL = () => {
 };
 
 export const SeafowlSampleQuery = () => {
+  const { SqlProvider, useSql } = useSqlProvider({
+    // @ts-ignore-erro
+    makeDataContext: makeSeafowlHTTPContext,
+    options: {
+      database: {
+        dbname: "seafowl", // arbitrary
+      },
+      authenticatedCredential: undefined,
+      host: {
+        // temporary hacky mess
+        dataHost: "demo.seafowl.cloud",
+        apexDomain: "bogus",
+        apiHost: "bogus",
+        baseUrls: {
+          gql: "bogus",
+          sql: "https://demo.seafowl.cloud/q",
+          auth: "bogus",
+        },
+        postgres: {
+          host: "demo.seafowl.cloud",
+          port: 6432,
+          ssl: false,
+        },
+      },
+    },
+  });
+
   // Uses splitgraph.com by default (anon access supported for public data)
   return (
-    <SqlProvider
-      options={{
-        database: {
-          dbname: "seafowl", // arbitrary
-        },
-        authenticatedCredential: undefined,
-        host: {
-          // temporary hacky mess
-          dataHost: "demo.seafowl.cloud",
-          apexDomain: "bogus",
-          apiHost: "bogus",
-          baseUrls: {
-            gql: "bogus",
-            sql: "https://demo.seafowl.cloud/q",
-            auth: "bogus",
-          },
-          postgres: {
-            host: "demo.seafowl.cloud",
-            port: 6432,
-            ssl: false,
-          },
-        },
-      }}
-    >
-      <ExampleComponentUsingSQL />
+    <SqlProvider>
+      <ExampleComponentUsingSQL useSql={useSql} />
     </SqlProvider>
   );
 };

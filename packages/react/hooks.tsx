@@ -11,7 +11,12 @@ import {
 
 import type {
   // Client,
-  // DataContext,
+  PluginList,
+  BaseDb,
+  DbOptions,
+  Db,
+  DataContext,
+  DataContextOptions,
   ExecutionResultFromRowShape,
   ExecutionResultWithArrayShapedRows,
   ExecutionResultWithObjectShapedRows,
@@ -19,6 +24,7 @@ import type {
   UnknownArrayShape,
   UnknownObjectShape,
   UnknownRowShape,
+  ClientOptions,
 } from "@madatdata/core";
 
 import {
@@ -45,97 +51,117 @@ export const makeDefaultAnonymousContext = () => {
   return defaultAnonymousContext;
 };
 
-export const DSXContext = createContext<SplitgraphDataContext>(
-  makeSplitgraphHTTPContext()
-);
+// export const DSXContext = createContext<DataContext>(
+//   makeSplitgraphHTTPContext()
+// );
 
-export const SqlProvider = ({
-  children,
+export const useSqlProvider = <
+  ConcretePluginList extends PluginList,
+  ConcretePluginHostContext extends object,
+  ConcreteDb extends BaseDb<ConcretePluginList, ConcretePluginHostContext>,
+  ConcreteDataContext extends DataContext<ConcreteDb>,
+  MakeDataContextOptions extends DataContextOptions<
+    ConcreteDb,
+    ConcretePluginList
+  >,
+  MakeDataContext extends (opts?: MakeDataContextOptions) => ConcreteDataContext
+>({
+  makeDataContext,
   options,
-}: PropsWithChildren<{
-  options: Parameters<typeof makeSplitgraphHTTPContext>[0];
-}>) => {
-  const stableContext = useMemo(() => makeSplitgraphHTTPContext(options), []);
-
-  return (
-    <DSXContext.Provider value={stableContext}>{children}</DSXContext.Provider>
+}: {
+  makeDataContext: MakeDataContext;
+  options: MakeDataContextOptions;
+}) => {
+  const SqlContext = useMemo(
+    () => createContext<ConcreteDataContext>(makeDataContext(options)),
+    [makeDataContext, options]
   );
-};
 
-export const useDSXContext = () => useContext(DSXContext);
+  const SqlProvider = useMemo(
+    () =>
+      ({
+        children,
+        makeDataContext,
+      }: PropsWithChildren<{
+        makeDataContext: MakeDataContext;
+        options: Parameters<MakeDataContext>[0];
+      }>) => {
+        const stableContext = useMemo(() => makeDataContext(options), []);
 
-export const makeDataContext = () => {};
+        return (
+          <SqlContext.Provider value={stableContext}>
+            {children}
+          </SqlContext.Provider>
+        );
+      },
+    [SqlContext]
+  );
 
-// export const DSXQuery = ({
-//   children,
-// }: {
-//   children: ReturnType<typeof sql>;
-// }) => {
-//   return <>{children}</>;
-// };
+  const useSqlContext = useMemo(() => () => useContext(SqlContext), []);
 
-// export const sql = (
-//   chunks: TemplateStringsArray,
-//   ...variables: any[]
-// ): string => {
-//   return chunks.join("\n");
-// };
-
-export function useSql<RowShape extends UnknownArrayShape>(
-  query: string,
-  executeOptions: { rowMode: "array" }
-): {
-  loading: boolean;
-  response: ExecutionResultWithArrayShapedRows<RowShape> | null;
-  error: QueryError | null;
-};
-
-export function useSql<RowShape extends UnknownObjectShape>(
-  query: string,
-  executeOptions?: { rowMode: "object" }
-): {
-  loading: boolean;
-  response: ExecutionResultWithObjectShapedRows<RowShape> | null;
-  error: QueryError | null;
-};
-
-export function useSql<RowShape extends UnknownRowShape>(
-  query: string,
-  execOptions?: { rowMode?: "object" | "array" }
-) {
-  const [state, setState] = useState<{
+  function useSql<RowShape extends UnknownArrayShape>(
+    query: string,
+    executeOptions: { rowMode: "array" }
+  ): {
     loading: boolean;
-    response: ExecutionResultFromRowShape<RowShape> | null;
+    response: ExecutionResultWithArrayShapedRows<RowShape> | null;
     error: QueryError | null;
-  }>({
-    loading: true,
-    response: null,
-    error: null,
-  });
+  };
 
-  const { client } = useDSXContext();
+  function useSql<RowShape extends UnknownObjectShape>(
+    query: string,
+    executeOptions?: { rowMode: "object" }
+  ): {
+    loading: boolean;
+    response: ExecutionResultWithObjectShapedRows<RowShape> | null;
+    error: QueryError | null;
+  };
 
-  useEffect(() => {
-    if (!client) {
-      return;
-    }
+  function useSql<RowShape extends UnknownRowShape>(
+    query: string,
+    execOptions?: { rowMode?: "object" | "array" }
+  ) {
+    const [state, setState] = useState<{
+      loading: boolean;
+      response: ExecutionResultFromRowShape<RowShape> | null;
+      error: QueryError | null;
+    }>({
+      loading: true,
+      response: null,
+      error: null,
+    });
 
-    client
-      .execute<RowShape>(query, {
-        rowMode: execOptions?.rowMode ?? "object",
-        ...execOptions,
-      })
-      .then((result) =>
-        setState({
-          loading: false,
-          response: result.response,
-          error: result.error,
+    const { client } = useSqlContext();
+
+    useEffect(() => {
+      if (!client) {
+        return;
+      }
+
+      client
+        .execute<RowShape>(query, {
+          rowMode: execOptions?.rowMode ?? "object",
+          ...execOptions,
         })
-      );
-  }, [query, execOptions?.rowMode]);
+        .then((result) =>
+          setState({
+            loading: false,
+            response: result.response,
+            error: result.error,
+          })
+        );
+    }, [query, execOptions?.rowMode]);
 
-  return state;
-}
+    return state;
+  }
+
+  return {
+    SqlContext,
+    SqlProvider,
+    useSqlContext,
+    useSql,
+  };
+};
 
 export const HelloButton = () => {
   const [state, setState] = useState<"hello" | "goodbye">("hello");
