@@ -1,37 +1,20 @@
-import { SqlProvider, useSql } from "@madatdata/react";
+import { useSql, SqlProvider, makeSeafowlHTTPContext } from "@madatdata/react";
+import { useMemo } from "react";
 
 const ExampleComponentUsingSQL = () => {
   const { loading, error, response } = useSql<{
-    origin_airport: string;
-    destination_airport: string;
-    origin_city: string;
-    destination_city: string;
-    passengers: number;
-    seats: number;
-    flights: number;
-    distance: number;
-    fly_month: string;
-    origin_pop: number;
-    destination_pop: number;
-    id: number;
-  }>(
-    `SELECT
-    "origin_airport",
-    "destination_airport",
-    "origin_city",
-    "destination_city",
-    "passengers",
-    "seats",
-    "flights",
-    "distance",
-    "fly_month",
-    "origin_pop",
-    "destination_pop",
-    "id"
-FROM
-    "splitgraph/domestic_us_flights:latest"."flights"
-LIMIT 100;`
-  );
+    total_impressions: number;
+    total_clicks: number;
+    page: string;
+    average_ctr: number;
+  }>(`SELECT page,
+    SUM(impressions::double) AS total_impressions,
+    SUM(clicks::double) AS total_clicks,
+    SUM(clicks::double) / SUM(impressions::double) AS average_ctr
+    FROM "miles/splitgraph-seafowl-search-console.performance_report_page"
+    WHERE site_url = 'sc-domain:splitgraph.com'
+    GROUP BY 1 ORDER BY 3 DESC
+    LIMIT 100;`);
 
   return (
     <pre
@@ -45,13 +28,40 @@ LIMIT 100;`
   );
 };
 
-const SplitgraphSampleQuery = () => {
+const SeafowlSampleQuery = () => {
+  const seafowlDataContext = useMemo(
+    () =>
+      makeSeafowlHTTPContext({
+        database: {
+          dbname: "seafowl", // arbitrary
+        },
+        authenticatedCredential: undefined,
+        host: {
+          // temporary hacky mess
+          dataHost: "demo.seafowl.cloud",
+          apexDomain: "bogus",
+          apiHost: "bogus",
+          baseUrls: {
+            gql: "bogus",
+            sql: "https://demo.seafowl.cloud/q",
+            auth: "bogus",
+          },
+          postgres: {
+            host: "demo.seafowl.cloud",
+            port: 6432,
+            ssl: false,
+          },
+        },
+      }),
+    []
+  );
+
   // Uses splitgraph.com by default (anon access supported for public data)
   return (
-    <SqlProvider options={{ credential: null }}>
+    <SqlProvider dataContext={seafowlDataContext}>
       <ExampleComponentUsingSQL />
     </SqlProvider>
   );
 };
 
-export default SplitgraphSampleQuery;
+export default SeafowlSampleQuery;
