@@ -38,16 +38,16 @@ export const SeafowlSampleQuery = () => {
         authenticatedCredential: undefined,
         host: {
           // temporary hacky mess
-          dataHost: "dimmadome-data-developers.fly.dev",
+          dataHost: "demo.seafowl.cloud",
           apexDomain: "bogus",
           apiHost: "bogus",
           baseUrls: {
             gql: "bogus",
-            sql: "https://dimmadome-data-developers.fly.dev/q",
+            sql: "https://demo.seafowl.cloud/q",
             auth: "bogus",
           },
           postgres: {
-            host: "dimmadome-data-developers.fly.dev",
+            host: "demo.seafowl.cloud",
             port: 6432,
             ssl: false,
           },
