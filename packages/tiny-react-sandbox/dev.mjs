@@ -9,6 +9,7 @@ const context = await esbuild
       "./pages/dsx.tsx",
       "./pages/ddn.tsx",
       "./pages/seafowl.tsx",
+      "./pages/seafowl-hooks.tsx",
     ],
     bundle: true,
     external: ["crypto"],
@@ -45,3 +46,4 @@ console.log(" http://localhost:3000/ast-debugger.html");
 console.log(" http://localhost:3000/dsx.html");
 console.log(" http://localhost:3000/ddn.html");
 console.log(" http://localhost:3000/seafowl.html");
+console.log(" http://localhost:3000/seafowl-hooks.html");
