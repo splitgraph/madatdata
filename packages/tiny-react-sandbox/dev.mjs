@@ -8,6 +8,7 @@ const context = await esbuild
       "./pages/ast-debugger.tsx",
       "./pages/dsx.tsx",
       "./pages/ddn.tsx",
+      "./pages/seafowl.tsx",
     ],
     bundle: true,
     external: ["crypto"],
@@ -43,3 +44,4 @@ console.log(`Listening on http://${serveResult.host}:${serveResult.port}`);
 console.log(" http://localhost:3000/ast-debugger.html");
 console.log(" http://localhost:3000/dsx.html");
 console.log(" http://localhost:3000/ddn.html");
+console.log(" http://localhost:3000/seafowl.html");
