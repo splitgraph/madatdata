@@ -103,11 +103,6 @@ export class DbSeafowl<SeafowlPluginList extends PluginList>
 
   async fetchCredentials() {
     await Promise.resolve();
-    this.setAuthenticatedCredential({
-      // @ts-expect-error https://stackoverflow.com/a/70711231
-      token: import.meta.env.VITE_TEST_SEAFOWL_SECRET,
-      anonymous: false,
-    });
   }
 
   public get httpClientOptions(): HTTPClientOptions {
