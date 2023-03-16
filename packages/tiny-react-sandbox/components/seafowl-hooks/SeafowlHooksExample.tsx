@@ -1,8 +1,7 @@
-import { useSqlProvider, makeSeafowlHTTPContext } from "@madatdata/react";
+import { useSql, SqlProvider, makeSeafowlHTTPContext } from "@madatdata/react";
+import { useMemo } from "react";
 
-const ExampleComponentUsingSQL = (
-  useSql: ReturnType<typeof useSqlProvider>["useSql"]
-) => {
+const ExampleComponentUsingSQL = () => {
   const { loading, error, response } = useSql<{
     total_impressions: number;
     total_clicks: number;
@@ -30,37 +29,37 @@ const ExampleComponentUsingSQL = (
 };
 
 export const SeafowlSampleQuery = () => {
-  const { SqlProvider, useSql } = useSqlProvider({
-    // @ts-ignore-erro
-    makeDataContext: makeSeafowlHTTPContext,
-    options: {
-      database: {
-        dbname: "seafowl", // arbitrary
-      },
-      authenticatedCredential: undefined,
-      host: {
-        // temporary hacky mess
-        dataHost: "demo.seafowl.cloud",
-        apexDomain: "bogus",
-        apiHost: "bogus",
-        baseUrls: {
-          gql: "bogus",
-          sql: "https://demo.seafowl.cloud/q",
-          auth: "bogus",
+  const seafowlDataContext = useMemo(
+    () =>
+      makeSeafowlHTTPContext({
+        database: {
+          dbname: "seafowl", // arbitrary
         },
-        postgres: {
-          host: "demo.seafowl.cloud",
-          port: 6432,
-          ssl: false,
+        authenticatedCredential: undefined,
+        host: {
+          // temporary hacky mess
+          dataHost: "demo.seafowl.cloud",
+          apexDomain: "bogus",
+          apiHost: "bogus",
+          baseUrls: {
+            gql: "bogus",
+            sql: "https://demo.seafowl.cloud/q",
+            auth: "bogus",
+          },
+          postgres: {
+            host: "demo.seafowl.cloud",
+            port: 6432,
+            ssl: false,
+          },
         },
-      },
-    },
-  });
+      }),
+    []
+  );
 
   // Uses splitgraph.com by default (anon access supported for public data)
   return (
-    <SqlProvider>
-      <ExampleComponentUsingSQL useSql={useSql} />
+    <SqlProvider dataContext={seafowlDataContext}>
+      <ExampleComponentUsingSQL />
     </SqlProvider>
   );
 };

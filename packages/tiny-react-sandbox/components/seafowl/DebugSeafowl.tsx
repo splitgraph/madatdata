@@ -2,7 +2,7 @@ import { SplitPaneInputOutput } from "../debugging/SplitPaneInputOutput";
 
 import { ConfigWidget } from "./ConfigWidget";
 
-import { makeSeafowlHTTPContext } from "@madatdata/react/hooks-seafowl";
+import { makeSeafowlHTTPContext } from "@madatdata/react";
 import { usePersistedConfig } from "./usePersistedConfig";
 
 export const createRealSeafowlDataContext = ({

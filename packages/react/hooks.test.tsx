@@ -9,12 +9,17 @@ import {
 import { rest } from "msw";
 
 import { defaultHost } from "@madatdata/core";
-import {
-  HelloButton,
-  SqlProvider,
-  useSql,
-  makeDefaultAnonymousContext,
-} from "./hooks";
+import { HelloButton, SqlProvider, useSql } from "./hooks";
+
+import { makeSplitgraphHTTPContext } from "@madatdata/core";
+
+const makeDefaultAnonymousContext = () => {
+  const defaultAnonymousContext = makeSplitgraphHTTPContext({
+    credential: null,
+  });
+
+  return defaultAnonymousContext;
+};
 
 const DebugQuery = () => {
   const { loading, error, response } = useSql<{ "?column?": number }>(
@@ -84,7 +89,7 @@ describe("hooks", () => {
 
   it("renders the sql according to the mock", async () => {
     render(
-      <SqlProvider options={{ credential: null }}>
+      <SqlProvider dataContext={makeDefaultAnonymousContext()}>
         <DebugQuery />
       </SqlProvider>
     );
