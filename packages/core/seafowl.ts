@@ -3,6 +3,7 @@ import { makeClient } from "@madatdata/client-http";
 import { makeDb, makeDefaultPluginList } from "@madatdata/db-seafowl";
 // TODO: these are splitgraph specific defaults
 import { defaultDatabase, defaultHost } from "@madatdata/base-client";
+export { makeClient as makeSeafowlClient };
 export { makeDb as makeSeafowlDb };
 
 // note: "default" is redundant given base-client, but it's a TODO to extract it
