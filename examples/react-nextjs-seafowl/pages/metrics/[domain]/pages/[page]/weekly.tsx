@@ -6,6 +6,7 @@ import {
   LoadingSkeleton,
   SqlQueryError,
 } from "../../../../../components/common";
+import { Breadcrumbs } from "../../../../../components/Breadcrumbs";
 
 const WeeklyReportsForPage = () => {
   const { domain, page } = useRouter().query as {
@@ -30,6 +31,29 @@ const WeeklyReportsForPage = () => {
 
   return (
     <div>
+      <Breadcrumbs
+        crumbs={[
+          { href: "/", anchor: "Home" },
+          { href: "/metrics", anchor: "Metrics" },
+          { href: `/metrics/${encodeURIComponent(domain)}`, anchor: domain },
+          {
+            href: `/metrics/${encodeURIComponent(domain)}/pages`,
+            anchor: "Pages",
+          },
+          {
+            href: `/metrics/${encodeURIComponent(
+              domain
+            )}/pages/${encodeURIComponent(page)}`,
+            anchor: page,
+          },
+          {
+            href: `/metrics/${encodeURIComponent(
+              domain
+            )}/pages/${encodeURIComponent(page)}/weekly`,
+            anchor: "Weekly",
+          },
+        ]}
+      />
       <h2>
         Weekly Reports for <code>{domain}</code> traffic to page:{" "}
         <code>{page}</code>

@@ -1,8 +1,7 @@
 import Link from "next/link";
-import type { SearchDomain } from "../../../types";
 import type { GetStaticPaths, GetStaticProps } from "next";
 import type { ParsedUrlQuery } from "querystring";
-import { useRouter } from "next/router";
+import { Breadcrumbs } from "../../../components/Breadcrumbs";
 
 const supportedDomains = ["seafowl.io"] as const;
 
@@ -34,13 +33,37 @@ const MetricsForDomainIndexPage = ({
 }: MetricsDomainIndexPageProps) => {
   return (
     <div>
+      <Breadcrumbs
+        crumbs={[
+          { href: "/", anchor: "Home" },
+          { href: "/metrics", anchor: "Metrics" },
+          { href: `/metrics/${encodeURIComponent(domain)}`, anchor: domain },
+        ]}
+      />
       <h2>
         Metrics for <code>{domain}</code>
       </h2>
+
+      <h3>Overall:</h3>
+      <ul>
+        <li key="weekly">
+          <Link href={`/metrics/${encodeURIComponent(domain)}/weekly`}>
+            Weekly
+          </Link>
+        </li>
+      </ul>
+
+      <h3>By Dimension:</h3>
       <ul>
         {metrics.map(({ metric, anchor }) => (
           <li key={domain}>
-            <Link href={`/metrics/${domain}/${metric}`}>{anchor}</Link>
+            <Link
+              href={`/metrics/${encodeURIComponent(
+                domain
+              )}/${encodeURIComponent(metric)}`}
+            >
+              {anchor}
+            </Link>
           </li>
         ))}
       </ul>

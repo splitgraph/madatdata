@@ -13,35 +13,8 @@ done manually in this case.)
 
 The reason for using Search data in this example is because it lends itself well
 to per-page group-bys, for example a page for each keyword and a page for each
-URL, all of which are not known ahead of time, and can use Next.js Incremental
-Static Regeneration (ISR) to generate their pages.
+URL.
 
-Note it's slightly confusing because there is `pages/pages`, where the second
-`/pages` refers to "pages" as in seafowl.io pages that are indexed by Google
-Search.
-
-Pages:
-
-- `/metrics/index`
-
-Queries:
-
-- Highest clicks by page
-
-```
-
-/metrics/index
-  Display list of available domains, link each to ./[domain]
-
-/metrics/[domain]
-  Display link to ./queries and ./pages
-
-/metrics/[domain]/queries
-  Display list of queries, and link each to ./by-query
-
-/metrics/[domain]/by-query/[search_query]
-  Display monthly reports for given domain and search query
-
-/metrics/[domain]/by-page/[site_page]
-  Display weekly reports for given domain and page
-```
+These could use Incremental Static Regeneration, since many of them are known
+ahead of time, but at the moment this demo just showcases using hooks, except
+for on the root page that lists available domains and metrics.
