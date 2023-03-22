@@ -45,9 +45,6 @@ const PagesForDomain = () => {
         ],
       }}
     >
-      <h2>
-        Indexed pages on <code>{domain}</code>
-      </h2>
       <ul>
         {rows.map(({ page, average_ctr, total_clicks, total_impressions }) => (
           <li key={page}>
