@@ -1,5 +1,5 @@
 .crumb::after {
-  content: '\00bb';
+  content: "\00bb";
   display: inline-block;
   padding-left: 10px;
   padding-right: 10px;
