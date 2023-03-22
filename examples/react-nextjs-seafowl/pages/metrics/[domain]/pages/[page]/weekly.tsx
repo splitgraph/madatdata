@@ -6,7 +6,7 @@ import {
   LoadingSkeleton,
   SqlQueryError,
 } from "../../../../../components/common";
-import { Breadcrumbs } from "../../../../../components/Breadcrumbs";
+import { BaseLayout } from "../../../../../components/BaseLayout";
 
 const WeeklyReportsForPage = () => {
   const { domain, page } = useRouter().query as {
@@ -30,9 +30,16 @@ const WeeklyReportsForPage = () => {
   const { rows } = response;
 
   return (
-    <div>
-      <Breadcrumbs
-        crumbs={[
+    <BaseLayout
+      heading={
+        <>
+          {" "}
+          Weekly Reports for <code>{domain}</code> traffic to page:{" "}
+          <code>{page}</code>
+        </>
+      }
+      breadcrumbs={{
+        crumbs: [
           { href: "/", anchor: "Home" },
           { href: "/metrics", anchor: "Metrics" },
           { href: `/metrics/${encodeURIComponent(domain)}`, anchor: domain },
@@ -52,12 +59,9 @@ const WeeklyReportsForPage = () => {
             )}/pages/${encodeURIComponent(page)}/weekly`,
             anchor: "Weekly",
           },
-        ]}
-      />
-      <h2>
-        Weekly Reports for <code>{domain}</code> traffic to page:{" "}
-        <code>{page}</code>
-      </h2>
+        ],
+      }}
+    >
       <ul>
         {rows.map(
           ({
@@ -87,7 +91,7 @@ const WeeklyReportsForPage = () => {
           )
         )}
       </ul>
-    </div>
+    </BaseLayout>
   );
 };
 

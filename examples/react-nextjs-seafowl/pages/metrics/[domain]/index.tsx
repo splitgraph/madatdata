@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { GetStaticPaths, GetStaticProps } from "next";
 import type { ParsedUrlQuery } from "querystring";
-import { Breadcrumbs } from "../../../components/Breadcrumbs";
+import { BaseLayout } from "../../../components/BaseLayout";
 
 const supportedDomains = ["seafowl.io"] as const;
 
@@ -32,18 +32,20 @@ const MetricsForDomainIndexPage = ({
   metrics,
 }: MetricsDomainIndexPageProps) => {
   return (
-    <div>
-      <Breadcrumbs
-        crumbs={[
+    <BaseLayout
+      heading={
+        <>
+          Metrics for <code>{domain}</code>
+        </>
+      }
+      breadcrumbs={{
+        crumbs: [
           { href: "/", anchor: "Home" },
           { href: "/metrics", anchor: "Metrics" },
           { href: `/metrics/${encodeURIComponent(domain)}`, anchor: domain },
-        ]}
-      />
-      <h2>
-        Metrics for <code>{domain}</code>
-      </h2>
-
+        ],
+      }}
+    >
       <h3>Overall:</h3>
       <ul>
         <li key="weekly">
@@ -67,7 +69,7 @@ const MetricsForDomainIndexPage = ({
           </li>
         ))}
       </ul>
-    </div>
+    </BaseLayout>
   );
 };
 

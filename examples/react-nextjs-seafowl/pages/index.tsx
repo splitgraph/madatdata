@@ -1,17 +1,18 @@
-import { Breadcrumbs } from "../components/Breadcrumbs";
+import { BaseLayout } from "../components/BaseLayout";
 import Link from "next/link";
 
 const SeafowlSampleQuery = () => {
   return (
-    <div>
-      <Breadcrumbs crumbs={[{ href: "/", anchor: "Home" }]} />
-      <h2>Seafowl Demo</h2>
+    <BaseLayout
+      heading="Seafowl Demo"
+      breadcrumbs={{ crumbs: [{ href: "/", anchor: "Home" }] }}
+    >
       <ul>
         <li>
           <Link href="/metrics">Metrics by Domain</Link>
         </li>
       </ul>
-    </div>
+    </BaseLayout>
   );
 };
 

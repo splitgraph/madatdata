@@ -6,6 +6,7 @@ import {
   LoadingSkeleton,
   SqlQueryError,
 } from "../../../../../components/common";
+import { BaseLayout } from "../../../../../components/BaseLayout";
 
 const MonthlyReportsForSearchQuery = () => {
   const { domain, search_query: query } = useRouter().query as {
@@ -29,11 +30,37 @@ const MonthlyReportsForSearchQuery = () => {
   const { rows } = response;
 
   return (
-    <div>
-      <h2>
-        Monthly Reports for <code>{domain}</code> traffic from query:{" "}
-        <code>{query}</code>
-      </h2>
+    <BaseLayout
+      heading={
+        <>
+          Monthly Reports for <code>{domain}</code> traffic from query:{" "}
+          <code>{query}</code>
+        </>
+      }
+      breadcrumbs={{
+        crumbs: [
+          { href: "/", anchor: "Home" },
+          { href: "/metrics", anchor: "Metrics" },
+          { href: `/metrics/${encodeURIComponent(domain)}`, anchor: domain },
+          {
+            href: `/metrics/${encodeURIComponent(domain)}/queries`,
+            anchor: "Queries",
+          },
+          {
+            href: `/metrics/${encodeURIComponent(
+              domain
+            )}/pages/${encodeURIComponent(query)}`,
+            anchor: query,
+          },
+          {
+            href: `/metrics/${encodeURIComponent(
+              domain
+            )}/pages/${encodeURIComponent(query)}/monthly`,
+            anchor: "Monthly",
+          },
+        ],
+      }}
+    >
       <ul>
         {rows.map(
           ({
@@ -63,7 +90,7 @@ const MonthlyReportsForSearchQuery = () => {
           )
         )}
       </ul>
-    </div>
+    </BaseLayout>
   );
 };
 

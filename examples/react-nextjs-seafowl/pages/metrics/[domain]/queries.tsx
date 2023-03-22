@@ -7,7 +7,7 @@ import {
   SqlQueryError,
 } from "../../../components/common";
 import Link from "next/link";
-import { Breadcrumbs } from "../../../components/Breadcrumbs";
+import { BaseLayout } from "../../../components/BaseLayout";
 
 const QueriesForDomain = () => {
   const domain = useRouter().query.domain as SearchDomain;
@@ -27,9 +27,14 @@ const QueriesForDomain = () => {
   const { rows } = response;
 
   return (
-    <div>
-      <Breadcrumbs
-        crumbs={[
+    <BaseLayout
+      heading={
+        <>
+          Queries for <code>{domain}</code>
+        </>
+      }
+      breadcrumbs={{
+        crumbs: [
           { href: "/", anchor: "Home" },
           { href: "/metrics", anchor: "Metrics" },
           { href: `/metrics/${encodeURIComponent(domain)}`, anchor: domain },
@@ -37,11 +42,9 @@ const QueriesForDomain = () => {
             href: `/metrics/${encodeURIComponent(domain)}/queries`,
             anchor: "Queries",
           },
-        ]}
-      />
-      <h2>
-        Queries for <code>{domain}</code>
-      </h2>
+        ],
+      }}
+    >
       <ul>
         {rows.map(({ query, average_ctr, total_clicks, total_impressions }) => (
           <li key={query}>
@@ -57,7 +60,7 @@ const QueriesForDomain = () => {
           </li>
         ))}
       </ul>
-    </div>
+    </BaseLayout>
   );
 };
 

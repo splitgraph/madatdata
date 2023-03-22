@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import type { SearchDomain, SitePage } from "../../../../types";
 import Link from "next/link";
-import { Breadcrumbs } from "../../../../components/Breadcrumbs";
+import { BaseLayout } from "../../../../components/BaseLayout";
 
 const MetricsForPageIndex = () => {
   const { domain, page } = useRouter().query as {
@@ -10,9 +10,14 @@ const MetricsForPageIndex = () => {
   };
 
   return (
-    <div>
-      <Breadcrumbs
-        crumbs={[
+    <BaseLayout
+      heading={
+        <>
+          Traffic for <code>{domain}</code> to page: <code>{page}</code>
+        </>
+      }
+      breadcrumbs={{
+        crumbs: [
           { href: "/", anchor: "Home" },
           { href: "/metrics", anchor: "Metrics" },
           { href: `/metrics/${encodeURIComponent(domain)}`, anchor: domain },
@@ -26,11 +31,9 @@ const MetricsForPageIndex = () => {
             )}/pages/${encodeURIComponent(page)}`,
             anchor: page,
           },
-        ]}
-      />
-      <h2>
-        Traffic for <code>{domain}</code> to page: <code>{page}</code>
-      </h2>
+        ],
+      }}
+    >
       <ul>
         <li>
           <Link
@@ -42,7 +45,7 @@ const MetricsForPageIndex = () => {
           </Link>
         </li>
       </ul>
-    </div>
+    </BaseLayout>
   );
 };
 

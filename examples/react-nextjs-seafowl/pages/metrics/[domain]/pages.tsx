@@ -7,7 +7,7 @@ import {
   SqlQueryError,
 } from "../../../components/common";
 import Link from "next/link";
-import { Breadcrumbs } from "../../../components/Breadcrumbs";
+import { BaseLayout } from "../../../components/BaseLayout";
 
 const PagesForDomain = () => {
   const domain = useRouter().query.domain as SearchDomain;
@@ -27,9 +27,14 @@ const PagesForDomain = () => {
   const { rows } = response;
 
   return (
-    <div>
-      <Breadcrumbs
-        crumbs={[
+    <BaseLayout
+      heading={
+        <>
+          Indexed pages on <code>{domain}</code>
+        </>
+      }
+      breadcrumbs={{
+        crumbs: [
           { href: "/", anchor: "Home" },
           { href: "/metrics", anchor: "Metrics" },
           { href: `/metrics/${encodeURIComponent(domain)}`, anchor: domain },
@@ -37,8 +42,9 @@ const PagesForDomain = () => {
             href: `/metrics/${encodeURIComponent(domain)}/pages`,
             anchor: "Pages",
           },
-        ]}
-      />
+        ],
+      }}
+    >
       <h2>
         Indexed pages on <code>{domain}</code>
       </h2>
@@ -57,7 +63,7 @@ const PagesForDomain = () => {
           </li>
         ))}
       </ul>
-    </div>
+    </BaseLayout>
   );
 };
 
