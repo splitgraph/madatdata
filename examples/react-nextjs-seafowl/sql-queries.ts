@@ -102,7 +102,8 @@ export const useWeeklyReportForPage = ({
         average_ctr,
         (total_clicks / LAG(total_clicks) OVER (ORDER BY week)) * 100 - 100
             AS weekly_clicks_growth_pct
-    FROM weekly_report;`);
+    FROM weekly_report
+    ORDER BY 1 DESC;`);
 
 /**
  * List of queries, ordered descending by total clicks, where each row is a
