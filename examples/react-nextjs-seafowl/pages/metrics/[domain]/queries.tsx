@@ -4,7 +4,7 @@ import type { SearchDomain } from "../../../types";
 import {
   EmptyResult,
   LoadingSkeleton,
-  QueryErrorPage,
+  SqlQueryError,
 } from "../../../components/common";
 import Link from "next/link";
 
@@ -18,7 +18,7 @@ const QueriesForDomain = () => {
   if (loading) {
     return <LoadingSkeleton />;
   } else if (error) {
-    return <QueryErrorPage error={error} />;
+    return <SqlQueryError error={error} />;
   } else if (!response.rows.length) {
     return <EmptyResult />;
   }
@@ -34,7 +34,7 @@ const QueriesForDomain = () => {
         {rows.map(({ query, average_ctr, total_clicks, total_impressions }) => (
           <li key={query}>
             <Link
-              href={`/metrics/${domain}/by-query/${encodeURIComponent(query)}`}
+              href={`/metrics/${domain}/queries/${encodeURIComponent(query)}`}
             >
               {query}
             </Link>{" "}

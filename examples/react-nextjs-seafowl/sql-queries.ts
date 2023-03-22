@@ -137,7 +137,7 @@ export const useMetricsByQuery = ({ domain }: { domain: SearchDomain }) =>
  * Monthly "report" for the given search query and domain (each row is a report), where
  * the report contains various metrics (average CTR, total clicks, total
  * impressions) and, where applicable, the growth percentage in total clicks
- * since the previous month.
+ * since the previous month. Most recent months appear first.
  *
  * Example:
  *
@@ -178,4 +178,5 @@ export const useMonthlyReportForQuery = ({
         average_ctr,
         (total_clicks / LAG(total_clicks) OVER (ORDER BY month)) * 100 - 100
             AS monthly_clicks_growth_pct
-    FROM monthly_report;`);
+    FROM monthly_report
+    ORDER BY 1 DESC;`);

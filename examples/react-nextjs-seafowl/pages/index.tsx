@@ -1,9 +1,10 @@
-import type { SearchDomain } from "../types";
-import { useMetricsByQuery } from "../sql-queries";
+import type { SearchDomain, SearchQuery } from "../types";
+import { useMonthlyReportForQuery } from "../sql-queries";
 
 const ExampleComponentUsingSQL = () => {
-  const { loading, error, response } = useMetricsByQuery({
+  const { loading, error, response } = useMonthlyReportForQuery({
     domain: "seafowl.io" as SearchDomain,
+    query: "seafowl" as SearchQuery,
   });
   return (
     <pre
