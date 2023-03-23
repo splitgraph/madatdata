@@ -75,13 +75,13 @@ const MonthlyReportsForSearchQuery = () => {
                     {typeof monthly_clicks_growth_pct !== "undefined" && (
                       <span>
                         {" "}
-                        ({(monthly_clicks_growth_pct * 100).toFixed(2)}% growth
-                        from previous month)
+                        ({monthly_clicks_growth_pct.toFixed(2)}% growth from
+                        previous month)
                       </span>
                     )}
                   </li>
                   <li>{total_impressions} total impressions</li>
-                  <li>{(average_ctr * 100).toFixed(2)} average CTR</li>
+                  <li>{(average_ctr * 100).toFixed(2)}% average CTR</li>
                 </ul>
               </li>
             )

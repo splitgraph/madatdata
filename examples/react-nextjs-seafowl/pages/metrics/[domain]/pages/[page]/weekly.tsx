@@ -81,13 +81,13 @@ const WeeklyReportsForPage = () => {
                     {typeof weekly_clicks_growth_pct !== "undefined" && (
                       <span>
                         {" "}
-                        ({(weekly_clicks_growth_pct * 100).toFixed(2)}% growth
-                        from previous week)
+                        ({weekly_clicks_growth_pct.toFixed(2)}% growth from
+                        previous week)
                       </span>
                     )}
                   </li>
                   <li>{total_impressions} total impressions</li>
-                  <li>{(average_ctr * 100).toFixed(2)} average CTR</li>
+                  <li>{(average_ctr * 100).toFixed(2)}% average CTR</li>
                 </ul>
               </li>
             )

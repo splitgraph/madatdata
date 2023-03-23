@@ -51,7 +51,7 @@ const WeeklyOverallReports = () => {
                 <ul>
                   <li>{total_clicks} total clicks</li>
                   <li>{total_impressions} total impressions</li>
-                  <li>{(average_ctr * 100).toFixed(2)} average CTR</li>
+                  <li>{(average_ctr * 100).toFixed(2)}% average CTR</li>
                 </ul>
               </li>
             )
