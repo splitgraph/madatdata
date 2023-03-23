@@ -1,0 +1,17 @@
+.breadcrumbs {
+  display: inline;
+  list-style-type: none;
+  padding: 5px 20px;
+  background-color: #ffd28b;
+}
+
+.crumb::after {
+  content: "\00bb";
+  display: inline-block;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.crumb:last-of-type::after {
+  display: none;
+}

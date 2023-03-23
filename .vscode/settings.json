@@ -8,5 +8,6 @@
     "activityBarBadge.background": "#26b7f9",
     "activityBarBadge.foreground": "#15202b"
   },
-  "typescript.tsdk": "node_modules/typescript/lib"
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "prettier.configPath": "./.prettierrc"
 }

@@ -43,31 +43,28 @@ cleanup (keeping in mind it will kill any process on machine matching
 # This example is for examples/react-nextjs-basic-hooks
 # Modify the snippet accordingly depending on which example you're focused on
 
-echo "Start in root of repository" \
-  && { ( yarn verdaccio.start > verdaccio.log & export VERDACCIO_PID=$! ) ; } \
-  && { echo "VERDACCIO_PID: $VERDACCIO_PID" ; } \
-  && { yarn build && yarn verdaccio.reset ; } \
-  && { yarn with-verdaccio publish-all ; } \
-  && { cd examples ; yarn md.clear ; echo "Ignore above errors" ; VERDACCIO=http://localhost:4873 yarn install ; cd .. ; } \
-  && { cd examples/react-nextjs-basic-hooks && rm -rf .next ; VERDACCIO=http://localhost:4873 yarn install ; cd ../.. ; } \
-  ; { echo "Kill $VERDACCIO_PID" ; kill -9 "$VERDACCIO_PID" ; ps aux | grep verdaccio ; } \
-  ; { ps aux | grep verdaccio | grep node | awk '{ print $2 }' | xargs kill -9 ; } \
-  ; { echo "Waiting" ; wait $(jobs -p) ; } \
-  ; { echo "Verdaccio log: -----" ; cat verdaccio.log ; } \
-  ; { echo ps aux | grep verdaccio ; } \
-  ; { cd examples/react-nextjs-basic-hooks ; }
+./build-examples.sh examples/react-nextjs-basic-hooks
 ```
+
+**WARNING**: After running this, if you are doing regular development (i.e. not
+including examples), you will probably need to run `yarn clean` in the repo root
+to make sure everything rebuilds properly (this especially applies to
+`@madatdata/react`)
 
 Note: this specific example also removes the `.next` directory in
 `examples/react-nextjs-basic-hooks`. Other examples might have similar
 directories that need to be deleted - by the nature of having realistic
 examples, it can vary wildly and depends on the software being used.
 
+See `build-examples.sh` for exactly what is happening.
+
 Note: Each test cycle will change `yarn.lock` (which is why we do `yarn install`
-and not `yarn --immutable` here), as the hash of each local package changes.
-It's best practice not to commit these changes into the repository, and leave
-`yarn.lock` referencing hashes of public versions of our packages. This way, the
-next developer starts from a known working state.
+and not `yarn install --immutable` here), as the hash of each local package
+changes. It's best practice not to commit these changes into the repository, and
+leave `yarn.lock` referencing hashes of public versions of our packages. This
+way, the next developer starts from a known working state. If you check in the
+`examples/yarn.lock` file with these temporary SHAs, then nobody will be able to
+install the packages (at least without also using Verdaccio).
 
 ## Verdaccio: Delete everything (not just our packages) in `./examples`
 

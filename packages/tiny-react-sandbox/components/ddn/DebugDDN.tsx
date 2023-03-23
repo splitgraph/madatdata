@@ -3,10 +3,44 @@ import { SplitPaneInputOutput } from "../debugging/SplitPaneInputOutput";
 
 import { AuthWidget } from "./AuthWidget";
 
-import { makeClient } from "@madatdata/client-http/client-http";
+import { makeClient, type HTTPStrategies } from "@madatdata/client-http";
+import { makeAuthHeaders } from "@madatdata/react";
 import { usePersistedCredential } from "./usePersistedCredential";
 
-const client = makeClient({});
+const splitgraphClientOptions = {
+  bodyMode: "json",
+  strategies: {
+    makeFetchOptions: ({ credential, query, execOptions }) => {
+      console.log("got credential...:", credential);
+
+      // HACKY: atm, splitgraph API does not accept "object" as valid param
+      // so remove it from execOptions (hacky because ideal is `...execOptions`)
+      const httpExecOptions =
+        execOptions?.rowMode === "object"
+          ? (({ rowMode, ...rest }) => rest)(execOptions)
+          : execOptions;
+
+      return {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...makeAuthHeaders(
+            credential
+          ) /* fixme: smell? prefer `this.credential`? */,
+        },
+        body: JSON.stringify({ sql: query, ...httpExecOptions }),
+      };
+    },
+    makeQueryURL: async ({ host, database }) => {
+      return Promise.resolve(host.baseUrls.sql + "/" + database.dbname);
+    },
+  } as HTTPStrategies,
+};
+
+const client = makeClient({
+  credential: null,
+  ...splitgraphClientOptions,
+});
 
 export const DebugDDN = () => {
   const { credential, loading } = usePersistedCredential();

@@ -2,7 +2,6 @@ import {
   // useSyncExternalStore,
   createContext,
   type PropsWithChildren,
-  useMemo,
   useContext,
   useEffect,
   useState,
@@ -10,8 +9,8 @@ import {
 } from "react";
 
 import type {
-  // Client,
-  // DataContext,
+  BaseDb,
+  DataContext,
   ExecutionResultFromRowShape,
   ExecutionResultWithArrayShapedRows,
   ExecutionResultWithObjectShapedRows,
@@ -19,64 +18,32 @@ import type {
   UnknownArrayShape,
   UnknownObjectShape,
   UnknownRowShape,
-} from "@madatdata/core";
-
-import {
+  makeSeafowlHTTPContext,
   makeSplitgraphHTTPContext,
-  SplitgraphDataContext,
+  BasePlugin,
+  PluginList,
 } from "@madatdata/core";
 
-// export const useSqlStore = () => {
-//   const sqlStore = useSyncExternalStore(
-//     () => () => {},
-//     () => undefined
-//   );
-//   return sqlStore;
-// };
+import { makeAuthHeaders } from "@madatdata/core";
 
-export const makeDefaultAnonymousContext = () => {
-  const defaultAnonymousContext = makeSplitgraphHTTPContext({
-    credential: null,
-  });
+export { makeAuthHeaders };
 
-  return defaultAnonymousContext;
-};
+type RealDataContext =
+  | ReturnType<typeof makeSplitgraphHTTPContext | typeof makeSeafowlHTTPContext>
+  | DataContext<BaseDb<PluginList<BasePlugin>, {}>, PluginList<BasePlugin>>;
 
-export const DSXContext = createContext<SplitgraphDataContext>(
-  makeSplitgraphHTTPContext()
-);
+const SqlContext = createContext<RealDataContext | null>(null);
 
 export const SqlProvider = ({
   children,
-  options,
-}: PropsWithChildren<{
-  options: Parameters<typeof makeSplitgraphHTTPContext>[0];
-}>) => {
-  const stableContext = useMemo(() => makeSplitgraphHTTPContext(options), []);
-
+  dataContext,
+}: PropsWithChildren<{ dataContext: RealDataContext }>) => {
   return (
-    <DSXContext.Provider value={stableContext}>{children}</DSXContext.Provider>
+    <SqlContext.Provider value={dataContext}>{children}</SqlContext.Provider>
   );
 };
 
-export const useDSXContext = () => useContext(DSXContext);
-
-export const makeDataContext = () => {};
-
-// export const DSXQuery = ({
-//   children,
-// }: {
-//   children: ReturnType<typeof sql>;
-// }) => {
-//   return <>{children}</>;
-// };
-
-// export const sql = (
-//   chunks: TemplateStringsArray,
-//   ...variables: any[]
-// ): string => {
-//   return chunks.join("\n");
-// };
+const useSqlContext = () => useContext(SqlContext);
 
 export function useSql<RowShape extends UnknownArrayShape>(
   query: string,
@@ -110,7 +77,17 @@ export function useSql<RowShape extends UnknownRowShape>(
     error: null,
   });
 
-  const { client } = useDSXContext();
+  const ctx = useSqlContext();
+
+  if (!ctx) {
+    return {
+      loading: true,
+      response: null,
+      error: null,
+    };
+  }
+
+  const client = ctx.client;
 
   useEffect(() => {
     if (!client) {

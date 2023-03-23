@@ -1,4 +1,9 @@
-import { SqlProvider, useSql } from "@madatdata/react";
+import { useMemo } from "react";
+import {
+  SqlProvider,
+  useSql,
+  makeSplitgraphHTTPContext,
+} from "@madatdata/react";
 
 const DSXQuery = () => {
   const { loading, error, response } = useSql<{ origin_airport: string }>(
@@ -28,8 +33,16 @@ const DSXQuery = () => {
 };
 
 export const DebugDSX = () => {
+  const anonymousSplitgraphDataContext = useMemo(
+    () =>
+      makeSplitgraphHTTPContext({
+        credential: null,
+      }),
+    []
+  );
+
   return (
-    <SqlProvider options={{ credential: null }}>
+    <SqlProvider dataContext={anonymousSplitgraphDataContext}>
       <DSXQuery />
     </SqlProvider>
   );

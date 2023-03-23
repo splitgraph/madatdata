@@ -5,3 +5,7 @@ node_modules
 dist
 build
 packages/db-splitgraph/plugins/importers/generated/*
+coverage
+.notes
+.wireit
+.verdaccio

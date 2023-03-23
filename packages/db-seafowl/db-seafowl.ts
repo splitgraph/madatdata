@@ -103,17 +103,14 @@ export class DbSeafowl<SeafowlPluginList extends PluginList>
 
   async fetchCredentials() {
     await Promise.resolve();
-    this.setAuthenticatedCredential({
-      // @ts-expect-error https://stackoverflow.com/a/70711231
-      token: import.meta.env.VITE_TEST_SEAFOWL_SECRET,
-      anonymous: false,
-    });
   }
 
   public get httpClientOptions(): HTTPClientOptions {
     return {
       bodyMode: "jsonl",
       strategies: {
+        // TODO: This should be overideable/injectable from the caller (e.g. the
+        // react client should be able to set its own 'mode', etc.)
         makeFetchOptions: ({ credential, query }) => {
           // TODO: this is hacky
           const guessedMethod = guessMethodForQuery(query);
@@ -140,10 +137,15 @@ export class DbSeafowl<SeafowlPluginList extends PluginList>
             return host.baseUrls.sql;
           }
 
+          // NOTE: The .csv extension is "ignored" (the data is still returned as jsonl),
+          // but forces cloudflare to cache it, and return cache headers in the response
+          // TODO: Make this configurable (maybe you don't want caching sometimes)
+          const extension = ".csv";
+
           const { fingerprint } = await this.fingerprintQuery(query ?? "");
           const guessedMethod = guessMethodForQuery(query);
           return guessedMethod === "GET"
-            ? host.baseUrls.sql + "/" + fingerprint
+            ? host.baseUrls.sql + "/" + fingerprint + extension
             : host.baseUrls.sql;
         },
       },

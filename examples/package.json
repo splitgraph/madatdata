@@ -18,7 +18,7 @@
     "md.clear-global-cache": "yarn rimraf \"$(yarn config get globalFolder)\"'/cache/@madatdata*'",
     "md.clear-nm": "yarn rimraf '**/node_modules/@madatdata'",
     "// md.prune-nm-state": "Remove all @madatdata entries from node_modules/.yarn-state",
-    "md.prune-nm-state": "yarn replace '\"@madatdata\\/.*@.*\":\\n\\s+locations:\\n\\s+-\\s\".*\"\\n\\s' '' node_modules/.yarn-state.yml",
+    "md.prune-nm-state": "echo \"Prune nm state\" ; yarn replace '\"@madatdata\\/.*@.*\":\\n\\s+locations:\\n(\\s+-\\s\".*\"\\n)+' '' node_modules/.yarn-state.yml",
     "// Aliases for commands in root of repository": "#",
     "verdaccio.check": "( cd .. && yarn verdaccio.check )",
     "verdaccio.start": "( cd .. && yarn verdaccio.start )"
