@@ -2,7 +2,7 @@ import Link from "next/link";
 import { BaseLayout } from "../../components/BaseLayout";
 
 const MetricsIndexPage = () => {
-  const domains = ["seafowl.io", "splitgraph.com"] as const;
+  const domains = ["seafowl.io"] as const;
 
   return (
     <BaseLayout
