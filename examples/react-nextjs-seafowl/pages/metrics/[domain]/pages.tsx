@@ -16,16 +16,6 @@ const PagesForDomain = () => {
     domain,
   });
 
-  if (loading) {
-    return <LoadingSkeleton />;
-  } else if (error) {
-    return <SqlQueryError error={error} />;
-  } else if (!response.rows.length) {
-    return <EmptyResult />;
-  }
-
-  const { rows } = response;
-
   return (
     <BaseLayout
       heading={
@@ -45,21 +35,31 @@ const PagesForDomain = () => {
         ],
       }}
     >
-      <ul>
-        {rows.map(({ page, average_ctr, total_clicks, total_impressions }) => (
-          <li key={page}>
-            <Link
-              href={`/metrics/${encodeURIComponent(
-                domain
-              )}/pages/${encodeURIComponent(page)}`}
-            >
-              {page}
-            </Link>{" "}
-            ({total_clicks} clicks, {total_impressions} impressions,{" "}
-            {(average_ctr * 100).toFixed(2)}% average CTR)
-          </li>
-        ))}
-      </ul>
+      {loading ? (
+        <LoadingSkeleton />
+      ) : error ? (
+        <SqlQueryError error={error} />
+      ) : !response.rows.length ? (
+        <EmptyResult />
+      ) : (
+        <ul>
+          {response.rows.map(
+            ({ page, average_ctr, total_clicks, total_impressions }) => (
+              <li key={page}>
+                <Link
+                  href={`/metrics/${encodeURIComponent(
+                    domain
+                  )}/pages/${encodeURIComponent(page)}`}
+                >
+                  {page}
+                </Link>{" "}
+                ({total_clicks} clicks, {total_impressions} impressions,{" "}
+                {(average_ctr * 100).toFixed(2)}% average CTR)
+              </li>
+            )
+          )}
+        </ul>
+      )}
     </BaseLayout>
   );
 };

@@ -7,18 +7,7 @@ interface BreadcrumbsProps {
 
 export const Breadcrumbs = ({ crumbs }: BreadcrumbsProps) => {
   return (
-    <ul
-      style={{
-        display: "inline",
-        listStyleType: "none",
-        padding: 0,
-      }}
-    >
-      <style type="text/css">
-        {`
-
-`}
-      </style>
+    <ul className={styles.breadcrumbs}>
       {crumbs.map(({ href, anchor }, crumbIdx) => (
         <li
           className={styles.crumb}

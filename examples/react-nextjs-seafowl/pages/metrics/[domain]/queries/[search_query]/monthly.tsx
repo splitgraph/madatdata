@@ -19,16 +19,6 @@ const MonthlyReportsForSearchQuery = () => {
     query,
   });
 
-  if (loading) {
-    return <LoadingSkeleton />;
-  } else if (error) {
-    return <SqlQueryError error={error} />;
-  } else if (!response.rows.length) {
-    return <EmptyResult />;
-  }
-
-  const { rows } = response;
-
   return (
     <BaseLayout
       heading={
@@ -49,47 +39,55 @@ const MonthlyReportsForSearchQuery = () => {
           {
             href: `/metrics/${encodeURIComponent(
               domain
-            )}/pages/${encodeURIComponent(query)}`,
+            )}/queries/${encodeURIComponent(query)}`,
             anchor: query,
           },
           {
             href: `/metrics/${encodeURIComponent(
               domain
-            )}/pages/${encodeURIComponent(query)}/monthly`,
+            )}/queries/${encodeURIComponent(query)}/monthly`,
             anchor: "Monthly",
           },
         ],
       }}
     >
-      <ul>
-        {rows.map(
-          ({
-            month,
-            average_ctr,
-            total_clicks,
-            total_impressions,
-            monthly_clicks_growth_pct,
-          }) => (
-            <li key={month}>
-              <span>Month starting {month}</span>
-              <ul>
-                <li>
-                  {total_clicks} total clicks
-                  {typeof monthly_clicks_growth_pct !== "undefined" && (
-                    <span>
-                      {" "}
-                      ({(monthly_clicks_growth_pct * 100).toFixed(2)}% growth
-                      from previous month)
-                    </span>
-                  )}
-                </li>
-                <li>{total_impressions} total impressions</li>
-                <li>{(average_ctr * 100).toFixed(2)} average CTR</li>
-              </ul>
-            </li>
-          )
-        )}
-      </ul>
+      {loading ? (
+        <LoadingSkeleton />
+      ) : error ? (
+        <SqlQueryError error={error} />
+      ) : !response.rows.length ? (
+        <EmptyResult />
+      ) : (
+        <ul>
+          {response.rows.map(
+            ({
+              month,
+              average_ctr,
+              total_clicks,
+              total_impressions,
+              monthly_clicks_growth_pct,
+            }) => (
+              <li key={month}>
+                <span>Month starting {month}</span>
+                <ul>
+                  <li>
+                    {total_clicks} total clicks
+                    {typeof monthly_clicks_growth_pct !== "undefined" && (
+                      <span>
+                        {" "}
+                        ({(monthly_clicks_growth_pct * 100).toFixed(2)}% growth
+                        from previous month)
+                      </span>
+                    )}
+                  </li>
+                  <li>{total_impressions} total impressions</li>
+                  <li>{(average_ctr * 100).toFixed(2)} average CTR</li>
+                </ul>
+              </li>
+            )
+          )}
+        </ul>
+      )}
     </BaseLayout>
   );
 };

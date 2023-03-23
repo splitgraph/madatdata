@@ -7,6 +7,7 @@ import {
   SqlQueryError,
 } from "../../../../../components/common";
 import { BaseLayout } from "../../../../../components/BaseLayout";
+import { useEffect } from "react";
 
 const WeeklyReportsForPage = () => {
   const { domain, page } = useRouter().query as {
@@ -19,15 +20,9 @@ const WeeklyReportsForPage = () => {
     page,
   });
 
-  if (loading) {
-    return <LoadingSkeleton />;
-  } else if (error) {
-    return <SqlQueryError error={error} />;
-  } else if (!response.rows.length) {
-    return <EmptyResult />;
-  }
-
-  const { rows } = response;
+  useEffect(() => {
+    console.log(response);
+  }, [response]);
 
   return (
     <BaseLayout
@@ -62,35 +57,43 @@ const WeeklyReportsForPage = () => {
         ],
       }}
     >
-      <ul>
-        {rows.map(
-          ({
-            week,
-            average_ctr,
-            total_clicks,
-            total_impressions,
-            weekly_clicks_growth_pct,
-          }) => (
-            <li key={week}>
-              <span>Week starting {week}</span>
-              <ul>
-                <li>
-                  {total_clicks} total clicks
-                  {typeof weekly_clicks_growth_pct !== "undefined" && (
-                    <span>
-                      {" "}
-                      ({(weekly_clicks_growth_pct * 100).toFixed(2)}% growth
-                      from previous week)
-                    </span>
-                  )}
-                </li>
-                <li>{total_impressions} total impressions</li>
-                <li>{(average_ctr * 100).toFixed(2)} average CTR</li>
-              </ul>
-            </li>
-          )
-        )}
-      </ul>
+      {loading ? (
+        <LoadingSkeleton />
+      ) : error ? (
+        <SqlQueryError error={error} />
+      ) : !response.rows.length ? (
+        <EmptyResult />
+      ) : (
+        <ul>
+          {response.rows.map(
+            ({
+              week,
+              average_ctr,
+              total_clicks,
+              total_impressions,
+              weekly_clicks_growth_pct,
+            }) => (
+              <li key={week}>
+                <span>Week starting {week}</span>
+                <ul>
+                  <li>
+                    {total_clicks} total clicks
+                    {typeof weekly_clicks_growth_pct !== "undefined" && (
+                      <span>
+                        {" "}
+                        ({(weekly_clicks_growth_pct * 100).toFixed(2)}% growth
+                        from previous week)
+                      </span>
+                    )}
+                  </li>
+                  <li>{total_impressions} total impressions</li>
+                  <li>{(average_ctr * 100).toFixed(2)} average CTR</li>
+                </ul>
+              </li>
+            )
+          )}
+        </ul>
+      )}
     </BaseLayout>
   );
 };

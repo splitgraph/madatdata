@@ -17,16 +17,6 @@ const WeeklyOverallReports = () => {
     domain,
   });
 
-  if (loading) {
-    return <LoadingSkeleton />;
-  } else if (error) {
-    return <SqlQueryError error={error} />;
-  } else if (!response.rows.length) {
-    return <EmptyResult />;
-  }
-
-  const { rows } = response;
-
   return (
     <BaseLayout
       heading={
@@ -46,18 +36,28 @@ const WeeklyOverallReports = () => {
         ],
       }}
     >
-      <ul>
-        {rows.map(({ week, average_ctr, total_clicks, total_impressions }) => (
-          <li key={week}>
-            <span>Week starting {week}</span>
-            <ul>
-              <li>{total_clicks} total clicks</li>
-              <li>{total_impressions} total impressions</li>
-              <li>{(average_ctr * 100).toFixed(2)} average CTR</li>
-            </ul>
-          </li>
-        ))}
-      </ul>
+      {loading ? (
+        <LoadingSkeleton />
+      ) : error ? (
+        <SqlQueryError error={error} />
+      ) : !response.rows.length ? (
+        <EmptyResult />
+      ) : (
+        <ul>
+          {response.rows.map(
+            ({ week, average_ctr, total_clicks, total_impressions }) => (
+              <li key={week}>
+                <span>Week starting {week}</span>
+                <ul>
+                  <li>{total_clicks} total clicks</li>
+                  <li>{total_impressions} total impressions</li>
+                  <li>{(average_ctr * 100).toFixed(2)} average CTR</li>
+                </ul>
+              </li>
+            )
+          )}
+        </ul>
+      )}
     </BaseLayout>
   );
 };

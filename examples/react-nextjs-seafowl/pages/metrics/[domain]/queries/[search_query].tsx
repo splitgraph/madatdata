@@ -28,7 +28,7 @@ const MetricsForQueryIndex = () => {
           {
             href: `/metrics/${encodeURIComponent(
               domain
-            )}/pages/${encodeURIComponent(query)}`,
+            )}/queries/${encodeURIComponent(query)}`,
             anchor: query,
           },
         ],
