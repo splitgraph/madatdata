@@ -1,12 +1,16 @@
-# ./build-examples.sh <example-to-clean-install>
+# ./build-examples-from-local.sh <example-to-clean-install>
 # Example usage:
-# ./build-examples.sh examples/react-nextjs-seafowl
+# ./build-examples-from-local.sh examples/react-nextjs-seafowl
 #
-# This is a hacky script to build packages, publish them to Verdaccio, then
+# This is a hacky script to build packages, publish them to local Verdaccio, then
 # install all the examples with the latest built packages. Note that this will
 # result in a temporary sha for each package being in examples/yarn.lock, which
 # does not refer to a public package, so nobody else will be able to install the
 # examples if you check it in with those shas.
+#
+# When you're done developing locally, or after you've published new versions of
+# packages to npm, you can build the examples from npm by running the counterpart
+# to this script, ./build-examples-from-npm.sh
 #
 
 REPO_ROOT="$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
