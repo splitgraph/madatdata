@@ -9,6 +9,27 @@ for Google Search, and then exported to Seafowl by calling a GraphQL mutation at
 the Splitgraph API. (Note: this is all possible with Madatdata code, but it was
 done manually in this case.)
 
+See the data at Splitgraph in the repository
+[`miles/splitgraph-seafowl-search-console`](https://www.splitgraph.com/miles/splitgraph-seafowl-search-console)
+
+This is using a hosted Seafowl instance at fly.dev
+([read the Seafowl docs: "Deploying to Fly.io"](https://seafowl.io/docs/getting-started/tutorial-fly-io/part-2-deploying-to-fly-io)),
+with Cloudflare in front of it at `demo.seafowl.cloud` providing a caching layer
+([read the Seafowl docs: "Delivering query results globally with Cloudflare"](https://seafowl.io/docs/getting-started/tutorial-fly-io/part-4-2-cdn-with-cloudflare)).
+
+## Try Now
+
+- [🚀 Click to Deploy Immediately to **StackBlitz**](https://stackblitz.com/github/splitgraph/madatdata/tree/main/examples/react-nextjs-seafowl?file=README.md)
+  (no signup required!)
+
+- [🚀 Click to Deploy to **Vercel**](https://vercel.com/new/git/external?repository-url=https://github.com/splitgraph/madatdata/tree/main/examples/react-nextjs-seafowl&project-name=madatdata-seafowl&repository-name=madatdata-nextjs-seafowl)
+  (signup and new repo required)
+
+## Queries
+
+You can find the queries used in [`./sql-queries.ts`](./sql-queries.ts). The
+data context is initiated in [`./pages/_app.tsx`](./pages/_app.tsx).
+
 ## Page Structure
 
 The reason for using Search data in this example is because it lends itself well
