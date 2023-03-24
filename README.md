@@ -534,13 +534,22 @@ yarn up -E -i '*'
 
 ## Publish
 
+**NOTE!** Make sure you've built the latest first with `yarn build` (which can
+technically be done after `yarn version-all`, but must be done before
+`yarn publish-all`. It's probably also smart to start with `yarn clean`)
+
 Running `yarn version-all` or `yarn publish-all` will run the corresponding
 `yarn version` or `yarn publish` command within each workspace where it is
 defined, in topological order. Therefore, to indicate a workspace is
 publishable, make sure the `package.json` includes `scripts.version` and
 `scripts.publish`.
 
-Create deferred patch changes (if necessary) in topological order:
+Create deferred patch (0.0.x) changes (if necessary) in topological order
+
+(NOTE: To update all versions immediately, change `-d` to `-i`, and then there
+is no need to do the next step of `apply`. This will also create an `undecided`
+deferred version file in `.yarn/versions` which you can safely delete by running
+`rm -rf .yarn/versions` (check the dir first, of course)):
 
 ```
 yarn version-all patch -d
@@ -561,6 +570,13 @@ yarn publish-all --otp <your otp>
 Note: If `publish-all` takes more than 30 seconds, the OTP could expire. It's
 currently unknown what will happen in this case, but it could break this script,
 in which case dropping the `--otp` might be sufficient for it to prompt on each.
+
+When you're done publishing, you probably want to update the examples to use the
+latest packages from npm. To do that, run:
+
+```
+./build-examples-from-npm.sh
+```
 
 ## Verdaccio - First time setup
 
