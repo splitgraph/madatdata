@@ -796,19 +796,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"react-nextjs-ssr-hooks-63304a@workspace:react-nextjs-ssr-hooks":
-  version: 0.0.0-use.local
-  resolution: "react-nextjs-ssr-hooks-63304a@workspace:react-nextjs-ssr-hooks"
-  dependencies:
-    "@types/node": ^18.0.0
-    "@types/react": ^18.0.14
-    next: latest
-    react: 18.2.0
-    react-dom: 18.2.0
-    typescript: ^4.7.4
-  languageName: unknown
-  linkType: soft
-
 "react@npm:18.2.0":
   version: 18.2.0
   resolution: "react@npm:18.2.0"
