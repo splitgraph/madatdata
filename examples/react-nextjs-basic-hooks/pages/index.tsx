@@ -1,4 +1,9 @@
-import { SqlProvider, useSql } from "@madatdata/react";
+import {
+  SqlProvider,
+  useSql,
+  makeSplitgraphHTTPContext,
+} from "@madatdata/react";
+import { useMemo } from "react";
 
 const ExampleComponentUsingSQL = () => {
   const { loading, error, response } = useSql<{
@@ -46,9 +51,14 @@ LIMIT 100;`
 };
 
 const SplitgraphSampleQuery = () => {
+  const splitgraphDataContext = useMemo(
+    () => makeSplitgraphHTTPContext({ credential: null }),
+    []
+  );
+
   // Uses splitgraph.com by default (anon access supported for public data)
   return (
-    <SqlProvider options={{ credential: null }}>
+    <SqlProvider dataContext={splitgraphDataContext}>
       <ExampleComponentUsingSQL />
     </SqlProvider>
   );
