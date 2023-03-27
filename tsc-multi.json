@@ -1,20 +1,6 @@
 {
   "targets": [
     {
-      "outDir": "build/es2015-commonjs",
-      "tsBuildInfoFile": "build/es2015-commonjs.tsbuildinfo",
-      "module": "CommonJS",
-      "target": "ES2015",
-      "extname": ".cjs"
-    },
-    {
-      "outDir": "build/es2015",
-      "tsBuildInfoFile": "build/es2015-es2015.tsbuildinfo",
-      "target": "es2015",
-      "module": "es2015",
-      "extname": ".mjs"
-    },
-    {
       "outDir": "build/es2020-commonjs",
       "tsBuildInfoFile": "build/es2020-commonjs.tsbuildinfo",
       "module": "CommonJS",
