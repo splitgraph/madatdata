@@ -1,24 +1,22 @@
-# 😡 📈 Madatdata
-
-## Why are you mad at the data?
+# 😠📈 Madatdata
 
 Madatdata ("mad at data") is a framework for working with data [in
-anger][in-anger].
+anger][in-anger]. Specifically, it's a TypeScript toolkit for building
+data-driven Web apps with SQL. Its main use cases include _managing_ databases
+(exporting and importing data) and querying them directly with SQL.
 
-## What is Madatdata?
+It works best with [Splitgraph][splitgraph] and [Seafowl][seafowl], but is not
+exclusive to either of them. It aims to provide a pluggable core API for solving
+common problems with data-driven Web apps, such as querying, authentication,
+data management, server-side rendering, client-side caching and hydration.
 
-It's a toolchain for building data-driven Web apps, shipping them to production,
-and keeping them running and up-to-date.
-
-It aims to provide a pluggable core API for solving common problems with
-data-driven Web apps, such as querying, authentication, data management,
-server-side rendering, client-side caching and hydration. It works best with
-[Splitgraph][splitgraph], but is not exclusive to it. The main constant is SQL,
-and the API is designed with generic data providers in mind. It's developed for
-the truly modern Web, with strategies for deploying to targets like Vercel,
+The main constant is SQL, and the API is designed with generic data providers in
+mind, so it should be easy to add bindings for other databases, like generic
+Postgres or SQLite or DuckDB. It's developed for the truly modern Web, with the
+goal of making it simple to deploy data-driven web apps to targets like Vercel,
 Fly.io, Cloudflare Workers, and Deno Deploy.
 
-## What is Splitgraph?
+## What are Splitgraph and Seafowl?
 
 [Splitgraph][splitgraph] is a serverless data platform where you can query,
 upload, connect and share tables of data. It's an opinionted implementation of
@@ -27,19 +25,50 @@ around Postgres — you can literally connect to it at
 [`data.splitgraph.com:5432`][splitgraph-connect-query] — and it's optimized for
 analytical queries over external data tables.
 
+[Seafowl][seafowl] is an open source analytical database optimized for running
+cache-friendly queries "at the edge." It's written in Rust and uses Datafusion
+as a SQL query engine, with a storage layer based on the Delta Lake protocol
+implemented with delta-rs.
+
+Splitgraph and Seafowl work great together. One common workflow is to treat
+Splitgraph as a data lake, and export production datasets to Seafowl for
+querying from Web apps. You can export this from the Splitgraph web interface,
+or from a GraphQL API call, or using Madatdata itself.
+
 ## What can I do with it?
 
-Madatdata is an alpha stage project built on top of Splitgraph, which is a
-production-ready platform backed by multiple years of development.
+Madatdata is an alpha stage project, but it works well for basic use cases with
+both Splitgraph (which is a production-ready platform backed by multiple years
+of development), and Seafowl (which is a more recent, but production-ready
+project that incorporates many lessons learned building Splitgraph).
 
-This monorepo contains a growing collection of tools for working with Splitgraph
-from the Web. Currently, that includes packages that facilitate sending queries
-to Splitgraph from the browser over HTTP with `fetch`, and from the server over
-the Postgres protocol with [`postgres`][github-porsager-postgres]. Namely, these
-packages are `@madatdata/client-http` and `@madatdata/client-postgres`. They
-both implement the `Client` interface and abstract base class provided by
-[`@madatdata/base-client`][src-base-client], in a pattern representative of how
-the rest of this repository will develop.
+Currently, Madatdata enables the following workflows for Splitgraph and Seafowl:
+
+**Splitgraph**
+
+- Query Data on the [Splitgraph DDN][splitgraph-ddn]
+  - from the browser over HTTP with `fetch` (or with React hooks like `useSql`)
+  - from the server over the Postgres protocol with
+    [`postgres`][github-porsager-postgres]
+- Manage your Splitgraph database via plugins that hit the [Splitgraph GraphQL
+  API][splitgraph-graphql-api]
+  - Import (ingest) data from 100+ sources, including most Airbyte adapters and
+    some Singer taps
+  - Export data to CSV or Parquet (which can then be imported to Seafowl, see
+    below)
+
+**Seafowl**
+
+- Query Data in a Seafowl Database, like one [deployed to Fly.io][seafowl-flyio]
+  - from the browser over HTTP with `fetch` (or with React hooks like `useSql`)
+- Manage your Seafowl database via plugins
+  - Import (ingest) data from a remote URL, like a
+    [Parquet file exported from Splitgraph](./packages/core/splitgraph-seafowl-sync.test.ts)
+
+## Basic Usage and Examples
+
+See the [examples directory](./examples) for deployable examples using common
+web frameworks and bundlers, including **Next.js** and **Vite**.
 
 ### Query Splitgraph with SQL from the browser with modern frameworks
 
@@ -52,10 +81,10 @@ with common frameworks like Next.js:
 
 ```ts
 import "cross-fetch/polyfill";
-import { makeClient } from "@madatdata/client-http";
+import { makeSplitgraphHTTPContext } from "@madatdata/client-http";
 
 // Anonymous queries are supported for public data by default
-const client = makeClient({ credential: null });
+const { client } = makeSplitgraphHTTPContext({ credential: null });
 
 client
   .execute<{ foo: number; bar: number }>("SELECT 1 as foo, 2 as bar;")
@@ -75,12 +104,20 @@ client
 
 ### Query Splitgraph with SQL from Observable notebooks
 
-Import the client from any CDN like Skypack into a Observable notebook ([see an
-example][observable-madatdata-testing]):
+For Observable, you might be more interested in using Seafowl with the native
+[Seafowl Observable client](https://observablehq.com/@seafowl/client), like in
+this
+[example notebook](https://observablehq.com/@seafowl/interactive-visualization-demo).
+
+_Note_: Importing Madatdata via Skypack is currently broken because the `crypto`
+module does not exist in browsers, which breaks Skypack imports.
+
+<details>
+<summary>Click Here to See the Example Anyway</summary>
 
 ```js
-import("https://cdn.skypack.dev/@madatdata/client-http@latest");
-client = splitgraph.makeClient({ credential: null });
+madatdata = import("https://cdn.skypack.dev/@madatdata/core@latest");
+client = madatdata.makeSplitgraphHTTPContext({ credential: null }).client;
 result = await client.execute(`
   select
     to_date(date, 'MM/DD/YYYY') as raw_date,
@@ -107,13 +144,19 @@ Plot.plot({
 });
 ```
 
+Also see this
+[outdated example](https://observablehq.com/@milesrichardson/madatdata-client-testing).
+
+</details>
+
 ### Query Splitgraph with SQL from Postgres on the server
 
 All data on Splitgraph is available through a unified Postgres interface which
 is [queryable from most existing Postgres clients][splitgraph-connect-query].
 
-The interface is exactly the same for querying data over Postgres as it is for
-querying data over HTTP:
+Currently, the Postgres client is only implemented for Splitgraph, and so
+(misleadingly) the generic `client-postgres` is sufficient to query it (as
+opposed to HTTP, which requires `makeHTTPContext`):
 
 ```ts
 import "cross-fetch/polyfill";
@@ -143,171 +186,119 @@ client
   .catch(console.trace);
 ```
 
-# Background
+### Import data into Splitgraph with plugins
 
-## How do data producers use Splitgraph?
+See
+[example code in `db-splitgraph.test.ts`](./packages/db-splitgraph/db-splitgraph.test.ts)
+(ctrl+f for `importData`)
 
-Splitgraph makes data integration easy. "Import Plugins" are available for
-importing from [hundreds of data sources][splitgraph-connect-data], including
-full support for the Airbyte standard. "Mount Plugins" are available for routing
-queries directly to many common data sources.
+### Export data from Splitgraph to CSV and Parquet files
 
-Data producers can work with Splitgraph at a low level, using the [`sgr` command
-line client][docs-sgr-cli] to build data images and execute Splitgraph API
-operations. Similarly to Docker and docker-compose, `sgr` also provides a
-declarative [`splitgraph.yml`][docs-splitgraph-yml] syntax for managing data
-sources and orchestrating ingestion pipelines. Much of Splitgraph is built on
-`sgr` - in fact, Splitgraph.com is an `sgr` "peer" - but you don't need to
-understand it at a low level to benefit from Splitgraph.
+See
+[example code in `db-splitgraph.test.ts`](./packages/db-splitgraph/db-splitgraph.test.ts)
+(ctrl+f for `exportData`)
 
-## How should data consumers use Madatdata?
+### Import data into Seafowl
 
-In the Splitgraph ecosystem, if sgr is the tool for producing data, then
-madatdata is the tool for consuming it. Together, they blur the lines between
-data producer and data consumer.
+See
+[example code in `db-seafowl.test.ts`](packages/db-seafowl/db-seafowl.test.ts)
+(ctrl+f for `importData`)
 
-Madatdata is complementary, but not exclusive, to Splitgraph.
-
-For data consumers, the primary value of Splitgraph comes from its unified
-Postgres endpoint at `data.splitgraph.com`, which is no different than any other
-Postgres frontend, apart from all the magic that happens on the backend.
-
-## Is Madatdata only useful with Splitgraph?
-
-While the most immediate benefits of Madatdata depend on its integration with
-Splitgraph, any implementation-specific behavior is isolated inside a plugin
-package. Madatdata is not designed to be exclusive to Splitgraph, and the core
-API should in theory be usable with any data source. As such, we welcome plugins
-that implement or extend the API for other data sources or providers.
-
-# How do I use it?
-
-## Packages available on `npm`
-
-🔜 = intend to support, but untested
-
-| Package                                             | Browser | Node | Deno |     |
-| --------------------------------------------------- | ------- | ---- | ---- | --- |
-| [`@madatdata/base-client`][npm-base-client]         | ✅      | ✅   | 🔜   |     |
-| [`@madatdata/client-http`][npm-client-http]         | ✅      | ✅   | 🔜   |     |
-| [`@madatdata/client-postgres`][npm-client-postgres] | 🚫      | ✅   | 🔜   |     |
-
-Currently, there is no browser bundle, but browsers supporting `esm` can use
-Skypack to load the modules as expected, with a default target of `ES2020`.
-
-The mission of this monorepo is to consolidate the fragmented complexity of many
-different SQL tools into a manageable interface.
+For an example of exporting data from Splitgraph, and then importing it into
+Seafowl, see
+[example code in `splitgraph-seafowl-sync.test.ts`](packages/core/splitgraph-seafowl-sync.test.ts)
 
 ## Installation
 
-### In browser with Skypack
+### Common Use Cases
 
-This would probably work in Deno too. We'd like it to, we just haven't tested it
-or productionized the cross-compiling toolchain for it yet.
-
-```js
-import("https://cdn.skypack.dev/@madatdata/client-http@latest");
-```
-
-### In Node, Postgres client only
-
-```bash
-yarn add postgres @madatdata/client-postgres
-```
-
-### In Node and/or browser, HTTP client
-
-for testing in Node and/or building for the client (need `cross-fetch` polyfill)
-
-```bash
-yarn add cross-fetch @madatdata/client-postgres
-```
-
-(note: Currently custom `fetch` not supported, but coming soon)
-
-### In Node, both Postgres and HTTP client
-
-This is likely what you want if you're doing SSR or any sort of isomorphic app.
+If you already have a bundler in place, you probably just want to install
+`@madatdata/core`, which will include all packages, but tree shaking should take
+care of eliminating code that you don't use:
 
 ```
-yarn add postgres @madatdata/client-postgres cross-fetch @madatdata/client-http
+yarn install @madatdata/core
 ```
 
-### In Deno (todo)
+If you are writing a React application, you probably want to install
+`@madatdata/react`, which also re-exports `@madatdata/core` (but you can install
+both explicitly if you prefer):
 
-Support is intended and coming soon. It will probably work already if you use
-skypack in the same way as Observable.
+```
+yarn install @madatdata/react
+```
+
+Currently, there is no browser bundle, but browsers supporting `esm` _should_ be
+able to use Skypack to load the modules as expected, with a default target of
+`ES2020`, however this is currently broken due to the `crypto` module not being
+exported.
+
+In theory, you should be able to install this with Deno, but we have not
+explicitly tested it yet. Please try it if you have the chance, and open an
+issue or PR with any problems you find.
+
+## Package Layout and Interface
+
+The mission of this monorepo is to consolidate the fragmented complexity of many
+different SQL tools into a manageable interface. The basic idea is to divide
+functionality into abstract base interfaces, and implementations of those
+interfaces for different data providers and transports.
+
+### Core Packages
+
+The "core" packages are probably what you want to install, depending on your
+bundler setup.
+
+| Package                         | Purpose                                                                                                                                                    |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`@madatdata/core`][npm-core]   | Wrapper around other packages, with functions for instantiating "data contexts" which include `client` and `db` objects, e.g. `makeSplitgraphHTTPContext`. |
+| [`@madatdata/react`][npm-react] | React hooks for querying different databases, and also re-exports `@madatdata/core`                                                                        |
+
+### Base Packages
+
+The "base" packages define the abstract interface which is implemented in the
+"implementation" packages (see below). Usually, you do not want to install these
+directly, unless you're building your own implementation of one of them.
+
+| Package                                     | Interface | Base Class   | Purpose                                                                                                                                                                                                                    |
+| ------------------------------------------- | --------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`@madatdata/base-client`][npm-base-client] | `Client`  | `BaseClient` | Defines how to execute queries against a given `Db`.                                                                                                                                                                       |
+| [`@madatdata/base-db`][npm-base-db]         | `Db`      | `BaseDb`     | Defines a pluggable interface for querying and managing a database, currently consisting of methods `execute`, `importData`, and `exportData`, all of which can be implemented with plugins injected into the constructor. |
+
+### Implementation Packages
+
+**`Client` implementations**
+
+These packages implement the `Client` interface and extend the
+[`BaseClient` base class](./packages/base-client/index.ts).
+
+| Package                                             | Purpose                                                                                                                                                                                                                                                       |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`@madatdata/client-http`][npm-client-http]         | Execute queries via an HTTP interface with `fetch`, where the exact strategies and responses can be implemented by the corresponding `Db` implementation (e.g., `db-splitgraph` and `db-seafowl` define how to implement their own `client-http` strategies). |
+| [`@madatdata/client-postgres`][npm-client-postgres] | Execute queries using the [`postgres` wire protocol][github-porsager-postgres]. Currently only implemented for `db-splitgraph`, but could be used by any `Db` implementation that is Postgres-compatible.                                                     |
+
+**`Db` implementations**
+
+These packages implement the `Db` interface and extend the
+[`BaseDb` base class](packages/base-db/base-db.ts).
+
+| Package                                         | Purpose                                                                                                                                                                                                                                                                                                               |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`@madatdata/db-splitgraph`][npm-db-splitgraph] | Implements the `Db` interface for the Splitgraph DDN, including anonymous and authenticated queries, and provides plugins for all 100+ data sources importable into Splitgraph. Compatible with both `client-http` and `client-postgres`.                                                                             |
+| [`@madatdata/db-seafowl`][npm-db-seafowl]       | Implements the `Db` interface for Seafowl databases (deployed anywhere with a publicly reachable URL), and implements `importData` for any CSV or Parquet data source with a remote URL. Compatible with `client-http`, and uses the `crypto` module for fingerprinting queries according to Seafowl cache semantics. |
 
 # What's next?
 
-## Repo layout
+Below are some possible ideas of where we might take this.
 
-The current goal is to develop a `@madatdata/core` API which is effectively a
-metapackage implementing the [strategy pattern][strategy-pattern], wherein the
-core API executes a specific set of "algorithms" according to a mapping of
-algorithm to "strategy" injected at runtime.
+### Mounting local databases
 
-At the moment, there is basically one "algorithm," which is `execute`, i.e. send
-a query to Splitgraph and return the result as JSON. Its strategy is described
-by the interface and abstract `BaseClient` class in
-[`@madatdata/base-client`][src-base-client]. There are currently two
-implementations of `BaseClient` strategy for the `execute` algorithm. For HTTP
-clients, [`@madatdata/client-http`][src-client-http] implements it using `fetch`
-to query the "web bridge" at Splitgraph. For Postgres clients,
-[`@madatdata/client-postgres`][src-client-postgres] implements it using
-`postgres` to query the "Data Delivery Network" at
-[`data.splitgraph.com:5432`][splitgraph-connect-query].
-
-In general, the strategies are named after the library they're effectively
-wrapping, so there might be a future `@madatdata/client-pg` or
-`@madatdata/client-duckdb`. Those libraries, or polyfills, are marked as peer
-dependencies to avoid version lock. Keep in mind this means you will need to
-install that dependency (e.g. [`postgres`][github-porsager-postgres] or
-[`cross-fetch`][github-cross-fetch]) for any `@madatdata` package to be able to
-use it.
-
-## Improvements coming soon
-
-- `@madatdata/core` API for single package installation and application context
-  encapsulation
-- Examples and reference implementations for common patterns
-- `@madatdata/base-db` and `@madatdata/db-splitgraph` for managing Splitgraph
-  databases and connections
-- Streaming support for `execute` via async iterators, with WHATWG support where
-  possible
-- More wrappers around libraries e.g. [`pg`][github-node-pg] which uses native
-  `libpq` bindings unlike [`postgres`][github-porsager-postgres]
-
-## Packages coming soon
-
-| Package                         | Browser | Node     | Deno     |     |
-| ------------------------------- | ------- | -------- | -------- | --- |
-| `@madatdata/base-cache`         | 🔜      | 🔜       | 🔜       |     |
-| `@madatdata/base-worker-cache`  | 🔜      | 🔜       | 🔜       |     |
-| `@madatdata/base-client`        | ✅      | ✅       | 🔜       |     |
-| `@madatdata/base-db`            | 🔜      | 🔜       | 🔜       |     |
-| `@madatdata/base-web-bridge`    | 🔜      | 🔜       | 🔜       |     |
-| `@madatdata/cache-duckdb`       | 🔜      | 🔜       | 🔜       |     |
-| `@madatdata/client-http`        | ✅      | ✅       | 🔜       |     |
-| `@madatdata/client-postgres`    | 🚫      | ✅       | 🔜       |     |
-| `@madatdata/db-splitgraph`      | 🔜      | 🔜       | 🔜       |     |
-| `@madatdata/sql-components`     | 🔜      | 🔜 (SSR) | 🔜 (SSR) |     |
-| `@madatdata/web-bridge-fastify` | 🔜      | 🔜       | 🔜       |     |
-
-### Soon: `@madatdata/base-db`and `@madatdata/db-splitgraph`
-
-The `db` algorithm will be implemented by strategies extending the base
-implementation in `@madatdata/base-db`, starting with the
-`@madatdata/db-splitgraph` strategy. This will include functionality for
-managing the database, which is mostly opaque to the rest of the API, aside from
-the tables that end up queryable inside of it. For `@madatdata/db-splitgraph`,
-the main functionality will be around managing data sources.
-
-This is something you can already do with `sgr`, and even declaratively with
-`splitgraph.yml`. But adding it to the `madatdata` toolchain unlocks use cases
-like building databases per branch - or even per page! - in CI, exporting each
-to a duckdb cache, and loading it at runtime in the serverless application
-layer.
+This is
+[already possible via the `sgr` command line](https://www.splitgraph.com/docs/add-data/with-tunnel),
+but can be nicely implemented in TypeScript too. But adding it to the
+`madatdata` toolchain unlocks use cases like building databases per branch - or
+even per page! - in CI, exporting each to a duckdb cache, and loading it at
+runtime in the serverless application layer.
 
 Example, for the imagination:
 
@@ -325,12 +316,7 @@ const { response, error } = await db.execute(
 );
 ```
 
-This will be querying the public Splitgraph GraphQL API, which is currently
-undocumented and unsupported. But as part of this project, we will be
-productionizing a public version of that API, and this repository will
-eventually consume that.
-
-### Soon: `@madatdata/sql-components`
+### `@madatdata/sql-components`
 
 The basic premise is `styled` components, but with a SQL query attached instead
 of a CSSProperties object. The current idea is perhaps most similar to the
@@ -359,7 +345,7 @@ query by first checking the cache in a worker, and then sending it to the origin
 only for a cache miss (which might never happen if we build the database for the
 page ahead of time).
 
-### Soon: `@madatdata/base-web-bridge` and `@madatdata/web-bridge-fastify`
+### `@madatdata/base-web-bridge` and `@madatdata/web-bridge-fastify`
 
 Currently, the Splitgraph [web bridge][docs-web-bridge-api] is running on our
 own infrastructure, separately from this repository. However, it makes sense to
@@ -387,8 +373,14 @@ see [./CONTRIBUTING.md](./CONTRIBUTING.md)
 [src-client-http]: ./packages/client-http/client-http.ts
 [src-client-postgres]: ./packages/client-postgres/client-postgres.ts
 [npm-base-client]: https://www.npmjs.com/package/@madatdata/base-client
+[npm-base-db]: https://www.npmjs.com/package/@madatdata/base-db
 [npm-client-http]: https://www.npmjs.com/package/@madatdata/client-http
 [npm-client-postgres]: https://www.npmjs.com/package/@madatdata/client-postgres
+[npm-core]: https://www.npmjs.com/package/@madatdata/core
+[npm-db-seafowl]: https://www.npmjs.com/package/@madatdata/db-seafowl
+[npm-db-splitgraph]: https://www.npmjs.com/package/@madatdata/db-splitgraph
+[npm-react]: https://www.npmjs.com/package/@madatdata/react
+[seafowl]: https://seafowl.io
 [splitgraph]: https://www.splitgraph.com
 [splitgraph-connect-data]: https://www.splitgraph.com/connect/data
 [splitgraph-connect-query]: https://www.splitgraph.com/connect/query
@@ -405,3 +397,7 @@ see [./CONTRIBUTING.md](./CONTRIBUTING.md)
 [tsc-multi]: https://github.com/tommy351/tsc-multi
 [in-anger]:
   https://english.stackexchange.com/questions/30939/is-used-in-anger-a-britishism-for-something
+[splitgraph-graphql-api]: https://api.splitgraph.com/gql/cloud/unified/graphql
+[splitgraph-ddn]: https://www.splitgraph.com/connect
+[seafowl-flyio]:
+  https://seafowl.io/docs/getting-started/tutorial-fly-io/part-2-deploying-to-fly-io
