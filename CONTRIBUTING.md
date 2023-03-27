@@ -114,6 +114,16 @@ yarn up -E -i '*'
 
 ## Publish
 
+tl;dr
+
+```bash
+yarn clean && yarn build
+yarn version-all patch -i
+git add packages/*/package.json
+git commit -m "Bump versions for publish"
+yarn publish-all --otp <your otp>
+```
+
 **NOTE!** Make sure you've built the latest first with `yarn build` (which can
 technically be done after `yarn version-all`, but must be done before
 `yarn publish-all`. It's probably also smart to start with `yarn clean`)
