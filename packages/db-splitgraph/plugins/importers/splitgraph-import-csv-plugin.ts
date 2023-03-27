@@ -185,14 +185,14 @@ export class SplitgraphImportCSVPlugin
 
   private async fetchPresignedURL() {
     const { response, error, info } = await this.graphqlClient.send<{
-      csvUploadDownloadUrls: {
+      fileUploadDownloadUrls: {
         upload: string;
         download: string;
       };
     }>(
       gql`
-        query CSVURLs {
-          csvUploadDownloadUrls {
+        query FileURLs {
+          fileUploadDownloadUrls {
             upload
             download
           }
@@ -383,7 +383,7 @@ export class SplitgraphImportCSVPlugin
     }
 
     const {
-      csvUploadDownloadUrls: {
+      fileUploadDownloadUrls: {
         download: presignedDownloadURL,
         upload: presignedUploadURL,
       },

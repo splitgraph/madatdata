@@ -149,14 +149,14 @@ describe("importData for SplitgraphImportCSVPlugin", () => {
     );
 
     mswServer?.use(
-      graphql.query("CSVURLs", (req, res, context) => {
+      graphql.query("FileURLs", (req, res, context) => {
         const reqId = bodyMemo.setWithRandomId(null);
 
         return res(
           // FIXME: msw handlers should be factored into a common place
           compose(
             context.data({
-              csvUploadDownloadUrls: {
+              fileUploadDownloadUrls: {
                 download: `https://data.splitgraph.com:9000/fake-url-download?key=${reqId}`,
                 upload: `https://data.splitgraph.com:9000/fake-url-upload?key=${reqId}`,
               },
