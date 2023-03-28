@@ -23,14 +23,15 @@ unset VERDACCIO || true
 # Install examples
 echo "[+] move into examples and clear installed madatdata packages"
 echo "[+] if you get an error here: cd examples ; yarn install, then run this again"
+echo "[+] or if @madatdata/ packages are missing because this just failed, maybe try git checkout -- examples/yarn.lock"
 echo "[+] if you still get an error, edit examples/.yarnrc.yml to hardcode npm registry URLs"
 cd "$REPO_ROOT/examples"
 yarn md.clear
 echo "[+] NOTE: Ignore above errors"
-echo "[+] Upgrade"
-yarn up '@madatdata/*@latest'
-echo "[+] Install"
-yarn install
+echo "[+] Upgrade (hacky: set VERDACCIO to real registry to make .yarnrc.yml valid)"
+VERDACCIO="https://registry.yarnpkg.com" yarn up '@madatdata/*@latest'
+echo "[+] Install (hacky: set VERDACCIO to real registry to make .yarnrc.yml valid)"
+VERDACCIO="https://registry.yarnpkg.com" yarn install
 echo "[+] Return to repo root"
 cd "$REPO_ROOT"
 echo "[+] Done."
