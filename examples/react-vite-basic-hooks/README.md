@@ -22,7 +22,7 @@ yarn dev
 This is a basic one page example of the `useSql` hook with Splitgraph.
 
 It displays the raw JSON results of sending a query via HTTP to the following
-Splitgraph repository (see [`./pages/index.tsx`](./pages/index.tsx)):
+Splitgraph repository (see [`./src/App.tsx`](./src/App.tsx)):
 
 - [`splitgraph/domestic_us_flights:latest`](https://www.splitgraph.com/splitgraph/domestic_us_flights)
 
