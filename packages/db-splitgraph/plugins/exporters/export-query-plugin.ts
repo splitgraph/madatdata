@@ -1,6 +1,9 @@
 import type { ExportPlugin, WithOptionsInterface } from "@madatdata/base-db";
 import { SplitgraphGraphQLClient } from "../../gql-client/splitgraph-graphql-client";
-import { ExportFormat, ExportJobOutput } from "../../gql-client/unified-types";
+import {
+  ExportFormat,
+  type ExportJobOutput,
+} from "../../gql-client/unified-types";
 import { Retryable, BackOffPolicy } from "typescript-retry-decorator";
 
 import { gql } from "graphql-request";

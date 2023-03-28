@@ -1,10 +1,10 @@
 import type { Plugin } from "./plugin-bindings";
 import {
-  WithPluginRegistry,
+  type WithPluginRegistry,
   PluginRegistry,
-  PluggableInterfaceShape,
-  PluginList,
-  ExtractPlugin,
+  type PluggableInterfaceShape,
+  type PluginList,
+  type ExtractPlugin,
 } from "./plugin-registry";
 
 import {

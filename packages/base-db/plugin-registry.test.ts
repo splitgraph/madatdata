@@ -5,9 +5,9 @@ import type {
   NotEqual,
 } from "@madatdata/test-helpers/type-test-utils";
 import {
-  PluginList,
+  type PluginList,
   PluginRegistry,
-  WithPluginRegistry,
+  type WithPluginRegistry,
 } from "./plugin-registry";
 
 type SomeKindOfChampionPlugin = {
