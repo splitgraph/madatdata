@@ -28,7 +28,7 @@ Splitgraph repository (see [`./pages/index.tsx`](./pages/index.tsx)):
 
 ## Try Now
 
-- [🚀 Click to Deploy Immediately to **StackBlitz**](https://stackblitz.com/github/splitgraph/madatdata/tree/main/examples/react-vite-basic-hooks?file=README.md)
+- [🚀 Click to Deploy Immediately to **StackBlitz**](https://stackblitz.com/github/splitgraph/madatdata/tree/main/examples/react-vite-basic-hooks?file=src/App.tsx)
   (no signup required!)
 
 - [🚀 Click to Deploy to **Vercel**](https://vercel.com/new/git/external?repository-url=https://github.com/splitgraph/madatdata/tree/main/examples/react-vite-basic-hooks&project-name=madatdata-basic-hooks&repository-name=madatdata-vite-basic-hooks)

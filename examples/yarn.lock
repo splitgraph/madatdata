@@ -2119,6 +2119,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "react-vite-basic-hooks@workspace:react-vite-basic-hooks"
   dependencies:
+    "@madatdata/react": latest
     "@types/react": ^18.0.28
     "@types/react-dom": ^18.0.11
     "@vitejs/plugin-react": ^3.1.0
