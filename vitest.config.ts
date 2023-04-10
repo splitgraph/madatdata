@@ -1,9 +1,5 @@
 import { defineConfig, configDefaults } from "vitest/config";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
 import react from "@vitejs/plugin-react";
-
-const currentDirectoryPath = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [
@@ -13,12 +9,6 @@ export default defineConfig({
   ],
   resolve: {
     conditions: ["dev"],
-    // alias: [
-    //   {
-    //     find: "@madatdata/root",
-    //     replacement: currentDirectoryPath,
-    //   },
-    // ],
   },
   test: {
     environment: "jsdom",
