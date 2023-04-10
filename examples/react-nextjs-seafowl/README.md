@@ -19,11 +19,19 @@ with Cloudflare in front of it at `demo.seafowl.cloud` providing a caching layer
 
 ## Try Now
 
-- [🚀 Click to Deploy Immediately to **StackBlitz**](https://stackblitz.com/github/splitgraph/madatdata/tree/main/examples/react-nextjs-seafowl?file=README.md)
-  (no signup required!)
+### Preview Immediately
 
-- [🚀 Click to Deploy to **Vercel**](https://vercel.com/new/git/external?repository-url=https://github.com/splitgraph/madatdata/tree/main/examples/react-nextjs-seafowl&project-name=madatdata-seafowl&repository-name=madatdata-nextjs-seafowl)
-  (signup and new repo required)
+_No signup required, just click the button!_
+
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/splitgraph/madatdata/tree/main/examples/react-nextjs-seafowl?file=sql-queries.ts)
+
+[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/splitgraph/madatdata/main/examples/react-nextjs-seafowl?file=sql-queries.ts&hardReloadOnChange=true&startScript=dev&node=16&port=3000)
+
+### Or, deploy to Vercel (signup required)
+
+_Signup, fork the repo, and import it_
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/external?repository-url=https://github.com/splitgraph/madatdata/tree/main/examples/react-nextjs-seafowl&project-name=madatdata-seafowl&repository-name=madatdata-nextjs-seafowl)
 
 ## Queries
 
