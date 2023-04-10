@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@rushstack/ts-command-line": "4.13.2",
-    "chalk": "5.0.1",
+    "chalk": "5.2.0",
     "esno": "0.16.3",
     "playwright": "1.23.2",
     "typescript": "5.0.2"

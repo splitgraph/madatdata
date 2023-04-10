@@ -15,7 +15,7 @@
     "msw": "https://github.com/milesforks/msw/blob/released/patched/intercept-node-v18-native-fetch/unreleased-msw-1190f5560178babd232abbb9a96ce8ba4f1abfb1.tgz?raw=true",
     "prettier": "2.7.1",
     "rimraf": "3.0.2",
-    "tsc-multi": "0.6.1",
+    "tsc-multi": "1.0.0",
     "typescript": "5.0.2",
     "undici": "5.10.0",
     "verdaccio": "5.13.1",
@@ -23,8 +23,8 @@
     "wireit": "0.7.1"
   },
   "resolutions": {
-    "tsc-multi@0.6.1": "patch:tsc-multi@npm:0.6.1#.yarn/patches/tsc-multi-npm-0.6.1-6c7411b6ff.patch",
-    "@madatdata/tiny-react-sandbox/react": "^18"
+    "@madatdata/tiny-react-sandbox/react": "^18",
+    "tsc-multi@1.0.0": "patch:tsc-multi@npm:1.0.0#.yarn/patches/tsc-multi-npm-1.0.0-509fa4971c.patch"
   },
   "dependencies": {
     "cross-fetch": "3.1.5"
