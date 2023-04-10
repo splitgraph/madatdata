@@ -3,7 +3,6 @@
   "compilerOptions": {
     "noEmit": true,
     "emitDeclarationOnly": false,
-    "module": "commonjs",
-    "verbatimModuleSyntax": false
+    "module": "commonjs"
   }
 }

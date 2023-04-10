@@ -5,11 +5,7 @@
       "tsBuildInfoFile": "build/es2020-commonjs.tsbuildinfo",
       "module": "CommonJS",
       "target": "ES2020",
-      "extname": ".cjs",
-      "verbatimModuleSyntax": false,
-      "isolatedModules": false,
-      "importsNotUsedAsValues": "error",
-      "ignoreDeprecations": "5.0"
+      "extname": ".cjs"
     },
     {
       "outDir": "build/es2020",
