@@ -7,7 +7,7 @@ import {
   type ExportPlugin,
   type ExtractPlugin,
   type PluginList,
-  WithOptionsInterface,
+  type WithOptionsInterface,
 } from "@madatdata/base-db";
 
 // TODO: This sould be injected in the constructor as the actual plugin map

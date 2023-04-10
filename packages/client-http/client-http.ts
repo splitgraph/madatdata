@@ -6,11 +6,11 @@ import {
   type Database,
   type Host,
   type UnknownCredential,
-  UnknownRowShape,
-  ExecutionResultWithObjectShapedRows,
-  ExecutionResultWithArrayShapedRows,
-  UnknownArrayShape,
-  UnknownObjectShape,
+  type UnknownRowShape,
+  type ExecutionResultWithObjectShapedRows,
+  type ExecutionResultWithArrayShapedRows,
+  type UnknownArrayShape,
+  type UnknownObjectShape,
 } from "@madatdata/base-client";
 
 export interface WebBridgeResponse<RowShape extends UnknownRowShape> {

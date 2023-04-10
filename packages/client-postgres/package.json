@@ -6,7 +6,7 @@
   "types": "./build/es2020/index.d.ts",
   "devDependencies": {
     "@types/node": "18.7.13",
-    "postgres": "3.2.4"
+    "postgres": "3.3.4"
   },
   "dependencies": {
     "@madatdata/base-client": "workspace:*"
@@ -18,6 +18,23 @@
     "access": "public",
     "main": "./build/es2020-commonjs/index.cjs",
     "module": "./build/es2020/index.mjs"
+  },
+  "exports": {
+    ".": {
+      "dev": "./index.ts",
+      "require": {
+        "types": "./build/es2020-commonjs/index.d.ts",
+        "default": "./build/es2020-commonjs/index.cjs"
+      },
+      "import": {
+        "types": "./build/es2020/index.d.ts",
+        "default": "./build/es2020/index.mjs"
+      },
+      "default": {
+        "types": "./build/es2020/index.d.ts",
+        "default": "./build/es2020/index.mjs"
+      }
+    }
   },
   "files": [
     "build/*/**",

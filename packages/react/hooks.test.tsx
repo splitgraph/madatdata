@@ -164,6 +164,7 @@ describe("makeDefaultAnonymousContext", () => {
           },
         },
         "db": DbSplitgraph {
+          "authenticatedCredential": undefined,
           "database": {
             "dbname": "ddn",
           },

@@ -2,11 +2,11 @@ import {
   BaseDb,
   type DbOptions,
   type DbPluggableInterface,
-  WithPluginRegistry,
-  ImportPlugin,
-  ExportPlugin,
-  PluginList,
-  ExtractPlugin,
+  type WithPluginRegistry,
+  type ImportPlugin,
+  type ExportPlugin,
+  type PluginList,
+  type ExtractPlugin,
   type WithOptionsInterface,
 } from "@madatdata/base-db";
 

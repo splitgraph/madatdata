@@ -1,6 +1,5 @@
 import { CommandLineAction } from "@rushstack/ts-command-line";
 import { chromium } from "playwright";
-import chalk from "chalk";
 import path from "path";
 
 export class OpenDevtoolsAction extends CommandLineAction {
@@ -30,11 +29,8 @@ export class OpenDevtoolsAction extends CommandLineAction {
         debugConfig,
       });
     } catch (openDevtoolsError) {
-      console.error(
-        chalk.red("Error"),
-        "Encountered exception during openDevtools."
-      );
-      console.error(chalk.yellow("Traceback:"));
+      console.error("Error", "Encountered exception during openDevtools.");
+      console.error("Traceback:");
       console.trace(openDevtoolsError);
     }
   }

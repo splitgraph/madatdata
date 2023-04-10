@@ -3,7 +3,6 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "emitDeclarationOnly": false,
-    "resolveJsonModule": false,
-    "isolatedModules": false
+    "resolveJsonModule": false
   }
 }

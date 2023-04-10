@@ -5,11 +5,7 @@ const [nodeMajorVersion, _nodeMinorVersion, _nodePatchVersion] = process.version
   .split(".")
   .map((x) => parseInt(x[0] === "v" ? x.slice(1) : x));
 
-// NOTE: `fetch` needs to be polyfilled in Node.
-// The dependency is in the root of the mono-repo, and any package that relies
-// on it is responsible for polyfilling it in its own bundle
-// import "cross-fetch/polyfill";
-window.fetch = globalThis.fetch;
+// NOTE: `fetch` would need to be polyfilled in Node < v18, but we're only running tests in v18+
 
 // Optionally disable TLS verification and suppress its resultant warning spam
 import "./suppress-insecure-tls-warning";
@@ -37,6 +33,8 @@ if (process.env.INSECURE_TLS === "1") {
 // Developer is responsible for operation of proxy, but we recommend `mitmproxy`
 // NOTE: It's also posible to set `GLOBAL_AGENT_*` env variables directly,
 // see: https://github.com/gajus/global-agent#environment-variables
+// NOTE: In node 18, setting GLOBAL_AGENT directly won't affect agent proxy URI,
+//       which is why we et it with setGlobalDispatcher (from undici)
 if (process.env.MITM) {
   if (!process.env.GLOBAL_AGENT_HTTP_PROXY) {
     process.env["GLOBAL_AGENT_HTTP_PROXY"] = process.env.MITM;

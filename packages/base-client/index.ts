@@ -9,6 +9,8 @@ export { type Host, defaultHost, type Database, defaultDatabase };
 
 export { type CredentialOptions, Credential };
 
+export * from "./host";
+
 export {
   type AuthenticatedCredential,
   type UnknownCredential,

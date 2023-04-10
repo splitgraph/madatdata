@@ -1,5 +1,5 @@
 diff --git a/dist/build.js b/dist/build.js
-index a669851a62851955a921cc070c4ee34fc7b07e4d..8c864827494011f3ebcbed952bd08bf6c81aa340 100644
+index 29144bc5cdb118655229a1f8998c3168170ca257..ba0595bd0a2a9789aac96ba8e7c97b037da34536 100644
 --- a/dist/build.js
 +++ b/dist/build.js
 @@ -20,10 +20,12 @@ function validateTargets(targets) {
@@ -13,7 +13,7 @@ index a669851a62851955a921cc070c4ee34fc7b07e4d..8c864827494011f3ebcbed952bd08bf6
 +        // PATCHED by Splitgraph
 +        // NOTE: duplicate extensions are okay as long as targets have different outDir and tsBuildInfoFile
 +        // const existedIndex = extMap.get(ext);
-+        // if (existedIndex != null && !targets[i].) {
++        // if (existedIndex != null) {
 +        //     throw new Error(`targets[${i}].extname is already used in targets[${existedIndex}].extname`);
 +        // }
          extMap.set(ext, i);

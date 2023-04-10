@@ -21,6 +21,23 @@
     "react": ">=17 || >=18",
     "react-dom": ">=17 || >=18"
   },
+  "exports": {
+    ".": {
+      "dev": "./index.ts",
+      "require": {
+        "types": "./build/es2020-commonjs/index.d.ts",
+        "default": "./build/es2020-commonjs/index.cjs"
+      },
+      "import": {
+        "types": "./build/es2020/index.d.ts",
+        "default": "./build/es2020/index.mjs"
+      },
+      "default": {
+        "types": "./build/es2020/index.d.ts",
+        "default": "./build/es2020/index.mjs"
+      }
+    }
+  },
   "publishConfig": {
     "access": "public",
     "main": "./build/es2020-commonjs/index.cjs",

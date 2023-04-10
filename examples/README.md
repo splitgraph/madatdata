@@ -40,10 +40,7 @@ cleanup (keeping in mind it will kill any process on machine matching
 `verdaccio` in its command line args).
 
 ```bash
-# This example is for examples/react-nextjs-basic-hooks
-# Modify the snippet accordingly depending on which example you're focused on
-
-./build-examples.sh examples/react-nextjs-basic-hooks
+./build-examples-from-local.sh
 ```
 
 **WARNING**: After running this, if you are doing regular development (i.e. not
@@ -51,12 +48,12 @@ including examples), you will probably need to run `yarn clean` in the repo root
 to make sure everything rebuilds properly (this especially applies to
 `@madatdata/react`)
 
-Note: this specific example also removes the `.next` directory in
-`examples/react-nextjs-basic-hooks`. Other examples might have similar
-directories that need to be deleted - by the nature of having realistic
-examples, it can vary wildly and depends on the software being used.
+Note: this specific example also removes the `.next` directory (if it exists) in
+each workspace. Some examples might have similar directories that need to be
+deleted - by the nature of having realistic examples, it can vary wildly and
+depends on the software being used, and is currently hardcoded to only`.next`.
 
-See `build-examples.sh` for exactly what is happening.
+See `build-examples-from-local.sh` for exactly what is happening.
 
 Note: Each test cycle will change `yarn.lock` (which is why we do `yarn install`
 and not `yarn install --immutable` here), as the hash of each local package

@@ -10,7 +10,7 @@ import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hook
 import { setupMemo } from "@madatdata/test-helpers/setup-memo";
 import { compose, graphql, rest, type DefaultBodyType } from "msw";
 
-import { defaultHost } from "@madatdata/base-client/host";
+import { defaultHost } from "@madatdata/base-client";
 
 import { faker } from "@faker-js/faker";
 
