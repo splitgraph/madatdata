@@ -15,16 +15,7 @@
 
 REPO_ROOT="$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 
-WORKING_EXAMPLE="${1-notadirectory}"
-shift
-
 set -e
-
-if [[ ! -d "$WORKING_EXAMPLE" ]] ; then
-  echo "error: first argument shuld be directory of example you're focusing on"
-  echo "e.g.: $0 examples/react-nextjs-seafowl"
-  exit 2
-fi
 
 if [[ "$REPO_ROOT" != "$(pwd)" ]] ; then
   echo "error: script must be run in root directory"
@@ -71,15 +62,35 @@ VERDACCIO=http://localhost:4873 yarn install
 echo "[+] Return to repo root"
 cd "$REPO_ROOT"
 
-# Install focused example
-echo "[+] FOCUS: $WORKING_EXAMPLE"
-cd "$WORKING_EXAMPLE"
-if [[ -d ".next" ]] ; then
-  echo "[+] found .next, delete it"
-  rm -rf .next
-fi
-echo "[+] install example"
-VERDACCIO=http://localhost:4873 yarn install
+# Clean install examples
+cd "$REPO_ROOT/examples"
+# Get workspace names that are directories (except for the current one),
+# and run yarn install in each of them. I'm not sure this is even necessary,
+# but it doesn't hurt. And regardless, we do want to perform cleanup steps in
+# each directory (e.g. deleting .next) anyway. (REMINDER: This script is a hack)
+while read -r workspace_dir ; do
+  if ! test -d "$workspace_dir" ; then
+    echo "[+] WARNING: detected workspace that's not a directory: $workspace_dir"
+    continue
+  fi
+
+  echo "[+] $workspace_dir : start install"
+  set -x
+  cd "$workspace_dir"
+  set +x
+
+  if [[ -d ".next" ]] ; then
+    echo "[+] found .next, delete it"
+    rm -rf .next
+  fi
+  echo "[+] install example from Verdaccio"
+  VERDACCIO=http://localhost:4873 yarn install
+
+  echo "[+] $workspace_dir : done install"
+  echo "[+] cd back to examples"
+  cd "$REPO_ROOT/examples"
+done < <(cd "$REPO_ROOT/examples" ; yarn workspaces list | awk '{print $3}' | grep -vE '^Done$|^\.$')
+
 echo "[+] return to repo root"
 cd "$REPO_ROOT"
 
@@ -103,8 +114,8 @@ set -x
 ps aux | grep verdaccio
 set +x
 
-echo "[+] READY TO GO: $WORKING_EXAMPLE"
-echo "[+] You can now cd into the example:"
-echo "cd $WORKING_EXAMPLE"
+echo "[+] READY TO GO: all examples installed"
+echo "[+] You can now cd into a example, e.g.:"
+echo "cd examples/react-nextjs-basic-hooks"
 echo "[+] NOTE: When you are done, if you want to go back to regular development"
 echo "    outside of the examples repo, you will probably want to run 'yarn clean'"
