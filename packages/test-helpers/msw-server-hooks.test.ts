@@ -1,55 +1,6 @@
-import {
-  describe,
-  it,
-  expect,
-  beforeEach,
-  beforeAll,
-  afterAll,
-  vi,
-} from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { setupMswServerTestHooks } from "./msw-server-hooks";
 import { rest } from "msw";
-
-import { FetchInterceptor } from "@mswjs/interceptors/lib/interceptors/fetch";
-
-/**
- * The "raw interceptor" (`FetchInterceptor`) intercepts global fetch, including
- * the "node native" (undici) fetch enabled by default in Node v18+.
- *
- * The upstream `msw` package does not currently provide an easy way to add
- * interceptors, and it does not enable the fetch interceptor by default in
- * the node environment. However, it does work. So until this is fixed upstream,
- * we patch it with Yarn patch to include this same FetchInterceptor, which we
- * test directly here as a smoke test to make sure `msw` could even be working
- */
-describe("can use raw msw FetchInterceptor", () => {
-  const resolver = vi.fn((req: any) => {
-    console.log("got req: ", req);
-  });
-
-  const interceptor = new FetchInterceptor();
-  interceptor.on("request", (...args) => {
-    return resolver(...args);
-  });
-
-  beforeAll(() => {
-    interceptor.apply();
-  });
-
-  beforeEach(() => {
-    resolver.mockReset();
-  });
-
-  it("intercepts HTTP GET request", async () => {
-    const response = await fetch("https://www.httpbin.org/headers");
-    expect(resolver).toHaveBeenCalledOnce();
-    expect(response).not.toBeNull();
-  });
-
-  afterAll(() => {
-    interceptor.dispose();
-  });
-});
 
 /**
  * Test that we can setup an msw "server", which will be using `FetchInterceptor`

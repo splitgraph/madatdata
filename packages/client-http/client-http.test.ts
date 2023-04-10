@@ -190,7 +190,7 @@ describe("client handles errors correctly because it", () => {
 
     expect(error).toMatchInlineSnapshot(`
       {
-        "name": "NetworkError",
+        "cause": [NetworkError: Some fake network error from MSW request handler],
         "success": false,
         "type": "network",
       }

@@ -102,25 +102,3 @@ export const makeClient = (args: ClientOptions) => {
   const client = new SplitgraphPostgresClient(args);
   return client;
 };
-
-// TEMPORARY: add .values() to typings by copying unreleased bugfix from commit:
-// https://github.com/porsager/postgres/commit/ac1bca41004c7923b877c26f2ffc3039b70b4432
-// declare module "postgres" {
-//   type ValuesRowList<T extends readonly any[]> =
-//     T[number][keyof T[number]][][] &
-//       postgres.ResultQueryMeta<T["length"], keyof T[number]>;
-
-//   interface PendingValuesQuery<TRow extends readonly postgres.MaybeRow[]>
-//     extends Promise<ValuesRowList<TRow>>,
-//       postgres.PendingQueryModifiers<TRow[number][keyof TRow[number]][][]> {
-//     describe(): postgres.PendingDescribeQuery;
-//   }
-
-//   interface PendingQuery<TRow extends readonly postgres.MaybeRow[]>
-//     extends Promise<postgres.RowList<TRow>>,
-//       postgres.PendingQueryModifiers<TRow> {
-//     describe(): postgres.PendingDescribeQuery;
-//     values(): PendingValuesQuery<TRow>;
-//     raw(): postgres.PendingRawQuery<TRow>;
-//   }
-// }

@@ -9,7 +9,7 @@ const [nodeMajorVersion, _nodeMinorVersion, _nodePatchVersion] = process.version
 // The dependency is in the root of the mono-repo, and any package that relies
 // on it is responsible for polyfilling it in its own bundle
 // import "cross-fetch/polyfill";
-window.fetch = globalThis.fetch;
+// window.fetch = globalThis.fetch;
 
 // Optionally disable TLS verification and suppress its resultant warning spam
 import "./suppress-insecure-tls-warning";
