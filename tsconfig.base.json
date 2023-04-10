@@ -15,7 +15,7 @@
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "nodenext",
-    // "customConditions": ["dev"],
+    "customConditions": ["dev"],
     "resolveJsonModule": true,
     "jsx": "react-jsx",
     "noUnusedLocals": true,

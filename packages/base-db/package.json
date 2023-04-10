@@ -22,7 +22,7 @@
   },
   "exports": {
     ".": {
-      "node": "./index.ts"
+      "dev": "./index.ts"
     }
   },
   "files": [

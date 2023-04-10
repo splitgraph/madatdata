@@ -12,7 +12,7 @@ export default defineConfig({
     }),
   ],
   resolve: {
-    // conditions: ["dev"],
+    conditions: ["dev"],
     // alias: [
     //   {
     //     find: "@madatdata/root",
