@@ -26,6 +26,11 @@
     "json-schema-to-typescript": "10.1.5",
     "rimraf": "3.0.2"
   },
+  "exports": {
+    ".": {
+      "node": "./index.ts"
+    }
+  },
   "publishConfig": {
     "access": "public",
     "main": "./build/es2020-commonjs/index.cjs",

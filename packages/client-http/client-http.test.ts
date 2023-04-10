@@ -5,7 +5,7 @@ import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hook
 import { shouldSkipIntegrationTests } from "@madatdata/test-helpers/env-config";
 import { rest } from "msw";
 
-import { defaultHost } from "@madatdata/base-client/host";
+import { defaultHost } from "@madatdata/base-client";
 
 // NOTE: Previously, the default http-client was hardcoded for Splitgraph, which
 // is why all the tests reflect its shape. But we don't want this package to

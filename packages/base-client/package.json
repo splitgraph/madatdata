@@ -21,6 +21,11 @@
     "build/*/**",
     "package.json"
   ],
+  "exports": {
+    ".": {
+      "node": "./index.ts"
+    }
+  },
   "scripts": {
     "version": "yarn version",
     "publish": "yarn npm publish"

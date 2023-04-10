@@ -24,6 +24,11 @@
     "main": "./build/es2020-commonjs/index.cjs",
     "module": "./build/es2020/index.mjs"
   },
+  "exports": {
+    ".": {
+      "node": "./index.ts"
+    }
+  },
   "files": [
     "build/*/**",
     "package.json"

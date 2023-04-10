@@ -37,6 +37,7 @@ if (process.env.INSECURE_TLS === "1") {
 // Developer is responsible for operation of proxy, but we recommend `mitmproxy`
 // NOTE: It's also posible to set `GLOBAL_AGENT_*` env variables directly,
 // see: https://github.com/gajus/global-agent#environment-variables
+// TODO: In node 18, setting GLOBAL_AGENT directly won't affect agent proxy URI
 if (process.env.MITM) {
   if (!process.env.GLOBAL_AGENT_HTTP_PROXY) {
     process.env["GLOBAL_AGENT_HTTP_PROXY"] = process.env.MITM;

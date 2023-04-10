@@ -21,6 +21,11 @@
     "react": ">=17 || >=18",
     "react-dom": ">=17 || >=18"
   },
+  "exports": {
+    ".": {
+      "node": "./index.ts"
+    }
+  },
   "publishConfig": {
     "access": "public",
     "main": "./build/es2020-commonjs/index.cjs",
