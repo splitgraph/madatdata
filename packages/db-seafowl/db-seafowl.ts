@@ -61,10 +61,26 @@ const makeTransformRequestHeadersForAuthenticatedRequest =
   });
 
 const guessMethodForQuery = (query: string) => {
-  return query.trim().startsWith("CREATE TABLE ") ||
-    query.trim().startsWith("CREATE EXTERNAL TABLE ")
-    ? "POST"
-    : "GET";
+  const writeStatements = [
+    "INSERT",
+    "UPDATE",
+    "DELETE",
+    "ALTER",
+    "VACUUM",
+    "CREATE",
+    "DROP",
+  ];
+
+  const normalizedQuery = query.trim().toUpperCase();
+
+  if (writeStatements.some((write) => normalizedQuery.startsWith(write))) {
+    return "POST";
+  }
+  if (!query.includes("SELECT")) {
+    console.warn("No SELECT in query, but assuming GET:", query);
+  }
+
+  return "GET";
 };
 
 interface DbSeafowlPluginHostContext {
@@ -132,9 +148,13 @@ export class DbSeafowl<SeafowlPluginList extends PluginList>
               : {}),
           };
         },
-        makeQueryURL: async ({ host, query }) => {
+        makeQueryURL: async ({ host, query, database: { dbname } }) => {
+          const baseQueryUrl = dbname
+            ? host.baseUrls.sql + "/" + dbname
+            : host.baseUrls.sql;
+
           if (!query) {
-            return host.baseUrls.sql;
+            return baseQueryUrl;
           }
 
           // NOTE: The .csv extension is "ignored" (the data is still returned as jsonl),
@@ -145,8 +165,8 @@ export class DbSeafowl<SeafowlPluginList extends PluginList>
           const { fingerprint } = await this.fingerprintQuery(query ?? "");
           const guessedMethod = guessMethodForQuery(query);
           return guessedMethod === "GET"
-            ? host.baseUrls.sql + "/" + fingerprint + extension
-            : host.baseUrls.sql;
+            ? baseQueryUrl + "/" + fingerprint + extension
+            : baseQueryUrl;
         },
       },
     };
