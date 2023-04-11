@@ -1,6 +1,6 @@
 {
   "name": "@madatdata/db-splitgraph",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "packageManager": "yarn@3.2.0",
   "main": "index.ts",
   "types": "./build/es2020/index.d.ts",
