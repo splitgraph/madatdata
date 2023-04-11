@@ -61,7 +61,7 @@ const createDb = () => {
       apiHost: "bogus",
       baseUrls: {
         gql: "bogus",
-        sql: "http://127.0.0.1:8080/q",
+        sql: "http://127.0.0.1:8080",
         auth: "bogus",
       },
       postgres: {

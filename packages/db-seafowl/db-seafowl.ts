@@ -149,9 +149,11 @@ export class DbSeafowl<SeafowlPluginList extends PluginList>
           };
         },
         makeQueryURL: async ({ host, query, database: { dbname } }) => {
+          const withoutTrailingSlash = host.baseUrls.sql.replace(/\/+$/g, "");
+
           const baseQueryUrl = dbname
-            ? host.baseUrls.sql + "/" + dbname
-            : host.baseUrls.sql;
+            ? [withoutTrailingSlash, dbname, "q"].join("/")
+            : [withoutTrailingSlash, "q"].join("/");
 
           if (!query) {
             return baseQueryUrl;
