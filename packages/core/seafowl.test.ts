@@ -30,7 +30,7 @@ export const createDataContext = () => {
       apiHost: "bogus",
       baseUrls: {
         gql: "bogus",
-        sql: "http://127.0.0.1:8080/q",
+        sql: "http://127.0.0.1:8080",
         auth: "bogus",
       },
       postgres: {
@@ -59,7 +59,7 @@ export const createRealDataContext = () => {
       apiHost: "bogus",
       baseUrls: {
         gql: "bogus",
-        sql: "http://127.0.0.1:8080/q",
+        sql: "http://127.0.0.1:8080",
         auth: "bogus",
       },
       postgres: {
@@ -114,7 +114,7 @@ describe("makeSeafowlHTTPContext", () => {
             "baseUrls": {
               "auth": "bogus",
               "gql": "bogus",
-              "sql": "http://127.0.0.1:8080/q",
+              "sql": "http://127.0.0.1:8080",
             },
             "dataHost": "127.0.0.1:8080",
             "postgres": {
@@ -138,7 +138,7 @@ describe("makeSeafowlHTTPContext", () => {
             "baseUrls": {
               "auth": "bogus",
               "gql": "bogus",
-              "sql": "http://127.0.0.1:8080/q",
+              "sql": "http://127.0.0.1:8080",
             },
             "dataHost": "127.0.0.1:8080",
             "postgres": {
@@ -165,7 +165,7 @@ describe("makeSeafowlHTTPContext", () => {
               "baseUrls": {
                 "auth": "bogus",
                 "gql": "bogus",
-                "sql": "http://127.0.0.1:8080/q",
+                "sql": "http://127.0.0.1:8080",
               },
               "dataHost": "127.0.0.1:8080",
               "postgres": {
@@ -222,7 +222,7 @@ describe("makeQueryURL", () => {
     apiHost: "bogus",
     baseUrls: {
       gql: "bogus",
-      sql: "http://127.0.0.1:8080/q",
+      sql: "http://127.0.0.1:8080",
       auth: "bogus",
     },
     postgres: {
@@ -270,7 +270,7 @@ describe("makeQueryURL", () => {
     });
 
     expect(await makeQueryUrl("SELECT 1")).toMatchInlineSnapshot(
-      '"http://127.0.0.1:8080/q/blahblah/e004ebd5b5532a4b85984a62f8ad48a81aa3460c1ca07701f386135d72cdecf5.csv"'
+      '"http://127.0.0.1:8080/blahblah/q/e004ebd5b5532a4b85984a62f8ad48a81aa3460c1ca07701f386135d72cdecf5.csv"'
     );
   });
 
@@ -283,7 +283,7 @@ describe("makeQueryURL", () => {
     const mockedWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     expect(await makeQueryUrl("-- Just a comment")).toMatchInlineSnapshot(
-      '"http://127.0.0.1:8080/q/blahblah/86661ce809b75e52fe37ba823a305238ce392fb793eaa92d2f86cd74bddb2a50.csv"'
+      '"http://127.0.0.1:8080/blahblah/q/86661ce809b75e52fe37ba823a305238ce392fb793eaa92d2f86cd74bddb2a50.csv"'
     );
 
     expect(mockedWarn).toHaveBeenLastCalledWith(
@@ -302,32 +302,32 @@ describe("makeQueryURL", () => {
 
     // NOTE: We assume it's a POST query because there is no hash in the URL
     expect(await makeQueryUrl("INSERT INTO blahblah")).toMatchInlineSnapshot(
-      '"http://127.0.0.1:8080/q/blahblah"'
+      '"http://127.0.0.1:8080/blahblah/q"'
     );
     expect(await makeQueryUrl("UPDATE something")).toMatchInlineSnapshot(
-      '"http://127.0.0.1:8080/q/blahblah"'
+      '"http://127.0.0.1:8080/blahblah/q"'
     );
     expect(await makeQueryUrl("DELETE xxx")).toMatchInlineSnapshot(
-      '"http://127.0.0.1:8080/q/blahblah"'
+      '"http://127.0.0.1:8080/blahblah/q"'
     );
     expect(await makeQueryUrl("delete xxx")).toMatchInlineSnapshot(
-      '"http://127.0.0.1:8080/q/blahblah"'
+      '"http://127.0.0.1:8080/blahblah/q"'
     );
     expect(
       await makeQueryUrl(`DELETE
         xxx`)
-    ).toMatchInlineSnapshot('"http://127.0.0.1:8080/q/blahblah"');
+    ).toMatchInlineSnapshot('"http://127.0.0.1:8080/blahblah/q"');
     expect(await makeQueryUrl("ALTER a_table")).toMatchInlineSnapshot(
-      '"http://127.0.0.1:8080/q/blahblah"'
+      '"http://127.0.0.1:8080/blahblah/q"'
     );
     expect(await makeQueryUrl("VACUUM")).toMatchInlineSnapshot(
-      '"http://127.0.0.1:8080/q/blahblah"'
+      '"http://127.0.0.1:8080/blahblah/q"'
     );
     expect(await makeQueryUrl("CREATE")).toMatchInlineSnapshot(
-      '"http://127.0.0.1:8080/q/blahblah"'
+      '"http://127.0.0.1:8080/blahblah/q"'
     );
     expect(await makeQueryUrl("Drop table blah")).toMatchInlineSnapshot(
-      '"http://127.0.0.1:8080/q/blahblah"'
+      '"http://127.0.0.1:8080/blahblah/q"'
     );
   });
 });

@@ -18,7 +18,7 @@ export default function SearchMetricsApp({ Component, pageProps }: AppProps) {
           apiHost: "bogus",
           baseUrls: {
             gql: "bogus",
-            sql: "https://demo.seafowl.cloud/q",
+            sql: "https://demo.seafowl.cloud",
             auth: "bogus",
           },
           postgres: {
