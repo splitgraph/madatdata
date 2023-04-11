@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { makeDb } from "./db-seafowl";
+import { makeDb } from "@madatdata/db-seafowl";
+
+// TODO: add entrypoint for ./plugins ?
 import { SeafowlImportFilePlugin } from "./plugins/importers/seafowl-import-file-plugin";
 
 import { shouldSkipSeafowlTests } from "@madatdata/test-helpers/env-config";

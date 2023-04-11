@@ -8,7 +8,7 @@ import {
   type PluginList,
   PluginRegistry,
   type WithPluginRegistry,
-} from "./plugin-registry";
+} from "@madatdata/base-db";
 
 type SomeKindOfChampionPlugin = {
   __name: string;

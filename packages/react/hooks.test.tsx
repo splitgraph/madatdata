@@ -164,7 +164,6 @@ describe("makeDefaultAnonymousContext", () => {
           },
         },
         "db": DbSplitgraph {
-          "authenticatedCredential": undefined,
           "database": {
             "dbname": "ddn",
           },
@@ -205,7 +204,7 @@ describe("makeDefaultAnonymousContext", () => {
               },
             },
             "plugins": [
-              _SplitgraphImportCSVPlugin {
+              SplitgraphImportCSVPlugin {
                 "__name": "csv",
                 "graphqlClient": SplitgraphGraphQLClient {
                   "graphqlClient": GraphQLClient {
@@ -224,7 +223,7 @@ describe("makeDefaultAnonymousContext", () => {
                 },
                 "transformRequestHeaders": [Function],
               },
-              _ExportQueryPlugin {
+              ExportQueryPlugin {
                 "__name": "exportQuery",
                 "graphqlClient": SplitgraphGraphQLClient {
                   "graphqlClient": GraphQLClient {
@@ -248,7 +247,7 @@ describe("makeDefaultAnonymousContext", () => {
           "plugins": PluginRegistry {
             "hostContext": {},
             "plugins": [
-              _SplitgraphImportCSVPlugin {
+              SplitgraphImportCSVPlugin {
                 "__name": "csv",
                 "graphqlClient": SplitgraphGraphQLClient {
                   "graphqlClient": GraphQLClient {
@@ -267,7 +266,7 @@ describe("makeDefaultAnonymousContext", () => {
                 },
                 "transformRequestHeaders": [Function],
               },
-              _ExportQueryPlugin {
+              ExportQueryPlugin {
                 "__name": "exportQuery",
                 "graphqlClient": SplitgraphGraphQLClient {
                   "graphqlClient": GraphQLClient {

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 
-import { makeSeafowlHTTPContext } from "./seafowl";
+// TODO: add /seafowl entry
+import { makeSeafowlHTTPContext } from "@madatdata/core";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
 import { shouldSkipSeafowlTests } from "@madatdata/test-helpers/env-config";
 
@@ -180,7 +181,6 @@ describe("makeSeafowlHTTPContext", () => {
                 "opts": {
                   "seafowlClient": undefined,
                 },
-                "seafowlClient": undefined,
               },
             ],
           },
@@ -192,7 +192,6 @@ describe("makeSeafowlHTTPContext", () => {
                 "opts": {
                   "seafowlClient": undefined,
                 },
-                "seafowlClient": undefined,
               },
             ],
           },

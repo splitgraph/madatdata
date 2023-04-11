@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { randSuffix } from "@madatdata/test-helpers/rand-suffix";
 import type { Expect, Equal } from "@madatdata/test-helpers/type-test-utils";
-import { makeDb } from "./db-splitgraph";
+import { makeDb } from "@madatdata/db-splitgraph";
+
+// TODO: Add entrypoint for /plugins
 import { SplitgraphImportCSVPlugin } from "./plugins/importers/splitgraph-import-csv-plugin";
 import { ExportQueryPlugin } from "./plugins/exporters/export-query-plugin";
 

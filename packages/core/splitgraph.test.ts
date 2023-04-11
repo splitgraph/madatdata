@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 
-import { makeSplitgraphHTTPContext } from "./splitgraph";
+// TODO: add /splitgraph entry
+import { makeSplitgraphHTTPContext } from "@madatdata/core";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
 
 export const createDataContext = () => {
@@ -120,7 +121,7 @@ describe("makeSplitgraphHTTPContext", () => {
               },
             },
             "plugins": [
-              _SplitgraphImportCSVPlugin {
+              SplitgraphImportCSVPlugin {
                 "__name": "csv",
                 "graphqlClient": SplitgraphGraphQLClient {
                   "graphqlClient": GraphQLClient {
@@ -139,7 +140,7 @@ describe("makeSplitgraphHTTPContext", () => {
                 },
                 "transformRequestHeaders": [Function],
               },
-              _ExportQueryPlugin {
+              ExportQueryPlugin {
                 "__name": "exportQuery",
                 "graphqlClient": SplitgraphGraphQLClient {
                   "graphqlClient": GraphQLClient {
@@ -163,7 +164,7 @@ describe("makeSplitgraphHTTPContext", () => {
           "plugins": PluginRegistry {
             "hostContext": {},
             "plugins": [
-              _SplitgraphImportCSVPlugin {
+              SplitgraphImportCSVPlugin {
                 "__name": "csv",
                 "graphqlClient": SplitgraphGraphQLClient {
                   "graphqlClient": GraphQLClient {
@@ -182,7 +183,7 @@ describe("makeSplitgraphHTTPContext", () => {
                 },
                 "transformRequestHeaders": [Function],
               },
-              _ExportQueryPlugin {
+              ExportQueryPlugin {
                 "__name": "exportQuery",
                 "graphqlClient": SplitgraphGraphQLClient {
                   "graphqlClient": GraphQLClient {

@@ -244,6 +244,7 @@ export class SqlHTTPClient<
 // TODO: maybe move/copy to db-{splitgraph,seafowl,etc} - expect them to have it?
 // pass in their own factory function here?
 export const makeClient = (args: ClientOptions<HTTPStrategies>) => {
+  console.log("default makeClient");
   const client = new SqlHTTPClient(args);
   return client;
 };

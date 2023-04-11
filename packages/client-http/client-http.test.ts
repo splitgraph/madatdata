@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { makeClient, type HTTPStrategies } from "./client-http";
+import { makeClient, type HTTPStrategies } from "@madatdata/client-http";
 import { makeAuthHeaders } from "@madatdata/base-client";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
 import { shouldSkipIntegrationTests } from "@madatdata/test-helpers/env-config";
