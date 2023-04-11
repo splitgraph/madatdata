@@ -17,7 +17,7 @@ export const createRealSeafowlDataContext = ({
     : new URL("http://127.0.0.1:8080");
   return makeSeafowlHTTPContext({
     database: {
-      dbname: "seafowl", // arbitrary
+      dbname: "default",
     },
     authenticatedCredential: seafowlSecret
       ? {

@@ -33,7 +33,7 @@ export const SeafowlSampleQuery = () => {
     () =>
       makeSeafowlHTTPContext({
         database: {
-          dbname: "seafowl", // arbitrary
+          dbname: "default",
         },
         authenticatedCredential: undefined,
         host: {

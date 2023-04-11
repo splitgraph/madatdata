@@ -1,8 +1,8 @@
-import { describe, it, expect } from "vitest";
-
+import { describe, it, expect, afterEach, vi } from "vitest";
 import { makeSeafowlHTTPContext } from "./seafowl";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
 import { shouldSkipSeafowlTests } from "@madatdata/test-helpers/env-config";
+import type { Host } from "@madatdata/base-client";
 
 // @ts-expect-error https://stackoverflow.com/a/70711231
 const SEAFOWL_SECRET = import.meta.env.VITE_TEST_SEAFOWL_SECRET;
@@ -15,7 +15,7 @@ const expectToken = SEAFOWL_SECRET ?? "anonymous-token";
 export const createDataContext = () => {
   return makeSeafowlHTTPContext({
     database: {
-      dbname: "seafowl", // arbitrary
+      dbname: "default",
     },
     authenticatedCredential: SEAFOWL_SECRET
       ? {
@@ -45,7 +45,7 @@ export const createDataContext = () => {
 export const createRealDataContext = () => {
   return makeSeafowlHTTPContext({
     database: {
-      dbname: "seafowl", // arbitrary
+      dbname: "default",
     },
     authenticatedCredential: {
       // @ts-expect-error https://stackoverflow.com/a/70711231
@@ -106,7 +106,7 @@ describe("makeSeafowlHTTPContext", () => {
             "token": "${expectToken}",
           },
           "database": {
-            "dbname": "seafowl",
+            "dbname": "default",
           },
           "host": {
             "apexDomain": "bogus",
@@ -130,7 +130,7 @@ describe("makeSeafowlHTTPContext", () => {
         },
         "db": {
           "database": {
-            "dbname": "seafowl",
+            "dbname": "default",
           },
           "host": {
             "apexDomain": "bogus",
@@ -157,7 +157,7 @@ describe("makeSeafowlHTTPContext", () => {
             }`
             },
             "database": {
-              "dbname": "seafowl",
+              "dbname": "default",
             },
             "host": {
               "apexDomain": "bogus",
@@ -199,6 +199,136 @@ describe("makeSeafowlHTTPContext", () => {
         },
       }
     `);
+  });
+});
+
+// NOTE: kind of unsafe/misleading. We're only testing the strategy functions here,
+// since e.g. SqlHttpClient.makeQueryURL is private, and we haven't yet bothered to
+// mock the Seafowl HTTP API. So we're assuming that SqlClientHttpClient.makeQueryURL
+// will pass parameters to the strategy function in the same way as we are doing here
+describe("makeQueryURL", () => {
+  const makeTestContext = ({ host, dbname }: { host: Host; dbname: string }) =>
+    makeSeafowlHTTPContext({
+      database: {
+        dbname,
+      },
+      authenticatedCredential: undefined,
+      host,
+    });
+
+  const hostFromUrl = (dataHost: string) => ({
+    dataHost: dataHost,
+    apexDomain: "bogus",
+    apiHost: "bogus",
+    baseUrls: {
+      gql: "bogus",
+      sql: "http://127.0.0.1:8080/q",
+      auth: "bogus",
+    },
+    postgres: {
+      host: "127.0.0.1",
+      port: 6432,
+      ssl: false,
+    },
+  });
+
+  const makeMockedMakeQueryUrl = ({
+    dataHost,
+    dbname,
+  }: {
+    dataHost: string;
+    dbname: string;
+  }) => {
+    const opts = { host: hostFromUrl(dataHost), dbname: dbname };
+
+    const {
+      db: {
+        httpClientOptions: { strategies },
+      },
+    } = makeTestContext(opts);
+
+    return {
+      opts,
+      makeQueryUrl: (query: string) => {
+        return strategies?.makeQueryURL({
+          host: opts.host,
+          database: { dbname: opts.dbname },
+          query: query,
+        });
+      },
+    };
+  };
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("constructs GET query URL for SELECT", async () => {
+    const { makeQueryUrl } = makeMockedMakeQueryUrl({
+      dataHost: "127.0.0.1:8080",
+      dbname: "blahblah",
+    });
+
+    expect(await makeQueryUrl("SELECT 1")).toMatchInlineSnapshot(
+      '"http://127.0.0.1:8080/q/blahblah/e004ebd5b5532a4b85984a62f8ad48a81aa3460c1ca07701f386135d72cdecf5.csv"'
+    );
+  });
+
+  it("assumes GET if no DDL but warns if no SELECT", async () => {
+    const { makeQueryUrl } = makeMockedMakeQueryUrl({
+      dataHost: "127.0.0.1:8080",
+      dbname: "blahblah",
+    });
+
+    const mockedWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    expect(await makeQueryUrl("-- Just a comment")).toMatchInlineSnapshot(
+      '"http://127.0.0.1:8080/q/blahblah/86661ce809b75e52fe37ba823a305238ce392fb793eaa92d2f86cd74bddb2a50.csv"'
+    );
+
+    expect(mockedWarn).toHaveBeenLastCalledWith(
+      "No SELECT in query, but assuming GET:",
+      "-- Just a comment"
+    );
+  });
+
+  // NOTE: We have a (very) hacky `guessMethodForQuery` that presumes GET for most queries
+  // and specifically looks for DDL statements for POST queries. See db-seafowl.ts
+  it("constructs POST query URL for DDL commands", async () => {
+    const { makeQueryUrl } = makeMockedMakeQueryUrl({
+      dataHost: "127.0.0.1:8080",
+      dbname: "blahblah",
+    });
+
+    // NOTE: We assume it's a POST query because there is no hash in the URL
+    expect(await makeQueryUrl("INSERT INTO blahblah")).toMatchInlineSnapshot(
+      '"http://127.0.0.1:8080/q/blahblah"'
+    );
+    expect(await makeQueryUrl("UPDATE something")).toMatchInlineSnapshot(
+      '"http://127.0.0.1:8080/q/blahblah"'
+    );
+    expect(await makeQueryUrl("DELETE xxx")).toMatchInlineSnapshot(
+      '"http://127.0.0.1:8080/q/blahblah"'
+    );
+    expect(await makeQueryUrl("delete xxx")).toMatchInlineSnapshot(
+      '"http://127.0.0.1:8080/q/blahblah"'
+    );
+    expect(
+      await makeQueryUrl(`DELETE
+        xxx`)
+    ).toMatchInlineSnapshot('"http://127.0.0.1:8080/q/blahblah"');
+    expect(await makeQueryUrl("ALTER a_table")).toMatchInlineSnapshot(
+      '"http://127.0.0.1:8080/q/blahblah"'
+    );
+    expect(await makeQueryUrl("VACUUM")).toMatchInlineSnapshot(
+      '"http://127.0.0.1:8080/q/blahblah"'
+    );
+    expect(await makeQueryUrl("CREATE")).toMatchInlineSnapshot(
+      '"http://127.0.0.1:8080/q/blahblah"'
+    );
+    expect(await makeQueryUrl("Drop table blah")).toMatchInlineSnapshot(
+      '"http://127.0.0.1:8080/q/blahblah"'
+    );
   });
 });
 

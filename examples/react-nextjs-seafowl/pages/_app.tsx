@@ -8,7 +8,7 @@ export default function SearchMetricsApp({ Component, pageProps }: AppProps) {
     () =>
       makeSeafowlHTTPContext({
         database: {
-          dbname: "seafowl", // arbitrary
+          dbname: "default",
         },
         authenticatedCredential: undefined,
         host: {

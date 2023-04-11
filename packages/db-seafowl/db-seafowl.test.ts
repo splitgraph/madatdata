@@ -47,7 +47,7 @@ const createDb = () => {
 
   const db = makeDb({
     database: {
-      dbname: "seafowl", // arbitrary
+      dbname: "default",
     },
     authenticatedCredential: {
       // @ts-expect-error https://stackoverflow.com/a/70711231
