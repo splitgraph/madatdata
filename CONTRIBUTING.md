@@ -117,10 +117,12 @@ yarn up -E -i '*'
 tl;dr
 
 ```bash
-yarn clean && yarn build
+yarn clean
+yarn build
 yarn version-all patch -i
 git add packages/*/package.json
 git commit -m "Bump versions for publish"
+rm -rf .yarn/versions
 yarn publish-all --otp <your otp>
 ```
 
