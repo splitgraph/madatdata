@@ -112,6 +112,30 @@ yarn check
 yarn up -E -i '*'
 ```
 
+## Running Scripts
+
+Scripts are installed in the `scripts` workspace and can be run with `yarn zx`
+from the root workspace or from within the `scripts` workspace. For example,
+from the root:
+
+```bash
+yarn zx scripts/print-cwd.ts
+```
+
+or from `scripts`:
+
+```bash
+cd scripts
+yarn zx print-cwd.ts
+```
+
+Note that this does not use `yarn workspace` and therefore does not change the
+CWD, so the **CWD will be your current directory when running the script**
+(i.e., the root of the repository if you're running it from there). See
+[`./package.json`](./package.json) for details.
+
+See [`./scripts/README.md`](./scripts/README.md) for more details.
+
 ## Publish
 
 tl;dr

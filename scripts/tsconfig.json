@@ -1,0 +1,7 @@
+{
+  "references": [{ "path": "../tsconfig.base-noncomposite-esno.json" }],
+  "compilerOptions": {
+    "module": "ESNext"
+  },
+  "files": []
+}
