@@ -84,6 +84,91 @@ export interface HTTPClientQueryError extends QueryError {
   response?: Response;
 }
 
+const TypeOfAny = (x: any) => typeof x;
+type ValidType = Exclude<ReturnType<typeof TypeOfAny>, "function"> | "null";
+
+type FieldTypesFromObjectRowShape<RowShape extends UnknownObjectShape> = {
+  [k in keyof RowShape]: Set<ValidType>;
+};
+
+// RIDICULOUS HACK
+const fieldsReducerForObjectRows = <RowShape extends UnknownObjectShape>(
+  observedFields: FieldTypesFromObjectRowShape<RowShape>,
+  row: RowShape
+) => {
+  const rowKeys = Object.keys(row) as (keyof RowShape)[];
+
+  for (const rowKey of rowKeys) {
+    if (!observedFields[rowKey]) {
+      observedFields[rowKey] = new Set();
+    }
+
+    let fieldType = typeof row[rowKey];
+
+    if (row[rowKey] === null) {
+      observedFields[rowKey].add("null");
+    } else if (fieldType === "function") {
+      throw new Error("Got function type in value");
+    } else {
+      observedFields[rowKey].add(fieldType);
+    }
+  }
+
+  if (rowKeys.length !== Object.keys(observedFields).length) {
+    const missingFields = Object.keys(observedFields).filter(
+      (seenField) => !rowKeys.includes(seenField)
+    ) as (keyof RowShape)[];
+
+    for (const missingField of missingFields) {
+      observedFields[missingField].add("undefined");
+    }
+  }
+
+  return observedFields;
+};
+
+// RIDICULOUS HACK
+const fieldsFromObservedFields = <RowShape extends UnknownObjectShape>(
+  observedFields: FieldTypesFromObjectRowShape<RowShape>
+) => {
+  const fields = Object.entries(observedFields).map(
+    ([fieldKey, fieldTypes]) => {
+      if (fieldTypes.size === 1) {
+        return {
+          name: fieldKey,
+          columnID: fieldKey,
+          format: Array.from(fieldTypes)[0],
+          formattedType: `${Array.from(fieldTypes)[0]} (JSON)`,
+        };
+      }
+
+      const fieldTypesArray = Array.from(fieldTypes);
+
+      const nullishTypes = fieldTypesArray.filter(
+        (fieldType) => fieldType === "null" || fieldType === "undefined"
+      ) as ("null" | "undefined")[];
+
+      if (nullishTypes.length === 0) {
+        return {
+          name: fieldKey,
+          columnID: fieldKey,
+          format: fieldTypesArray[0],
+          formattedType: `${fieldTypesArray[0]} (JSON)`,
+        };
+      }
+
+      return {
+        name: fieldKey,
+        columnID: fieldKey,
+        format: fieldTypesArray.join(" | "),
+        formattedType: fieldTypesArray.join(" | "),
+      };
+    }
+  );
+
+  return fields;
+};
+
 export class SqlHTTPClient<
   InputCredentialOptions extends CredentialOptions
 > extends BaseClient<InputCredentialOptions, HTTPStrategies> {
@@ -158,6 +243,12 @@ export class SqlHTTPClient<
       execOptions: SqlHTTPClient.defaultExecOptions(execOptions),
     });
 
+    const accumulators: {
+      observedFields: FieldTypesFromObjectRowShape<UnknownObjectShape>;
+    } = {
+      observedFields: {},
+    };
+
     const { response, error } = await fetch(queryURL, fetchOptions)
       .catch((err) => Promise.reject({ type: "network", ...err }))
       .then(async (r) => {
@@ -190,7 +281,13 @@ export class SqlHTTPClient<
             }
 
             try {
-              parsedLines.push(JSON.parse(line));
+              const parsedLine = JSON.parse(line);
+              // RIDICULOUS HACK
+              accumulators.observedFields = fieldsReducerForObjectRows(
+                accumulators.observedFields,
+                parsedLine
+              );
+              parsedLines.push(parsedLine);
             } catch (err) {
               console.warn(
                 `Failed to parse row. Row:\n${line}Error:\n${err}\n`
@@ -220,6 +317,14 @@ export class SqlHTTPClient<
           : {
               response: {
                 readable: () => new ReadableStream<UnknownObjectShape>(),
+                ...("fields" in rJson
+                  ? {}
+                  : {
+                      // RIDICULOUS HACK
+                      fields: fieldsFromObservedFields(
+                        accumulators.observedFields
+                      ),
+                    }),
                 ...rJson,
               } as WebBridgeResponse<UnknownObjectShape>,
               error: null,

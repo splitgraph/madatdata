@@ -124,7 +124,8 @@ export class DbSeafowl<SeafowlPluginList extends PluginList>
   public get httpClientOptions(): HTTPClientOptions {
     return {
       bodyMode: "jsonl",
-      strategies: {
+      // TODO: db splitgraph needs this too
+      strategies: this.opts.strategies ?? {
         // TODO: This should be overideable/injectable from the caller (e.g. the
         // react client should be able to set its own 'mode', etc.)
         makeFetchOptions: ({ credential, query }) => {

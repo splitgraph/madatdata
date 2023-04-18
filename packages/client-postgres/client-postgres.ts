@@ -72,6 +72,8 @@ class SplitgraphPostgresClient<
         return {
           response: {
             success: true,
+            // TODO: move field reducer to base client, call it here too (not just in client-http)
+            fields: [],
             rows: arrayShapedRows,
             readable: () => new ReadableStream<UnknownArrayShape>(),
           },
@@ -83,6 +85,8 @@ class SplitgraphPostgresClient<
         return {
           response: {
             success: true,
+            // TODO: move field reducer to base client, call it here too (not just in client-http)
+            fields: [],
             rows: objectShapedRows,
             readable: () => new ReadableStream<UnknownObjectShape>(),
           },

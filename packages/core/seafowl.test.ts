@@ -1,8 +1,9 @@
-import { describe, it, expect, afterEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { makeSeafowlHTTPContext } from "./seafowl";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
 import { shouldSkipSeafowlTests } from "@madatdata/test-helpers/env-config";
 import type { Host } from "@madatdata/base-client";
+import { rest } from "msw";
 
 // @ts-expect-error https://stackoverflow.com/a/70711231
 const SEAFOWL_SECRET = import.meta.env.VITE_TEST_SEAFOWL_SECRET;
@@ -12,7 +13,9 @@ const SEAFOWL_SECRET = import.meta.env.VITE_TEST_SEAFOWL_SECRET;
 const expectAnonymous = !SEAFOWL_SECRET;
 const expectToken = SEAFOWL_SECRET ?? "anonymous-token";
 
-export const createDataContext = () => {
+export const createDataContext = (
+  opts?: Parameters<typeof makeSeafowlHTTPContext>[0]
+) => {
   return makeSeafowlHTTPContext({
     database: {
       dbname: "default",
@@ -39,6 +42,7 @@ export const createDataContext = () => {
         ssl: false,
       },
     },
+    ...opts, // note: only top level keys are merged
   });
 };
 
@@ -71,9 +75,115 @@ export const createRealDataContext = () => {
   });
 };
 
-describe("makeSeafowlHTTPContext", () => {
+describe("field inferrence", () => {
   setupMswServerTestHooks();
 
+  beforeEach((testCtx) => {
+    const { mswServer } = testCtx;
+
+    mswServer?.use(
+      rest.get("http://localhost/default/q/fingerprint", (_req, res, ctx) => {
+        return res(
+          ctx.status(200),
+
+          ctx.body(
+            [
+              { col1: "foo", col2: "bar", cnullable: "bizz", copt: 44 },
+              { col1: "fizz", col2: "buzz", cnullable: null },
+              { col1: "fizz", col2: "buzz", cnullable: "gah", copt: 45 },
+              { col1: "fizz", col2: "buzz", cnullable: "gah", copt: 46 },
+            ]
+              .map((row) => JSON.stringify(row))
+              .join("\n")
+          )
+        );
+      })
+    );
+  });
+
+  it("infers fields", async () => {
+    const ctx = createDataContext({
+      strategies: {
+        async makeQueryURL() {
+          return Promise.resolve("http://localhost/default/q/fingerprint");
+        },
+        makeFetchOptions() {
+          return {
+            method: "GET",
+            headers: {},
+          };
+        },
+      },
+    });
+
+    const resp = await ctx.client.execute<{ col1: string; col2: string }>(
+      "SELECT * from something;"
+    );
+
+    expect(resp).toMatchInlineSnapshot(`
+      {
+        "error": null,
+        "response": {
+          "fields": [
+            {
+              "columnID": "col1",
+              "format": "string",
+              "formattedType": "string (JSON)",
+              "name": "col1",
+            },
+            {
+              "columnID": "col2",
+              "format": "string",
+              "formattedType": "string (JSON)",
+              "name": "col2",
+            },
+            {
+              "columnID": "cnullable",
+              "format": "string | null",
+              "formattedType": "string | null",
+              "name": "cnullable",
+            },
+            {
+              "columnID": "copt",
+              "format": "number | undefined",
+              "formattedType": "number | undefined",
+              "name": "copt",
+            },
+          ],
+          "readable": [Function],
+          "rows": [
+            {
+              "cnullable": "bizz",
+              "col1": "foo",
+              "col2": "bar",
+              "copt": 44,
+            },
+            {
+              "cnullable": null,
+              "col1": "fizz",
+              "col2": "buzz",
+            },
+            {
+              "cnullable": "gah",
+              "col1": "fizz",
+              "col2": "buzz",
+              "copt": 45,
+            },
+            {
+              "cnullable": "gah",
+              "col1": "fizz",
+              "col2": "buzz",
+              "copt": 46,
+            },
+          ],
+          "success": true,
+        },
+      }
+    `);
+  });
+});
+
+describe("makeSeafowlHTTPContext", () => {
   it("initializes as expected", () => {
     const ctx = createDataContext();
 
