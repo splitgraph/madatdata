@@ -1,0 +1,14 @@
+{
+  "name": "scripts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "zx": "esno --no-cache $(yarn bin zx)"
+  },
+  "dependencies": {
+    "zx": "7.2.1"
+  },
+  "devDependencies": {
+    "esno": "0.16.3"
+  }
+}

@@ -14,6 +14,7 @@
     { "path": "./packages/db-splitgraph" },
     { "path": "./packages/react" },
     { "path": "./packages/tiny-react-sandbox" },
-    { "path": "./packages/yeet" }
+    { "path": "./packages/yeet" },
+    { "path": "./scripts" }
   ]
 }
