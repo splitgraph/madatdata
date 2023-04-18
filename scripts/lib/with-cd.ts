@@ -2,6 +2,7 @@ import { $, cd } from "zx";
 import type { FnWithInjectablePrefixFunctions } from "./with-prefix.js";
 import { withPrefix } from "./with-prefix.js";
 import type { AddPrefixOpts } from "./add-prefix-to-logs.js";
+import { normalizeThingOrThingifier } from "./utils.js";
 
 type AddPrefixOptsWithPrefixer = Omit<AddPrefixOpts, "prefix"> & {
   /**
@@ -49,15 +50,7 @@ export const withCd = <T>(
       return fn(prefixedLoggingFunctions);
     },
     {
-      prefix: (() => {
-        if (typeof prefixOrPrefixer === "undefined") {
-          return undefined;
-        } else if (typeof prefixOrPrefixer === "string") {
-          return prefixOrPrefixer;
-        } else if (typeof prefixOrPrefixer === "function") {
-          return prefixOrPrefixer(dir);
-        }
-      })(),
+      prefix: normalizeThingOrThingifier(prefixOrPrefixer, dir),
       ...prefixRestOpts,
     }
   );
