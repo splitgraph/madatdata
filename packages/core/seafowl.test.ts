@@ -5,6 +5,18 @@ import { shouldSkipSeafowlTests } from "@madatdata/test-helpers/env-config";
 import type { Host } from "@madatdata/base-client";
 import { rest } from "msw";
 
+import {
+  tableFromJSON,
+  Schema,
+  Field,
+  Table,
+  vectorFromArray,
+  Vector,
+  RecordBatch,
+} from "apache-arrow";
+import * as dtypes from "apache-arrow/type";
+import { faker } from "@faker-js/faker";
+
 // @ts-expect-error https://stackoverflow.com/a/70711231
 const SEAFOWL_SECRET = import.meta.env.VITE_TEST_SEAFOWL_SECRET;
 
@@ -74,6 +86,275 @@ export const createRealDataContext = () => {
     },
   });
 };
+
+// import type { JavaScriptDataType } from "apache-arrow"
+
+const tableFromJSONWithSchema = <
+  T extends Record<string, unknown>,
+  TM extends dtypes.TypeMap,
+  S extends Schema<TM>
+>(
+  array: T[],
+  schema: S
+): Table<TM> => {
+  const vector = vectorFromArray(array) as Vector<dtypes.Struct<any>>;
+
+  const inferredSchema = new Schema(vector.type.children);
+  const givenSchema = schema;
+  const mergedSchema = inferredSchema.assign(givenSchema);
+
+  const batch = new RecordBatch(mergedSchema, vector.data[0]);
+  return new Table(batch);
+};
+
+describe.only("arrow", () => {
+  setupMswServerTestHooks();
+
+  const makeMockDataCtx = () =>
+    createDataContext({
+      strategies: {
+        async makeQueryURL() {
+          return Promise.resolve("http://localhost/default/q/fingerprint");
+        },
+        makeFetchOptions() {
+          return {
+            method: "GET",
+            headers: {},
+          };
+        },
+      },
+    });
+
+  it("parses JSON with no undefined or nulls into arrow table", async (testCtx) => {
+    const { mswServer } = testCtx;
+
+    mswServer?.use(
+      rest.get("http://localhost/default/q/fingerprint", (_req, res, ctx) => {
+        return res(
+          ctx.status(200),
+
+          ctx.body(
+            [...Array(11000)]
+              .map(() => ({
+                col1: faker.date.past(),
+                col2: faker.datatype.number(),
+                col3: faker.datatype.string(
+                  faker.datatype.number({ max: 100, min: 20 })
+                ),
+                col4: faker.datatype.number({ precision: 0.01 }),
+              }))
+              .map((row) => JSON.stringify(row))
+              .join("\n")
+          )
+        );
+      })
+    );
+
+    const { client } = makeMockDataCtx();
+
+    const result = await client.execute<{
+      col1: string;
+      col2: number;
+      col3: string;
+      col4: number;
+    }>("SELECT * from something;");
+
+    const rows = result.response?.rows!;
+
+    // const arrowTable = tableFromJSON(rows);
+
+    const arrowTable = tableFromJSONWithSchema(
+      rows,
+      new Schema([new Field("col1", new dtypes.Utf8())])
+    );
+
+    console.log(arrowTable.slice(0, 10).toString());
+
+    expect(arrowTable.schema.names).toMatchInlineSnapshot(`
+      [
+        "col1",
+        "col2",
+        "col3",
+        "col4",
+      ]
+    `);
+
+    expect(arrowTable.schema).toMatchInlineSnapshot(`
+      Schema {
+        "dictionaries": Map {
+          0 => Utf8 {},
+          1 => Utf8 {},
+        },
+        "fields": [
+          Field {
+            "metadata": Map {},
+            "name": "col1",
+            "nullable": false,
+            "type": Utf8 {},
+          },
+          Field {
+            "metadata": Map {},
+            "name": "col2",
+            "nullable": true,
+            "type": Float64 {
+              "precision": 2,
+            },
+          },
+          Field {
+            "metadata": Map {},
+            "name": "col3",
+            "nullable": true,
+            "type": Dictionary {
+              "dictionary": Utf8 {},
+              "id": 1,
+              "indices": Int32 {
+                "bitWidth": 32,
+                "isSigned": true,
+              },
+              "isOrdered": false,
+            },
+          },
+          Field {
+            "metadata": Map {},
+            "name": "col4",
+            "nullable": true,
+            "type": Float64 {
+              "precision": 2,
+            },
+          },
+        ],
+        "metadata": Map {},
+      }
+    `);
+  });
+
+  it("parses JSON with undefined and nulls into arrow table", async (testCtx) => {
+    const { mswServer } = testCtx;
+
+    mswServer?.use(
+      rest.get("http://localhost/default/q/fingerprint", (_req, res, ctx) => {
+        return res(
+          ctx.status(200),
+
+          ctx.body(
+            [
+              { dcol: "2022-10-03T03:18:32.895Z" },
+              { col1: "foo", col2: "bar", cnullable: "bizz", copt: 44 },
+              { col1: "fizz", col2: "buzz", cnullable: null },
+              { col1: "fizz", col2: "buzz", cnullable: "gah", copt: 45 },
+              { col1: "fizz", col2: "buzz", cnullable: "gah", copt: 46 },
+            ]
+              .map((row) => JSON.stringify(row))
+              .join("\n")
+          )
+        );
+      })
+    );
+
+    const { client } = makeMockDataCtx();
+
+    const result = await client.execute<{
+      col1: string;
+      col2: string;
+      cnullable: string | null;
+      copt: string | undefined;
+    }>("SELECT * from something;");
+
+    const rows = result.response?.rows!;
+
+    expect(rows.length).toEqual(5);
+
+    const arrowTable = tableFromJSON(rows);
+
+    expect(arrowTable.numCols).toEqual(5);
+
+    expect(arrowTable.numRows).toEqual(5);
+
+    expect(rows[0]).toMatchInlineSnapshot(`
+      {
+        "dcol": "2022-10-03T03:18:32.895Z",
+      }
+    `);
+
+    expect(arrowTable.schema).toMatchInlineSnapshot(`
+      Schema {
+        "dictionaries": Map {
+          2 => Utf8 {},
+          3 => Utf8 {},
+          4 => Utf8 {},
+          5 => Utf8 {},
+        },
+        "fields": [
+          Field {
+            "metadata": Map {},
+            "name": "dcol",
+            "nullable": true,
+            "type": Dictionary {
+              "dictionary": Utf8 {},
+              "id": 2,
+              "indices": Int32 {
+                "bitWidth": 32,
+                "isSigned": true,
+              },
+              "isOrdered": false,
+            },
+          },
+          Field {
+            "metadata": Map {},
+            "name": "col1",
+            "nullable": true,
+            "type": Dictionary {
+              "dictionary": Utf8 {},
+              "id": 3,
+              "indices": Int32 {
+                "bitWidth": 32,
+                "isSigned": true,
+              },
+              "isOrdered": false,
+            },
+          },
+          Field {
+            "metadata": Map {},
+            "name": "col2",
+            "nullable": true,
+            "type": Dictionary {
+              "dictionary": Utf8 {},
+              "id": 4,
+              "indices": Int32 {
+                "bitWidth": 32,
+                "isSigned": true,
+              },
+              "isOrdered": false,
+            },
+          },
+          Field {
+            "metadata": Map {},
+            "name": "cnullable",
+            "nullable": true,
+            "type": Dictionary {
+              "dictionary": Utf8 {},
+              "id": 5,
+              "indices": Int32 {
+                "bitWidth": 32,
+                "isSigned": true,
+              },
+              "isOrdered": false,
+            },
+          },
+          Field {
+            "metadata": Map {},
+            "name": "copt",
+            "nullable": true,
+            "type": Float64 {
+              "precision": 2,
+            },
+          },
+        ],
+        "metadata": Map {},
+      }
+    `);
+  });
+});
 
 describe("field inferrence", () => {
   setupMswServerTestHooks();

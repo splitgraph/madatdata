@@ -9,9 +9,11 @@
     "@madatdata/base-db": "workspace:*",
     "@madatdata/client-http": "workspace:*",
     "@madatdata/db-seafowl": "workspace:*",
-    "@madatdata/db-splitgraph": "workspace:*"
+    "@madatdata/db-splitgraph": "workspace:*",
+    "apache-arrow": "11.0.0"
   },
   "devDependencies": {
+    "@faker-js/faker": "7.6.0",
     "@madatdata/test-helpers": "workspace:*",
     "@types/node": "18.7.13",
     "cross-fetch": "3.1.5"
