@@ -17,14 +17,14 @@ type MetricsDomainIndexPageProps = {
   domain: string;
   metrics: Readonly<
     {
-      metric: typeof supportedMetrics[number]["metric"];
+      metric: (typeof supportedMetrics)[number]["metric"];
       anchor: string;
     }[]
   >;
 };
 
 interface MetricsDomainIndexParams extends ParsedUrlQuery {
-  domain: typeof supportedDomains[number];
+  domain: (typeof supportedDomains)[number];
 }
 
 const MetricsForDomainIndexPage = ({
