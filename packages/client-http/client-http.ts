@@ -3,77 +3,19 @@ import {
   type QueryError,
   type ClientOptions,
   type CredentialOptions,
-  type Database,
-  type Host,
-  type UnknownCredential,
-  type UnknownRowShape,
   type ExecutionResultWithObjectShapedRows,
   type ExecutionResultWithArrayShapedRows,
   type UnknownArrayShape,
   type UnknownObjectShape,
 } from "@madatdata/base-client";
 
-export interface WebBridgeResponse<RowShape extends UnknownRowShape> {
-  command: string;
-  fields: {
-    columnID: number;
-    dataTypeID: number;
-    dataTypeModifier: number;
-    dataTypeSize: number;
-    format: string;
-    formattedType: string;
-    name: string;
-    tableID: number;
-  }[];
-  rowCount: 1;
-  rows: RowShape[];
-  readable: () => ReadableStream<RowShape>;
-  success: true;
-  /** FIXME: optional to allow deleting it for inline snapshots */
-  executionTime?: string;
-  /** FIXME: optional to allow deleting it for inline snapshots */
-  executionTimeHighRes?: string;
-}
-
-// todo: "streaming" just here for debug, should be deleted
-type BodyMode = "json" | "jsonl" | "streaming";
-
-type MakeFetchOptionsStrategyArgs = {
-  credential: UnknownCredential;
-  query: string;
-  execOptions: ExecOptions;
-};
-
-type MakeFetchOptionsStrategy = ({
-  credential,
-  query,
-  execOptions,
-}: MakeFetchOptionsStrategyArgs) => RequestInit;
-
-type MakeQueryURLStrategyArgs = {
-  database: Database;
-  host: Host;
-  query?: string;
-};
-
-type MakeQueryURLStrategy = ({
-  database,
-  host,
-}: MakeQueryURLStrategyArgs) => Promise<string>;
-
-type ParseFieldsFromResponseStrategy = <RowShape extends UnknownRowShape>({
-  response,
-  parsedJSONBody,
-}: {
-  response: Response;
-  parsedJSONBody: WebBridgeResponse<RowShape> | null;
-}) => Promise<WebBridgeResponse<RowShape>["fields"]>;
-
-export type HTTPStrategies = {
-  makeFetchOptions: MakeFetchOptionsStrategy;
-  makeQueryURL: MakeQueryURLStrategy;
-  parseFieldsFromResponse: ParseFieldsFromResponseStrategy;
-};
+import type {
+  HTTPStrategies,
+  BodyMode,
+  WebBridgeResponse,
+  MakeQueryURLStrategyArgs,
+  MakeFetchOptionsStrategyArgs,
+} from "./strategies/types";
 
 export type HTTPClientOptions = {
   bodyMode?: BodyMode;
@@ -196,6 +138,8 @@ export class SqlHTTPClient<
       makeFetchOptions: opts.strategies?.makeFetchOptions,
       makeQueryURL: opts.strategies?.makeQueryURL,
       parseFieldsFromResponse: opts.strategies?.parseFieldsFromResponse,
+      parseFieldsFromResponseBodyJSON:
+        opts.strategies?.parseFieldsFromResponseBodyJSON,
     };
   }
 
@@ -272,16 +216,9 @@ export class SqlHTTPClient<
           return Promise.reject({ type: "response-not-ok", response: r });
         }
 
-        const fieldsFromResponse = await (async () => {
-          try {
-            return await this.strategies.parseFieldsFromResponse({
-              response: r,
-              parsedJSONBody: null,
-            });
-          } catch {
-            return null;
-          }
-        })();
+        const maybeFieldsFromResponse = await this.strategies
+          .parseFieldsFromResponse({ response: r })
+          .catch(() => null);
 
         // TODO: streaming jus there for debug, should be deleted
         // if (this.bodyMode === "streaming") {
@@ -318,26 +255,23 @@ export class SqlHTTPClient<
           }
           return {
             rows: parsedLines,
-            fields: fieldsFromResponse ?? undefined,
+            fields: maybeFieldsFromResponse ?? undefined,
             success: true,
           };
         } else if (this.bodyMode === "json") {
           const responseJson = await r.json();
 
-          const fieldsFromResponseBody = await (async () => {
-            try {
-              return await this.strategies.parseFieldsFromResponse({
-                response: new Response(), // TODO: this is a hack
-                parsedJSONBody: responseJson,
-              });
-            } catch {
-              return null;
-            }
-          })();
+          const maybeFieldsFromResponseBody =
+            await this.strategies.parseFieldsFromResponseBodyJSON({
+              parsedJSONBody: responseJson,
+            });
 
           return {
             ...responseJson,
-            fields: fieldsFromResponseBody,
+            fields:
+              maybeFieldsFromResponseBody ??
+              maybeFieldsFromResponse ??
+              undefined,
           };
         } else {
           throw "Unexpected bodyMode (should never happen, default is json)";

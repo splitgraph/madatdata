@@ -175,6 +175,7 @@ export class DbSeafowl<SeafowlPluginList extends PluginList>
             : baseQueryUrl;
         },
         parseFieldsFromResponse: parseFieldsFromResponseContentTypeHeader,
+        parseFieldsFromResponseBodyJSON: () => Promise.resolve(null),
       },
     };
   }

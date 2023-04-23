@@ -108,7 +108,7 @@ const tableFromJSONWithSchema = <
   return new Table(batch);
 };
 
-describe("arrow", () => {
+describe.only("arrow", () => {
   setupMswServerTestHooks();
 
   const makeMockDataCtx = () =>
@@ -124,6 +124,7 @@ describe("arrow", () => {
           };
         },
         parseFieldsFromResponse: parseFieldsFromResponseContentTypeHeader,
+        parseFieldsFromResponseBodyJSON: () => Promise.resolve(null),
       },
     });
 
@@ -162,6 +163,8 @@ describe("arrow", () => {
     }>("SELECT * from something;");
 
     const rows = result.response?.rows!;
+
+    expect(rows.length).toEqual(11000);
 
     // const arrowTable = tableFromJSON(rows);
 
@@ -400,6 +403,7 @@ describe("fields from header", () => {
           };
         },
         parseFieldsFromResponse: parseFieldsFromResponseContentTypeHeader,
+        parseFieldsFromResponseBodyJSON: () => Promise.resolve(null),
       },
     });
 
@@ -454,6 +458,7 @@ describe("field inferrence", () => {
           };
         },
         parseFieldsFromResponse: parseFieldsFromResponseContentTypeHeader,
+        parseFieldsFromResponseBodyJSON: () => Promise.resolve(null),
       },
     });
 
@@ -578,6 +583,7 @@ describe("makeSeafowlHTTPContext", () => {
             "makeFetchOptions": [Function],
             "makeQueryURL": [Function],
             "parseFieldsFromResponse": [Function],
+            "parseFieldsFromResponseBodyJSON": [Function],
           },
         },
         "db": {
