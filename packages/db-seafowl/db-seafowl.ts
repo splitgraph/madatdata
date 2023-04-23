@@ -21,7 +21,10 @@ import {
   makeAuthHeaders,
 } from "@madatdata/base-client";
 
-import { makeClient as makeHTTPClient } from "@madatdata/client-http";
+import {
+  makeClient as makeHTTPClient,
+  parseFieldsFromResponseContentTypeHeader,
+} from "@madatdata/client-http";
 
 // FIXME: we _should_ only be depending on types from this pacakge - should
 // they be in a separate package from the actual http-client?
@@ -171,6 +174,7 @@ export class DbSeafowl<SeafowlPluginList extends PluginList>
             ? baseQueryUrl + "/" + fingerprint + extension
             : baseQueryUrl;
         },
+        parseFieldsFromResponse: parseFieldsFromResponseContentTypeHeader,
       },
     };
   }

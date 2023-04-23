@@ -68,6 +68,7 @@ describe("makeSplitgraphHTTPContext", () => {
           "strategies": {
             "makeFetchOptions": [Function],
             "makeQueryURL": [Function],
+            "parseFieldsFromResponse": [Function],
           },
         },
         "db": DbSplitgraph {

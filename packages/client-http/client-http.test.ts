@@ -38,6 +38,12 @@ const splitgraphClientOptions = {
     makeQueryURL: async ({ host, database }) => {
       return Promise.resolve(host.baseUrls.sql + "/" + database.dbname);
     },
+    parseFieldsFromResponse: async ({ parsedJSONBody }) => {
+      if (!parsedJSONBody || !parsedJSONBody.fields) {
+        throw new Error("Splitgraph client expects fields in JSON body");
+      }
+      return Promise.resolve(parsedJSONBody.fields);
+    },
   } as HTTPStrategies,
 };
 
@@ -128,6 +134,12 @@ const makeStubClient = () => {
       makeQueryURL: async ({ host, database }) => {
         return Promise.resolve(host.baseUrls.sql + "/" + database.dbname);
       },
+      parseFieldsFromResponse: async ({ parsedJSONBody }) => {
+        if (!parsedJSONBody || !parsedJSONBody.fields) {
+          throw new Error("stub client expects fields in JSON body");
+        }
+        return Promise.resolve(parsedJSONBody.fields);
+      },
     },
   });
 };
@@ -205,6 +217,12 @@ const makeUnconnectableClient = () => {
       makeFetchOptions: () => ({}),
       makeQueryURL: async () => {
         return Promise.resolve("http://999.999.999.999/");
+      },
+      parseFieldsFromResponse: async ({ parsedJSONBody }) => {
+        if (!parsedJSONBody || parsedJSONBody.fields) {
+          throw new Error("stub client expects fields in JSON body");
+        }
+        return Promise.resolve(parsedJSONBody.fields);
       },
     },
   });

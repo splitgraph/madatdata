@@ -61,9 +61,18 @@ type MakeQueryURLStrategy = ({
   host,
 }: MakeQueryURLStrategyArgs) => Promise<string>;
 
+type ParseFieldsFromResponseStrategy = <RowShape extends UnknownRowShape>({
+  response,
+  parsedJSONBody,
+}: {
+  response: Response;
+  parsedJSONBody: WebBridgeResponse<RowShape> | null;
+}) => Promise<WebBridgeResponse<RowShape>["fields"]>;
+
 export type HTTPStrategies = {
   makeFetchOptions: MakeFetchOptionsStrategy;
   makeQueryURL: MakeQueryURLStrategy;
+  parseFieldsFromResponse: ParseFieldsFromResponseStrategy;
 };
 
 export type HTTPClientOptions = {
@@ -186,6 +195,7 @@ export class SqlHTTPClient<
     this.strategies = {
       makeFetchOptions: opts.strategies?.makeFetchOptions,
       makeQueryURL: opts.strategies?.makeQueryURL,
+      parseFieldsFromResponse: opts.strategies?.parseFieldsFromResponse,
     };
   }
 
@@ -262,6 +272,17 @@ export class SqlHTTPClient<
           return Promise.reject({ type: "response-not-ok", response: r });
         }
 
+        const fieldsFromResponse = await (async () => {
+          try {
+            return await this.strategies.parseFieldsFromResponse({
+              response: r,
+              parsedJSONBody: null,
+            });
+          } catch {
+            return null;
+          }
+        })();
+
         // TODO: streaming jus there for debug, should be deleted
         // if (this.bodyMode === "streaming") {
         //   console.log("streaming body");
@@ -297,16 +318,33 @@ export class SqlHTTPClient<
           }
           return {
             rows: parsedLines,
+            fields: fieldsFromResponse ?? undefined,
             success: true,
           };
         } else if (this.bodyMode === "json") {
-          return await r.json();
+          const responseJson = await r.json();
+
+          const fieldsFromResponseBody = await (async () => {
+            try {
+              return await this.strategies.parseFieldsFromResponse({
+                response: new Response(), // TODO: this is a hack
+                parsedJSONBody: responseJson,
+              });
+            } catch {
+              return null;
+            }
+          })();
+
+          return {
+            ...responseJson,
+            fields: fieldsFromResponseBody,
+          };
         } else {
           throw "Unexpected bodyMode (should never happen, default is json)";
         }
       })
-      .then((rJson) =>
-        execOptions?.rowMode === "array"
+      .then((rJson) => {
+        return execOptions?.rowMode === "array"
           ? {
               response: {
                 readable: () => new ReadableStream<UnknownArrayShape>(),
@@ -328,8 +366,8 @@ export class SqlHTTPClient<
                 ...rJson,
               } as WebBridgeResponse<UnknownObjectShape>,
               error: null,
-            }
-      )
+            };
+      })
       .catch((err) => ({
         response: null,
         error: {

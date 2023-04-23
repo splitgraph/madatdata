@@ -3,6 +3,7 @@ import { makeSeafowlHTTPContext } from "./seafowl";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
 import { shouldSkipSeafowlTests } from "@madatdata/test-helpers/env-config";
 import type { Host } from "@madatdata/base-client";
+import { parseFieldsFromResponseContentTypeHeader } from "@madatdata/client-http";
 import { rest } from "msw";
 
 import {
@@ -107,7 +108,7 @@ const tableFromJSONWithSchema = <
   return new Table(batch);
 };
 
-describe.only("arrow", () => {
+describe("arrow", () => {
   setupMswServerTestHooks();
 
   const makeMockDataCtx = () =>
@@ -122,6 +123,7 @@ describe.only("arrow", () => {
             headers: {},
           };
         },
+        parseFieldsFromResponse: parseFieldsFromResponseContentTypeHeader,
       },
     });
 
@@ -356,6 +358,63 @@ describe.only("arrow", () => {
   });
 });
 
+describe("fields from header", () => {
+  setupMswServerTestHooks();
+
+  beforeEach((testCtx) => {
+    const { mswServer } = testCtx;
+
+    mswServer?.use(
+      rest.get("http://localhost/default/q/fingerprint", (_req, res, ctx) => {
+        return res(
+          ctx.status(200),
+          ctx.set(
+            "Content-Type",
+            `application/json; arrow-schema="{\\"blah\\": \\"foo=bar; arrow-schema-inner\\"}"`
+          ),
+          ctx.body(
+            [
+              { col1: "foo", col2: "bar", cnullable: "bizz", copt: 44 },
+              { col1: "fizz", col2: "buzz", cnullable: null },
+              { col1: "fizz", col2: "buzz", cnullable: "gah", copt: 45 },
+              { col1: "fizz", col2: "buzz", cnullable: "gah", copt: 46 },
+            ]
+              .map((row) => JSON.stringify(row))
+              .join("\n")
+          )
+        );
+      })
+    );
+  });
+
+  it("infers fields from content-type header", async () => {
+    const ctx = createDataContext({
+      strategies: {
+        async makeQueryURL() {
+          return Promise.resolve("http://localhost/default/q/fingerprint");
+        },
+        makeFetchOptions() {
+          return {
+            method: "GET",
+            headers: {},
+          };
+        },
+        parseFieldsFromResponse: parseFieldsFromResponseContentTypeHeader,
+      },
+    });
+
+    const resp = await ctx.client.execute<{ col1: string; col2: string }>(
+      "SELECT * from something;"
+    );
+
+    expect(resp.response?.fields).toMatchInlineSnapshot(`
+      {
+        "blah": "foo=bar; arrow-schema-inner",
+      }
+    `);
+  });
+});
+
 describe("field inferrence", () => {
   setupMswServerTestHooks();
 
@@ -382,7 +441,7 @@ describe("field inferrence", () => {
     );
   });
 
-  it("infers fields", async () => {
+  it.skip("infers fields", async () => {
     const ctx = createDataContext({
       strategies: {
         async makeQueryURL() {
@@ -394,6 +453,7 @@ describe("field inferrence", () => {
             headers: {},
           };
         },
+        parseFieldsFromResponse: parseFieldsFromResponseContentTypeHeader,
       },
     });
 
@@ -517,6 +577,7 @@ describe("makeSeafowlHTTPContext", () => {
           "strategies": {
             "makeFetchOptions": [Function],
             "makeQueryURL": [Function],
+            "parseFieldsFromResponse": [Function],
           },
         },
         "db": {

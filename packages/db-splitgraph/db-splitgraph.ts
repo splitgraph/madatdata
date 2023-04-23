@@ -156,6 +156,12 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
           makeQueryURL: async ({ host, database }) => {
             return Promise.resolve(host.baseUrls.sql + "/" + database.dbname);
           },
+          parseFieldsFromResponse: async ({ parsedJSONBody }) => {
+            if (!parsedJSONBody || !parsedJSONBody.fields) {
+              throw new Error("Splitgraph client expects fields in JSON body");
+            }
+            return Promise.resolve(parsedJSONBody.fields);
+          },
         },
       }
     );
