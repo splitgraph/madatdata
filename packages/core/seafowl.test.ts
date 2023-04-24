@@ -112,6 +112,252 @@ const tableFromJSONWithSchema = <
   return new Table(batch);
 };
 
+// TODO: This asserts on the live fields of the seafowl backend, but we still
+// need to add the code that parses them to our shape. This is mostly here for
+// keeping track of what the actual response looks like so we can mock it accurately.
+describe.skipIf(shouldSkipSeafowlTests())(
+  "parse fields from live seafowl backend",
+  () => {
+    const makeLiveDataContext = () => {
+      return createDataContext({
+        database: {
+          dbname: "default",
+        },
+        host: {
+          dataHost: "censored:8080",
+          apexDomain: "",
+          apiHost: "",
+          baseUrls: {
+            gql: "",
+            sql: "http://censored:8080",
+            auth: "",
+          },
+          postgres: {
+            host: "127.0.0.1",
+            port: 6432,
+            ssl: false,
+          },
+        },
+      });
+    };
+
+    it("simple query, one column", async () => {
+      const { client } = makeLiveDataContext();
+
+      const result = await client.execute<any>("SELECT 1");
+
+      const rows = result.response?.rows;
+
+      expect(rows).toMatchInlineSnapshot(`
+      [
+        {
+          "Int64(1)": 1,
+        },
+      ]
+    `);
+
+      const arrowFields = result.response?.fields;
+
+      expect(typeof arrowFields).toEqual("object");
+
+      expect(arrowFields).toMatchInlineSnapshot(`
+      {
+        "fields": [
+          {
+            "children": [],
+            "name": "Int64(1)",
+            "nullable": false,
+            "type": {
+              "bitWidth": 64,
+              "isSigned": true,
+              "name": "int",
+            },
+          },
+        ],
+        "metadata": {},
+      }
+    `);
+
+      expect((arrowFields as any)["fields"][0]["name"]).toEqual("Int64(1)");
+    });
+
+    it("simple query, two columns", async () => {
+      const { client } = makeLiveDataContext();
+
+      const result = await client.execute<any>("SELECT 1, 2");
+
+      const rows = result.response?.rows;
+
+      expect(rows).toMatchInlineSnapshot(`
+      [
+        {
+          "Int64(1)": 1,
+          "Int64(2)": 2,
+        },
+      ]
+    `);
+
+      const arrowFields = result.response?.fields;
+
+      expect(typeof arrowFields).toEqual("object");
+
+      expect(arrowFields).toMatchInlineSnapshot(`
+      {
+        "fields": [
+          {
+            "children": [],
+            "name": "Int64(1)",
+            "nullable": false,
+            "type": {
+              "bitWidth": 64,
+              "isSigned": true,
+              "name": "int",
+            },
+          },
+          {
+            "children": [],
+            "name": "Int64(2)",
+            "nullable": false,
+            "type": {
+              "bitWidth": 64,
+              "isSigned": true,
+              "name": "int",
+            },
+          },
+        ],
+        "metadata": {},
+      }
+    `);
+
+      expect((arrowFields as any)["fields"][0]["name"]).toEqual("Int64(1)");
+      expect((arrowFields as any)["fields"][1]["name"]).toEqual("Int64(2)");
+    });
+
+    it("nasty query", async () => {
+      const { client } = makeLiveDataContext();
+
+      const result = await client.execute<any>(
+        `SELECT 1::FLOAT AS \"_ :;.,\/'?!(){}[]@<>=-+*#$&\`|~^%\"`
+      );
+
+      const rows = result.response?.rows;
+
+      expect(rows).toMatchInlineSnapshot(`
+      [
+        {
+          "_ :;.,/'?!(){}[]@<>=-+*#$&\`|~^%": 1,
+        },
+      ]
+    `);
+
+      const arrowFields = result.response?.fields;
+
+      expect(typeof arrowFields).toEqual("object");
+
+      expect(arrowFields).toMatchInlineSnapshot(`
+      {
+        "fields": [
+          {
+            "children": [],
+            "name": "_ :;.,/'?!(){}[]@<>=-+*#$&\`|~^%",
+            "nullable": false,
+            "type": {
+              "name": "floatingpoint",
+              "precision": "SINGLE",
+            },
+          },
+        ],
+        "metadata": {},
+      }
+    `);
+
+      expect((arrowFields as any)["fields"][0]["name"]).toEqual(
+        "_ :;.,/'?!(){}[]@<>=-+*#$&`|~^%"
+      );
+    });
+
+    it("one double quote in column name", async () => {
+      const { client } = makeLiveDataContext();
+
+      // column name should be literal " (one double quote) (SQL escapes one double quote with two double quotes)
+      const result = await client.execute<any>('SELECT 1::FLOAT AS """"');
+
+      const rows = result.response?.rows;
+
+      expect(rows).toMatchInlineSnapshot(`
+      [
+        {
+          "\\"": 1,
+        },
+      ]
+    `);
+
+      const arrowFields = result.response?.fields;
+
+      expect(typeof arrowFields).toEqual("object");
+
+      expect(arrowFields).toMatchInlineSnapshot(`
+      {
+        "fields": [
+          {
+            "children": [],
+            "name": "\\"",
+            "nullable": false,
+            "type": {
+              "name": "floatingpoint",
+              "precision": "SINGLE",
+            },
+          },
+        ],
+        "metadata": {},
+      }
+    `);
+
+      expect((arrowFields as any)["fields"][0]["name"]).toEqual('"');
+    });
+
+    it("two double quotes in column name", async () => {
+      const { client } = makeLiveDataContext();
+
+      // column name should be literal "" (two double quotes)
+      const result = await client.execute<any>('SELECT 1::FLOAT AS """"""');
+
+      const rows = result.response?.rows;
+
+      expect(rows).toMatchInlineSnapshot(`
+      [
+        {
+          "\\"\\"": 1,
+        },
+      ]
+    `);
+
+      const arrowFields = result.response?.fields;
+
+      expect(typeof arrowFields).toEqual("object");
+
+      expect(arrowFields).toMatchInlineSnapshot(`
+      {
+        "fields": [
+          {
+            "children": [],
+            "name": "\\"\\"",
+            "nullable": false,
+            "type": {
+              "name": "floatingpoint",
+              "precision": "SINGLE",
+            },
+          },
+        ],
+        "metadata": {},
+      }
+    `);
+
+      expect((arrowFields as any)["fields"][0]["name"]).toEqual('""');
+    });
+  }
+);
+
 describe("arrow", () => {
   setupMswServerTestHooks();
 
@@ -140,7 +386,11 @@ describe("arrow", () => {
       rest.get("http://localhost/default/q/fingerprint", (_req, res, ctx) => {
         return res(
           ctx.status(200),
-
+          // note: not accurate/required, but put it here to avoid warning from failed json parsing
+          ctx.set(
+            "Content-Type",
+            `application/json; arrow-schema="{\"blah\": \"foo=bar; arrow-schema-inner\"}"`
+          ),
           ctx.body(
             [...Array(11000)]
               .map(() => ({
@@ -243,7 +493,11 @@ describe("arrow", () => {
       rest.get("http://localhost/default/q/fingerprint", (_req, res, ctx) => {
         return res(
           ctx.status(200),
-
+          // note: not accurate/required, but put it here to avoid warning from failed json parsing
+          ctx.set(
+            "Content-Type",
+            `application/json; arrow-schema="{\"blah\": \"foo=bar; arrow-schema-inner\"}"`
+          ),
           ctx.body(
             [
               { dcol: "2022-10-03T03:18:32.895Z" },
@@ -376,7 +630,7 @@ describe("fields from header", () => {
           ctx.status(200),
           ctx.set(
             "Content-Type",
-            `application/json; arrow-schema="{\\"blah\\": \\"foo=bar; arrow-schema-inner\\"}"`
+            `application/json; arrow-schema="{\"blah\": \"foo=bar; arrow-schema-inner\"}"`
           ),
           ctx.body(
             [
@@ -389,7 +643,23 @@ describe("fields from header", () => {
               .join("\n")
           )
         );
-      })
+      }),
+      rest.get(
+        "http://localhost/default/q/invalid-header",
+        (_req, res, ctx) => {
+          return res(
+            ctx.status(200),
+            // Return a content-type with invalid JSON
+            ctx.set(
+              "Content-Type",
+              `application/json; arrow-schema="{\"blah\": \"extra comma\",}"`
+            ),
+            ctx.body(
+              [{ col1: "1" }].map((row) => JSON.stringify(row)).join("\n")
+            )
+          );
+        }
+      )
     );
   });
 
@@ -421,6 +691,43 @@ describe("fields from header", () => {
       }
     `);
   });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("warns on failed parse JSON from content-type header, returns undefined for fields", async () => {
+    const ctx = createDataContext({
+      strategies: {
+        async makeQueryURL() {
+          return Promise.resolve("http://localhost/default/q/invalid-header");
+        },
+        makeFetchOptions() {
+          return {
+            method: "GET",
+            headers: {},
+          };
+        },
+        parseFieldsFromResponse: parseFieldsFromResponseContentTypeHeader,
+        parseFieldsFromResponseBodyJSON: skipParsingFieldsFromResponseBodyJSON,
+        transformFetchOptions: skipTransformFetchOptions,
+      },
+    });
+
+    const mockedWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const resp = await ctx.client.execute<{ col1: string; col2: string }>(
+      "SELECT * from something;"
+    );
+
+    expect(mockedWarn).toHaveBeenLastCalledWith(
+      "Failed to parse fields from Response Content-Type header"
+    );
+
+    // TODO: (?) This is not type-safe/consistent with expected shape of fields,
+    // and perhaps would be better fo fallback to field inferrence, but should happen rarely
+    expect(resp.response?.fields).toBeUndefined();
+  });
 });
 
 describe("field inferrence", () => {
@@ -433,7 +740,11 @@ describe("field inferrence", () => {
       rest.get("http://localhost/default/q/fingerprint", (_req, res, ctx) => {
         return res(
           ctx.status(200),
-
+          // note: not accurate/required, but put it here to avoid warning from failed json parsing
+          ctx.set(
+            "Content-Type",
+            `application/json; arrow-schema="{\"blah\": \"foo=bar; arrow-schema-inner\"}"`
+          ),
           ctx.body(
             [
               { col1: "foo", col2: "bar", cnullable: "bizz", copt: 44 },
@@ -449,6 +760,8 @@ describe("field inferrence", () => {
     );
   });
 
+  // TODO: We're probably getting rid of this, but might keep it as a fallback
+  // if parsing from header fails? So keep it here for now but skip its test
   it.skip("infers fields", async () => {
     const ctx = createDataContext({
       strategies: {

@@ -19,26 +19,27 @@ export const parseFieldsFromResponseContentTypeHeader: HTTPStrategies["parseFiel
        * "..."
        *
        *
-       * application/json; arrow-schema="{\"blah\": \"foo=bar\"}"
+       * application/json; arrow-schema="{"blah": "foo=bar"}"
+       *                                  ^       ^       ^
+       * NOTE: By convention of seafowl, these inside double quotes are _not_ escaped,
+       * so that we can always slice off the surrounding pair of double quotes and parse
+       * the value inside them as JSON.
        *
-       * for paste into node, add double slash
-       *
-       * const contentType = `application/json; arrow-schema="{\\"blah\\": \\"foo=bar; arrow-schema-inner\\"}"`
+       * const contentType = `application/json; arrow-schema="{\"blah\\": \"foo=bar; arrow-schema-inner\"}"`
        */
       const quotedJson = contentType
-        .split("; arrow-schema")
+        .split("; arrow-schema=")
         .slice(1)
-        .join("; arrow-schema")
-        .split("=")
-        .slice(1)
-        .join("=");
+        .join("; arrow-schema="); // make sure to join it back in case the value itself happens to contain this string
 
-      // It's escaped, so parse it twice (once to a string, then once to an object)
-      const arrowFields = JSON.parse(JSON.parse(quotedJson));
+      // slice off the double quote pair that surrounds the entire string
+      // NOTE: by convention of Seafowl, the string is _not_ escaped inside these quotes
+      const arrowFields = JSON.parse(quotedJson.slice(1, -1));
       return arrowFields satisfies ReturnType<
         HTTPStrategies["parseFieldsFromResponse"]
       >;
-    } catch {
+    } catch (err) {
+      console.warn("Failed to parse fields from Response Content-Type header");
       return null;
     }
   };
