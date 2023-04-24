@@ -1,5 +1,7 @@
 import type { HTTPStrategies } from "./types";
 
+export const skipParsingFieldsFromResponse = () => Promise.resolve(null);
+
 export const parseFieldsFromResponseContentTypeHeader: HTTPStrategies["parseFieldsFromResponse"] =
   async ({ response }) => {
     const headers = response.headers;

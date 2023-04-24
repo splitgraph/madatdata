@@ -24,6 +24,10 @@ import {
 } from "@madatdata/base-client";
 
 import type { HTTPStrategies, HTTPClientOptions } from "@madatdata/client-http";
+import {
+  parseFieldsFromResponseBodyJSONFieldsKey,
+  skipParsingFieldsFromResponse,
+} from "@madatdata/client-http";
 import type { GraphQLClientOptions } from "./plugins";
 
 interface DbSplitgraphPluginHostContext extends GraphQLClientOptions {}
@@ -156,13 +160,9 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
           makeQueryURL: async ({ host, database }) => {
             return Promise.resolve(host.baseUrls.sql + "/" + database.dbname);
           },
-          parseFieldsFromResponse: () => Promise.resolve(null),
-          parseFieldsFromResponseBodyJSON: async ({ parsedJSONBody }) => {
-            if (!parsedJSONBody || !parsedJSONBody.fields) {
-              return null;
-            }
-            return Promise.resolve(parsedJSONBody.fields);
-          },
+          parseFieldsFromResponse: skipParsingFieldsFromResponse,
+          parseFieldsFromResponseBodyJSON:
+            parseFieldsFromResponseBodyJSONFieldsKey,
         },
       }
     );

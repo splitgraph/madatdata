@@ -3,7 +3,12 @@ import { SplitPaneInputOutput } from "../debugging/SplitPaneInputOutput";
 
 import { AuthWidget } from "./AuthWidget";
 
-import { makeClient, type HTTPStrategies } from "@madatdata/client-http";
+import {
+  skipParsingFieldsFromResponse,
+  parseFieldsFromResponseBodyJSONFieldsKey,
+  makeClient,
+  type HTTPStrategies,
+} from "@madatdata/client-http";
 import { makeAuthHeaders } from "@madatdata/react";
 import { usePersistedCredential } from "./usePersistedCredential";
 
@@ -34,13 +39,8 @@ const splitgraphClientOptions = {
     makeQueryURL: async ({ host, database }) => {
       return Promise.resolve(host.baseUrls.sql + "/" + database.dbname);
     },
-    parseFieldsFromResponse: () => Promise.resolve(null),
-    parseFieldsFromResponseBodyJSON: async ({ parsedJSONBody }) => {
-      if (!parsedJSONBody || !parsedJSONBody.fields) {
-        return null;
-      }
-      return Promise.resolve(parsedJSONBody.fields);
-    },
+    parseFieldsFromResponse: skipParsingFieldsFromResponse,
+    parseFieldsFromResponseBodyJSON: parseFieldsFromResponseBodyJSONFieldsKey,
   } as HTTPStrategies,
 };
 

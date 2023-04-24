@@ -7,6 +7,10 @@ import { rest } from "msw";
 
 import { defaultHost } from "@madatdata/base-client";
 import type { HTTPStrategies } from "./strategies/types";
+import {
+  skipParsingFieldsFromResponse,
+  parseFieldsFromResponseBodyJSONFieldsKey,
+} from ".";
 
 // NOTE: Previously, the default http-client was hardcoded for Splitgraph, which
 // is why all the tests reflect its shape. But we don't want this package to
@@ -39,13 +43,8 @@ const splitgraphClientOptions = {
     makeQueryURL: async ({ host, database }) => {
       return Promise.resolve(host.baseUrls.sql + "/" + database.dbname);
     },
-    parseFieldsFromResponse: () => Promise.resolve(null),
-    parseFieldsFromResponseBodyJSON: async ({ parsedJSONBody }) => {
-      if (!parsedJSONBody || !parsedJSONBody.fields) {
-        return null;
-      }
-      return Promise.resolve(parsedJSONBody.fields);
-    },
+    parseFieldsFromResponse: skipParsingFieldsFromResponse,
+    parseFieldsFromResponseBodyJSON: parseFieldsFromResponseBodyJSONFieldsKey,
   } as HTTPStrategies,
 };
 
@@ -136,13 +135,8 @@ const makeStubClient = () => {
       makeQueryURL: async ({ host, database }) => {
         return Promise.resolve(host.baseUrls.sql + "/" + database.dbname);
       },
-      parseFieldsFromResponse: () => Promise.resolve(null),
-      parseFieldsFromResponseBodyJSON: async ({ parsedJSONBody }) => {
-        if (!parsedJSONBody || !parsedJSONBody.fields) {
-          return null;
-        }
-        return Promise.resolve(parsedJSONBody.fields);
-      },
+      parseFieldsFromResponse: skipParsingFieldsFromResponse,
+      parseFieldsFromResponseBodyJSON: parseFieldsFromResponseBodyJSONFieldsKey,
     },
   });
 };
@@ -221,13 +215,8 @@ const makeUnconnectableClient = () => {
       makeQueryURL: async () => {
         return Promise.resolve("http://999.999.999.999/");
       },
-      parseFieldsFromResponse: () => Promise.resolve(null),
-      parseFieldsFromResponseBodyJSON: async ({ parsedJSONBody }) => {
-        if (!parsedJSONBody || !parsedJSONBody.fields) {
-          return null;
-        }
-        return Promise.resolve(parsedJSONBody.fields);
-      },
+      parseFieldsFromResponse: skipParsingFieldsFromResponse,
+      parseFieldsFromResponseBodyJSON: parseFieldsFromResponseBodyJSONFieldsKey,
     },
   });
 };

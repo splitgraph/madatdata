@@ -3,7 +3,10 @@ import { makeSeafowlHTTPContext } from "./seafowl";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
 import { shouldSkipSeafowlTests } from "@madatdata/test-helpers/env-config";
 import type { Host } from "@madatdata/base-client";
-import { parseFieldsFromResponseContentTypeHeader } from "@madatdata/client-http";
+import {
+  parseFieldsFromResponseContentTypeHeader,
+  skipParsingFieldsFromResponseBodyJSON,
+} from "@madatdata/client-http";
 import { rest } from "msw";
 
 import {
@@ -108,7 +111,7 @@ const tableFromJSONWithSchema = <
   return new Table(batch);
 };
 
-describe.only("arrow", () => {
+describe("arrow", () => {
   setupMswServerTestHooks();
 
   const makeMockDataCtx = () =>
@@ -124,7 +127,7 @@ describe.only("arrow", () => {
           };
         },
         parseFieldsFromResponse: parseFieldsFromResponseContentTypeHeader,
-        parseFieldsFromResponseBodyJSON: () => Promise.resolve(null),
+        parseFieldsFromResponseBodyJSON: skipParsingFieldsFromResponseBodyJSON,
       },
     });
 
@@ -172,8 +175,6 @@ describe.only("arrow", () => {
       rows,
       new Schema([new Field("col1", new dtypes.Utf8())])
     );
-
-    console.log(arrowTable.slice(0, 10).toString());
 
     expect(arrowTable.schema.names).toMatchInlineSnapshot(`
       [
@@ -403,7 +404,7 @@ describe("fields from header", () => {
           };
         },
         parseFieldsFromResponse: parseFieldsFromResponseContentTypeHeader,
-        parseFieldsFromResponseBodyJSON: () => Promise.resolve(null),
+        parseFieldsFromResponseBodyJSON: skipParsingFieldsFromResponseBodyJSON,
       },
     });
 
@@ -458,7 +459,7 @@ describe("field inferrence", () => {
           };
         },
         parseFieldsFromResponse: parseFieldsFromResponseContentTypeHeader,
-        parseFieldsFromResponseBodyJSON: () => Promise.resolve(null),
+        parseFieldsFromResponseBodyJSON: skipParsingFieldsFromResponseBodyJSON,
       },
     });
 
