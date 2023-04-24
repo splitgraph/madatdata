@@ -11,6 +11,7 @@ const context = await esbuild
       "./pages/seafowl.tsx",
       "./pages/seafowl-hooks.tsx",
     ],
+    conditions: ["dev"],
     bundle: true,
     external: ["crypto"],
     outdir: "./www/dist",
@@ -42,8 +43,8 @@ const serveResult = await context.serve({
 });
 
 console.log(`Listening on http://${serveResult.host}:${serveResult.port}`);
-console.log(" http://localhost:3000/ast-debugger.html");
-console.log(" http://localhost:3000/dsx.html");
-console.log(" http://localhost:3000/ddn.html");
-console.log(" http://localhost:3000/seafowl.html");
-console.log(" http://localhost:3000/seafowl-hooks.html");
+console.log(` http://localhost:${serveResult.port}/ast-debugger.html`);
+console.log(` http://localhost:${serveResult.port}/dsx.html`);
+console.log(` http://localhost:${serveResult.port}/ddn.html`);
+console.log(` http://localhost:${serveResult.port}/seafowl.html`);
+console.log(` http://localhost:${serveResult.port}/seafowl-hooks.html`);
