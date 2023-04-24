@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { makeClient } from "./client-http";
 import { makeAuthHeaders } from "@madatdata/base-client";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
+import { setupMemo } from "@madatdata/test-helpers/setup-memo";
 import { shouldSkipIntegrationTests } from "@madatdata/test-helpers/env-config";
 import { rest } from "msw";
 
@@ -10,7 +11,10 @@ import type { HTTPStrategies } from "./strategies/types";
 import {
   skipParsingFieldsFromResponse,
   parseFieldsFromResponseBodyJSONFieldsKey,
+  skipTransformFetchOptions,
 } from ".";
+
+import type { IsomorphicRequest } from "@mswjs/interceptors";
 
 // NOTE: Previously, the default http-client was hardcoded for Splitgraph, which
 // is why all the tests reflect its shape. But we don't want this package to
@@ -45,7 +49,33 @@ const splitgraphClientOptions = {
     },
     parseFieldsFromResponse: skipParsingFieldsFromResponse,
     parseFieldsFromResponseBodyJSON: parseFieldsFromResponseBodyJSONFieldsKey,
+    transformFetchOptions: skipTransformFetchOptions,
   } as HTTPStrategies,
+};
+
+const minSuccessfulJSON = {
+  success: true,
+  command: "SELECT",
+  rowCount: 1,
+  rows: [
+    {
+      "?column?": 1,
+    },
+  ],
+  fields: [
+    {
+      name: "?column?",
+      tableID: 0,
+      columnID: 0,
+      dataTypeID: 23,
+      dataTypeSize: 4,
+      dataTypeModifier: -1,
+      format: "text",
+      formattedType: "INT4",
+    },
+  ],
+  executionTime: "128ms",
+  executionTimeHighRes: "0s 128.383115ms",
 };
 
 describe("makeClient creates client which", () => {
@@ -54,32 +84,7 @@ describe("makeClient creates client which", () => {
   beforeEach(({ mswServer }) => {
     mswServer?.use(
       rest.post(defaultHost.baseUrls.sql + "/ddn", (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            success: true,
-            command: "SELECT",
-            rowCount: 1,
-            rows: [
-              {
-                "?column?": 1,
-              },
-            ],
-            fields: [
-              {
-                name: "?column?",
-                tableID: 0,
-                columnID: 0,
-                dataTypeID: 23,
-                dataTypeSize: 4,
-                dataTypeModifier: -1,
-                format: "text",
-                formattedType: "INT4",
-              },
-            ],
-            executionTime: "128ms",
-            executionTimeHighRes: "0s 128.383115ms",
-          })
-        );
+        return res(ctx.json(minSuccessfulJSON));
       })
     );
   });
@@ -125,21 +130,124 @@ describe("makeClient creates client which", () => {
   });
 });
 
-const makeStubClient = () => {
+const stubStrategies: HTTPStrategies = {
+  makeFetchOptions: () => ({
+    method: "POST",
+  }),
+  makeQueryURL: async ({ host, database }) => {
+    return Promise.resolve(host.baseUrls.sql + "/" + database.dbname);
+  },
+  parseFieldsFromResponse: skipParsingFieldsFromResponse,
+  parseFieldsFromResponseBodyJSON: parseFieldsFromResponseBodyJSONFieldsKey,
+  transformFetchOptions: skipTransformFetchOptions,
+};
+
+const makeStubClient = (opts?: { strategies?: Partial<HTTPStrategies> }) => {
   return makeClient({
     credential: null,
     strategies: {
-      makeFetchOptions: () => ({
-        method: "POST",
-      }),
-      makeQueryURL: async ({ host, database }) => {
-        return Promise.resolve(host.baseUrls.sql + "/" + database.dbname);
-      },
-      parseFieldsFromResponse: skipParsingFieldsFromResponse,
-      parseFieldsFromResponseBodyJSON: parseFieldsFromResponseBodyJSONFieldsKey,
+      ...stubStrategies,
+      ...opts?.strategies,
     },
   });
 };
+
+describe("client implements strategies", () => {
+  setupMswServerTestHooks();
+  setupMemo();
+
+  beforeEach((testCtx) => {
+    const { mswServer, useTestMemo } = testCtx;
+
+    const reqMemo = useTestMemo!<string, IsomorphicRequest>();
+
+    mswServer?.use(
+      rest.post("http://localhost/default/q/fingerprint", (req, res, ctx) => {
+        reqMemo.set(testCtx.meta.id, req);
+        return res(ctx.status(200), ctx.json(minSuccessfulJSON));
+      }),
+      rest.post("http://localhost/transformed", (req, res, ctx) => {
+        reqMemo.set(testCtx.meta.id, req);
+        return res(ctx.status(200), ctx.json(minSuccessfulJSON));
+      })
+    );
+  });
+
+  it("transforms request headers", async ({ useTestMemo, meta }) => {
+    const client = makeStubClient({
+      strategies: {
+        makeQueryURL: () =>
+          Promise.resolve("http://localhost/default/q/fingerprint"),
+        makeFetchOptions: () => {
+          return {
+            method: "POST",
+            headers: {
+              "initial-header": "stays",
+              "override-header": "will-not-be-set-to-this",
+            },
+          };
+        },
+        transformFetchOptions({ input, init }) {
+          return {
+            input,
+            init: {
+              ...init,
+              headers: {
+                ...init?.headers,
+                "new-header": "was-not-in-make-fetch-options",
+                "override-header": "is-different-from-fetch-options",
+              },
+            },
+          };
+        },
+      },
+    });
+
+    const { error } = await client.execute<{}>("SELECT 1;");
+
+    const reqMemo = useTestMemo!().get(meta.id) as IsomorphicRequest;
+
+    expect(error).toBeNull();
+
+    expect(reqMemo["headers"]).toMatchInlineSnapshot(`
+      HeadersPolyfill {
+        Symbol(normalizedHeaders): {
+          "initial-header": "stays",
+          "new-header": "was-not-in-make-fetch-options",
+          "override-header": "is-different-from-fetch-options",
+        },
+        Symbol(rawHeaderNames): Map {
+          "initial-header" => "initial-header",
+          "new-header" => "new-header",
+          "override-header" => "override-header",
+        },
+      }
+    `);
+  });
+
+  it("transforms request URL", async ({ useTestMemo, meta }) => {
+    const client = makeStubClient({
+      strategies: {
+        makeQueryURL: () =>
+          Promise.resolve("http://localhost/default/q/fingerprint"),
+        transformFetchOptions({ init }) {
+          return {
+            input: "http://localhost/transformed",
+            init,
+          };
+        },
+      },
+    });
+
+    const { error } = await client.execute<{}>("SELECT 1;");
+
+    const reqMemo = useTestMemo!().get(meta.id) as IsomorphicRequest;
+
+    expect(error).toBeNull();
+
+    expect(reqMemo["url"].toString()).toBe("http://localhost/transformed");
+  });
+});
 
 describe("client handles errors correctly because it", () => {
   setupMswServerTestHooks();
@@ -217,6 +325,7 @@ const makeUnconnectableClient = () => {
       },
       parseFieldsFromResponse: skipParsingFieldsFromResponse,
       parseFieldsFromResponseBodyJSON: parseFieldsFromResponseBodyJSONFieldsKey,
+      transformFetchOptions: skipTransformFetchOptions,
     },
   });
 };

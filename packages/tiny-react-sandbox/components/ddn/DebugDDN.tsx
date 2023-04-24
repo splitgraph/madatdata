@@ -6,6 +6,7 @@ import { AuthWidget } from "./AuthWidget";
 import {
   skipParsingFieldsFromResponse,
   parseFieldsFromResponseBodyJSONFieldsKey,
+  skipTransformFetchOptions,
   makeClient,
   type HTTPStrategies,
 } from "@madatdata/client-http";
@@ -41,6 +42,7 @@ const splitgraphClientOptions = {
     },
     parseFieldsFromResponse: skipParsingFieldsFromResponse,
     parseFieldsFromResponseBodyJSON: parseFieldsFromResponseBodyJSONFieldsKey,
+    transformFetchOptions: skipTransformFetchOptions,
   } as HTTPStrategies,
 };
 

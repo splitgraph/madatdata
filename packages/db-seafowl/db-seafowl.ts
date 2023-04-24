@@ -25,6 +25,7 @@ import {
   makeClient as makeHTTPClient,
   parseFieldsFromResponseContentTypeHeader,
   skipParsingFieldsFromResponseBodyJSON,
+  skipTransformFetchOptions,
 } from "@madatdata/client-http";
 
 // FIXME: we _should_ only be depending on types from this pacakge - should
@@ -177,6 +178,7 @@ export class DbSeafowl<SeafowlPluginList extends PluginList>
         },
         parseFieldsFromResponse: parseFieldsFromResponseContentTypeHeader,
         parseFieldsFromResponseBodyJSON: skipParsingFieldsFromResponseBodyJSON,
+        transformFetchOptions: skipTransformFetchOptions,
       },
     };
   }

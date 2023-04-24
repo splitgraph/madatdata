@@ -6,6 +6,7 @@ import type { Host } from "@madatdata/base-client";
 import {
   parseFieldsFromResponseContentTypeHeader,
   skipParsingFieldsFromResponseBodyJSON,
+  skipTransformFetchOptions,
 } from "@madatdata/client-http";
 import { rest } from "msw";
 
@@ -128,6 +129,7 @@ describe("arrow", () => {
         },
         parseFieldsFromResponse: parseFieldsFromResponseContentTypeHeader,
         parseFieldsFromResponseBodyJSON: skipParsingFieldsFromResponseBodyJSON,
+        transformFetchOptions: skipTransformFetchOptions,
       },
     });
 
@@ -405,6 +407,7 @@ describe("fields from header", () => {
         },
         parseFieldsFromResponse: parseFieldsFromResponseContentTypeHeader,
         parseFieldsFromResponseBodyJSON: skipParsingFieldsFromResponseBodyJSON,
+        transformFetchOptions: skipTransformFetchOptions,
       },
     });
 
@@ -460,6 +463,7 @@ describe("field inferrence", () => {
         },
         parseFieldsFromResponse: parseFieldsFromResponseContentTypeHeader,
         parseFieldsFromResponseBodyJSON: skipParsingFieldsFromResponseBodyJSON,
+        transformFetchOptions: skipTransformFetchOptions,
       },
     });
 
@@ -585,6 +589,7 @@ describe("makeSeafowlHTTPContext", () => {
             "makeQueryURL": [Function],
             "parseFieldsFromResponse": [Function],
             "parseFieldsFromResponseBodyJSON": [Function],
+            "transformFetchOptions": [Function],
           },
         },
         "db": {

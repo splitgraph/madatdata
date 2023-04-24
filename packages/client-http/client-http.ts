@@ -140,6 +140,7 @@ export class SqlHTTPClient<
       parseFieldsFromResponse: opts.strategies?.parseFieldsFromResponse,
       parseFieldsFromResponseBodyJSON:
         opts.strategies?.parseFieldsFromResponseBodyJSON,
+      transformFetchOptions: opts.strategies?.transformFetchOptions,
     };
   }
 
@@ -203,7 +204,16 @@ export class SqlHTTPClient<
       observedFields: {},
     };
 
-    const { response, error } = await fetch(queryURL, fetchOptions)
+    const { input: transformedQueryURL, init: transformedFetchOptions } =
+      this.strategies.transformFetchOptions({
+        input: queryURL,
+        init: fetchOptions,
+      });
+
+    const { response, error } = await fetch(
+      transformedQueryURL,
+      transformedFetchOptions
+    )
       .catch((err) => Promise.reject({ type: "network", ...err }))
       .then(async (r) => {
         if (r.type === "error") {

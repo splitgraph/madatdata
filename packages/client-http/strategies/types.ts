@@ -50,6 +50,17 @@ type MakeFetchOptionsStrategy = ({
   execOptions,
 }: MakeFetchOptionsStrategyArgs) => RequestInit;
 
+type TransformFetchOptionsStrategy = ({
+  input,
+  init,
+}: {
+  input: Parameters<typeof fetch>[0];
+  init: Parameters<typeof fetch>[1];
+}) => {
+  input: Parameters<typeof fetch>[0];
+  init: Parameters<typeof fetch>[1];
+};
+
 export type MakeQueryURLStrategyArgs = {
   database: Database;
   host: Host;
@@ -80,4 +91,5 @@ export type HTTPStrategies = {
   makeQueryURL: MakeQueryURLStrategy;
   parseFieldsFromResponse: ParseFieldsFromResponseStrategy;
   parseFieldsFromResponseBodyJSON: ParseFieldsFromResponseBodyJSONStrategy;
+  transformFetchOptions: TransformFetchOptionsStrategy;
 };

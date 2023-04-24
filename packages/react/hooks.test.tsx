@@ -163,6 +163,7 @@ describe("makeDefaultAnonymousContext", () => {
             "makeQueryURL": [Function],
             "parseFieldsFromResponse": [Function],
             "parseFieldsFromResponseBodyJSON": [Function],
+            "transformFetchOptions": [Function],
           },
         },
         "db": DbSplitgraph {

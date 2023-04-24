@@ -27,6 +27,7 @@ import type { HTTPStrategies, HTTPClientOptions } from "@madatdata/client-http";
 import {
   parseFieldsFromResponseBodyJSONFieldsKey,
   skipParsingFieldsFromResponse,
+  skipTransformFetchOptions,
 } from "@madatdata/client-http";
 import type { GraphQLClientOptions } from "./plugins";
 
@@ -163,6 +164,7 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
           parseFieldsFromResponse: skipParsingFieldsFromResponse,
           parseFieldsFromResponseBodyJSON:
             parseFieldsFromResponseBodyJSONFieldsKey,
+          transformFetchOptions: skipTransformFetchOptions,
         },
       }
     );
