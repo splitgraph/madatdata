@@ -115,40 +115,38 @@ const tableFromJSONWithSchema = <
 // TODO: This asserts on the live fields of the seafowl backend, but we still
 // need to add the code that parses them to our shape. This is mostly here for
 // keeping track of what the actual response looks like so we can mock it accurately.
-describe.skipIf(shouldSkipSeafowlTests())(
-  "parse fields from live seafowl backend",
-  () => {
-    const makeLiveDataContext = () => {
-      return createDataContext({
-        database: {
-          dbname: "default",
+describe("parse fields from live seafowl backend", () => {
+  const makeLiveDataContext = () => {
+    return createDataContext({
+      database: {
+        dbname: "default",
+      },
+      host: {
+        dataHost: "header-testing.seafowl.cloud",
+        apexDomain: "",
+        apiHost: "",
+        baseUrls: {
+          gql: "",
+          sql: "https://header-testing.seafowl.cloud",
+          auth: "",
         },
-        host: {
-          dataHost: "censored:8080",
-          apexDomain: "",
-          apiHost: "",
-          baseUrls: {
-            gql: "",
-            sql: "http://censored:8080",
-            auth: "",
-          },
-          postgres: {
-            host: "127.0.0.1",
-            port: 6432,
-            ssl: false,
-          },
+        postgres: {
+          host: "127.0.0.1",
+          port: 6432,
+          ssl: false,
         },
-      });
-    };
+      },
+    });
+  };
 
-    it("simple query, one column", async () => {
-      const { client } = makeLiveDataContext();
+  it("simple query, one column", async () => {
+    const { client } = makeLiveDataContext();
 
-      const result = await client.execute<any>("SELECT 1");
+    const result = await client.execute<any>("SELECT 1");
 
-      const rows = result.response?.rows;
+    const rows = result.response?.rows;
 
-      expect(rows).toMatchInlineSnapshot(`
+    expect(rows).toMatchInlineSnapshot(`
       [
         {
           "Int64(1)": 1,
@@ -156,11 +154,11 @@ describe.skipIf(shouldSkipSeafowlTests())(
       ]
     `);
 
-      const arrowFields = result.response?.fields;
+    const arrowFields = result.response?.fields;
 
-      expect(typeof arrowFields).toEqual("object");
+    expect(typeof arrowFields).toEqual("object");
 
-      expect(arrowFields).toMatchInlineSnapshot(`
+    expect(arrowFields).toMatchInlineSnapshot(`
       {
         "fields": [
           {
@@ -178,17 +176,17 @@ describe.skipIf(shouldSkipSeafowlTests())(
       }
     `);
 
-      expect((arrowFields as any)["fields"][0]["name"]).toEqual("Int64(1)");
-    });
+    expect((arrowFields as any)["fields"][0]["name"]).toEqual("Int64(1)");
+  });
 
-    it("simple query, two columns", async () => {
-      const { client } = makeLiveDataContext();
+  it("simple query, two columns", async () => {
+    const { client } = makeLiveDataContext();
 
-      const result = await client.execute<any>("SELECT 1, 2");
+    const result = await client.execute<any>("SELECT 1, 2");
 
-      const rows = result.response?.rows;
+    const rows = result.response?.rows;
 
-      expect(rows).toMatchInlineSnapshot(`
+    expect(rows).toMatchInlineSnapshot(`
       [
         {
           "Int64(1)": 1,
@@ -197,11 +195,11 @@ describe.skipIf(shouldSkipSeafowlTests())(
       ]
     `);
 
-      const arrowFields = result.response?.fields;
+    const arrowFields = result.response?.fields;
 
-      expect(typeof arrowFields).toEqual("object");
+    expect(typeof arrowFields).toEqual("object");
 
-      expect(arrowFields).toMatchInlineSnapshot(`
+    expect(arrowFields).toMatchInlineSnapshot(`
       {
         "fields": [
           {
@@ -229,20 +227,20 @@ describe.skipIf(shouldSkipSeafowlTests())(
       }
     `);
 
-      expect((arrowFields as any)["fields"][0]["name"]).toEqual("Int64(1)");
-      expect((arrowFields as any)["fields"][1]["name"]).toEqual("Int64(2)");
-    });
+    expect((arrowFields as any)["fields"][0]["name"]).toEqual("Int64(1)");
+    expect((arrowFields as any)["fields"][1]["name"]).toEqual("Int64(2)");
+  });
 
-    it("nasty query", async () => {
-      const { client } = makeLiveDataContext();
+  it("nasty query", async () => {
+    const { client } = makeLiveDataContext();
 
-      const result = await client.execute<any>(
-        `SELECT 1::FLOAT AS \"_ :;.,\/'?!(){}[]@<>=-+*#$&\`|~^%\"`
-      );
+    const result = await client.execute<any>(
+      `SELECT 1::FLOAT AS \"_ :;.,\/'?!(){}[]@<>=-+*#$&\`|~^%\"`
+    );
 
-      const rows = result.response?.rows;
+    const rows = result.response?.rows;
 
-      expect(rows).toMatchInlineSnapshot(`
+    expect(rows).toMatchInlineSnapshot(`
       [
         {
           "_ :;.,/'?!(){}[]@<>=-+*#$&\`|~^%": 1,
@@ -250,11 +248,11 @@ describe.skipIf(shouldSkipSeafowlTests())(
       ]
     `);
 
-      const arrowFields = result.response?.fields;
+    const arrowFields = result.response?.fields;
 
-      expect(typeof arrowFields).toEqual("object");
+    expect(typeof arrowFields).toEqual("object");
 
-      expect(arrowFields).toMatchInlineSnapshot(`
+    expect(arrowFields).toMatchInlineSnapshot(`
       {
         "fields": [
           {
@@ -271,20 +269,20 @@ describe.skipIf(shouldSkipSeafowlTests())(
       }
     `);
 
-      expect((arrowFields as any)["fields"][0]["name"]).toEqual(
-        "_ :;.,/'?!(){}[]@<>=-+*#$&`|~^%"
-      );
-    });
+    expect((arrowFields as any)["fields"][0]["name"]).toEqual(
+      "_ :;.,/'?!(){}[]@<>=-+*#$&`|~^%"
+    );
+  });
 
-    it("one double quote in column name", async () => {
-      const { client } = makeLiveDataContext();
+  it("one double quote in column name", async () => {
+    const { client } = makeLiveDataContext();
 
-      // column name should be literal " (one double quote) (SQL escapes one double quote with two double quotes)
-      const result = await client.execute<any>('SELECT 1::FLOAT AS """"');
+    // column name should be literal " (one double quote) (SQL escapes one double quote with two double quotes)
+    const result = await client.execute<any>('SELECT 1::FLOAT AS """"');
 
-      const rows = result.response?.rows;
+    const rows = result.response?.rows;
 
-      expect(rows).toMatchInlineSnapshot(`
+    expect(rows).toMatchInlineSnapshot(`
       [
         {
           "\\"": 1,
@@ -292,11 +290,11 @@ describe.skipIf(shouldSkipSeafowlTests())(
       ]
     `);
 
-      const arrowFields = result.response?.fields;
+    const arrowFields = result.response?.fields;
 
-      expect(typeof arrowFields).toEqual("object");
+    expect(typeof arrowFields).toEqual("object");
 
-      expect(arrowFields).toMatchInlineSnapshot(`
+    expect(arrowFields).toMatchInlineSnapshot(`
       {
         "fields": [
           {
@@ -313,18 +311,18 @@ describe.skipIf(shouldSkipSeafowlTests())(
       }
     `);
 
-      expect((arrowFields as any)["fields"][0]["name"]).toEqual('"');
-    });
+    expect((arrowFields as any)["fields"][0]["name"]).toEqual('"');
+  });
 
-    it("two double quotes in column name", async () => {
-      const { client } = makeLiveDataContext();
+  it("two double quotes in column name", async () => {
+    const { client } = makeLiveDataContext();
 
-      // column name should be literal "" (two double quotes)
-      const result = await client.execute<any>('SELECT 1::FLOAT AS """"""');
+    // column name should be literal "" (two double quotes)
+    const result = await client.execute<any>('SELECT 1::FLOAT AS """"""');
 
-      const rows = result.response?.rows;
+    const rows = result.response?.rows;
 
-      expect(rows).toMatchInlineSnapshot(`
+    expect(rows).toMatchInlineSnapshot(`
       [
         {
           "\\"\\"": 1,
@@ -332,11 +330,11 @@ describe.skipIf(shouldSkipSeafowlTests())(
       ]
     `);
 
-      const arrowFields = result.response?.fields;
+    const arrowFields = result.response?.fields;
 
-      expect(typeof arrowFields).toEqual("object");
+    expect(typeof arrowFields).toEqual("object");
 
-      expect(arrowFields).toMatchInlineSnapshot(`
+    expect(arrowFields).toMatchInlineSnapshot(`
       {
         "fields": [
           {
@@ -353,10 +351,9 @@ describe.skipIf(shouldSkipSeafowlTests())(
       }
     `);
 
-      expect((arrowFields as any)["fields"][0]["name"]).toEqual('""');
-    });
-  }
-);
+    expect((arrowFields as any)["fields"][0]["name"]).toEqual('""');
+  });
+});
 
 describe("arrow", () => {
   setupMswServerTestHooks();
@@ -389,7 +386,10 @@ describe("arrow", () => {
           // note: not accurate/required, but put it here to avoid warning from failed json parsing
           ctx.set(
             "Content-Type",
-            `application/json; arrow-schema="{\"blah\": \"foo=bar; arrow-schema-inner\"}"`
+
+            `application/json; arrow-schema-escaped=${encodeURIComponent(
+              JSON.stringify({ blah: "foo=bar; arrow-schema-escaped-inner" })
+            )}`
           ),
           ctx.body(
             [...Array(11000)]
@@ -496,7 +496,9 @@ describe("arrow", () => {
           // note: not accurate/required, but put it here to avoid warning from failed json parsing
           ctx.set(
             "Content-Type",
-            `application/json; arrow-schema="{\"blah\": \"foo=bar; arrow-schema-inner\"}"`
+            `application/json; arrow-schema-escaped=${encodeURIComponent(
+              JSON.stringify({ blah: "foo=bar; arrow-schema-escaped-inner" })
+            )}`
           ),
           ctx.body(
             [
@@ -630,7 +632,9 @@ describe("fields from header", () => {
           ctx.status(200),
           ctx.set(
             "Content-Type",
-            `application/json; arrow-schema="{\"blah\": \"foo=bar; arrow-schema-inner\"}"`
+            `application/json; arrow-schema-escaped=${encodeURIComponent(
+              JSON.stringify({ blah: "foo=bar; arrow-schema-escaped-inner" })
+            )}`
           ),
           ctx.body(
             [
@@ -652,7 +656,9 @@ describe("fields from header", () => {
             // Return a content-type with invalid JSON
             ctx.set(
               "Content-Type",
-              `application/json; arrow-schema="{\"blah\": \"extra comma\",}"`
+              `application/json; arrow-schema-escaped=${encodeURIComponent(
+                '{"blah": "extra comma",}'
+              )}`
             ),
             ctx.body(
               [{ col1: "1" }].map((row) => JSON.stringify(row)).join("\n")
@@ -687,7 +693,7 @@ describe("fields from header", () => {
 
     expect(resp.response?.fields).toMatchInlineSnapshot(`
       {
-        "blah": "foo=bar; arrow-schema-inner",
+        "blah": "foo=bar; arrow-schema-escaped-inner",
       }
     `);
   });
@@ -743,7 +749,9 @@ describe("field inferrence", () => {
           // note: not accurate/required, but put it here to avoid warning from failed json parsing
           ctx.set(
             "Content-Type",
-            `application/json; arrow-schema="{\"blah\": \"foo=bar; arrow-schema-inner\"}"`
+            `application/json; arrow-schema-escaped=${encodeURIComponent(
+              JSON.stringify({ blah: "foo=bar; arrow-schema-escaped-inner" })
+            )}`
           ),
           ctx.body(
             [

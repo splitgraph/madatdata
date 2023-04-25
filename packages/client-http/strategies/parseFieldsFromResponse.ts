@@ -14,27 +14,19 @@ export const parseFieldsFromResponseContentTypeHeader: HTTPStrategies["parseFiel
     try {
       /**
        *
-       * application/json; arrow-schema="..."
+       * application/json; arrow-schema-escaped=%7B%22blah%22%3A%22ok%22%7D
        *
-       * "..."
-       *
-       *
-       * application/json; arrow-schema="{"blah": "foo=bar"}"
-       *                                  ^       ^       ^
-       * NOTE: By convention of seafowl, these inside double quotes are _not_ escaped,
-       * so that we can always slice off the surrounding pair of double quotes and parse
-       * the value inside them as JSON.
-       *
-       * const contentType = `application/json; arrow-schema="{\"blah\\": \"foo=bar; arrow-schema-inner\"}"`
+       * NOTE: We assume that arrow-schema-escaped is the only parameter, and is
+       * thus the last one, and so does not terminate with a semi-colon
        */
-      const quotedJson = contentType
-        .split("; arrow-schema=")
+      const urlencodedJson = contentType
+        .split("; arrow-schema-escaped=")
         .slice(1)
-        .join("; arrow-schema="); // make sure to join it back in case the value itself happens to contain this string
+        .join("; arrow-schema-escped="); // make sure to join it back in case the value itself happens to contain this string
 
-      // slice off the double quote pair that surrounds the entire string
-      // NOTE: by convention of Seafowl, the string is _not_ escaped inside these quotes
-      const arrowFields = JSON.parse(quotedJson.slice(1, -1));
+      const decodedJson = decodeURIComponent(urlencodedJson);
+
+      const arrowFields = JSON.parse(decodedJson);
       return arrowFields satisfies ReturnType<
         HTTPStrategies["parseFieldsFromResponse"]
       >;
