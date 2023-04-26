@@ -14,15 +14,15 @@ export const parseFieldsFromResponseContentTypeHeader: HTTPStrategies["parseFiel
     try {
       /**
        *
-       * application/json; arrow-schema-escaped=%7B%22blah%22%3A%22ok%22%7D
+       * application/json; arrow-schema=%7B%22blah%22%3A%22ok%22%7D
        *
-       * NOTE: We assume that arrow-schema-escaped is the only parameter, and is
+       * NOTE: We assume that arrow-schema is the only parameter, and is
        * thus the last one, and so does not terminate with a semi-colon
        */
       const urlencodedJson = contentType
-        .split("; arrow-schema-escaped=")
+        .split("; arrow-schema=")
         .slice(1)
-        .join("; arrow-schema-escped="); // make sure to join it back in case the value itself happens to contain this string
+        .join("; arrow-schema="); // make sure to join it back in case the value itself happens to contain this string
 
       const decodedJson = decodeURIComponent(urlencodedJson);
 

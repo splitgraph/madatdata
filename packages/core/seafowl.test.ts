@@ -334,8 +334,10 @@ describe("arrow", () => {
           ctx.set(
             "Content-Type",
 
-            `application/json; arrow-schema-escaped=${encodeURIComponent(
-              JSON.stringify({ blah: "foo=bar; arrow-schema-escaped-inner" })
+            `application/json; arrow-schema=${encodeURIComponent(
+              JSON.stringify({
+                blah: "foo=bar; ; arrow-schema=inner-do-not-replace",
+              })
             )}`
           ),
           ctx.body(
@@ -443,8 +445,10 @@ describe("arrow", () => {
           // note: not accurate/required, but put it here to avoid warning from failed json parsing
           ctx.set(
             "Content-Type",
-            `application/json; arrow-schema-escaped=${encodeURIComponent(
-              JSON.stringify({ blah: "foo=bar; arrow-schema-escaped-inner" })
+            `application/json; arrow-schema=${encodeURIComponent(
+              JSON.stringify({
+                blah: "foo=bar; ; arrow-schema=inner-do-not-replace",
+              })
             )}`
           ),
           ctx.body(
@@ -579,8 +583,10 @@ describe("fields from header", () => {
           ctx.status(200),
           ctx.set(
             "Content-Type",
-            `application/json; arrow-schema-escaped=${encodeURIComponent(
-              JSON.stringify({ blah: "foo=bar; arrow-schema-escaped-inner" })
+            `application/json; arrow-schema=${encodeURIComponent(
+              JSON.stringify({
+                blah: "foo=bar; ; arrow-schema=inner-do-not-replace",
+              })
             )}`
           ),
           ctx.body(
@@ -603,7 +609,7 @@ describe("fields from header", () => {
             // Return a content-type with invalid JSON
             ctx.set(
               "Content-Type",
-              `application/json; arrow-schema-escaped=${encodeURIComponent(
+              `application/json; arrow-schema=${encodeURIComponent(
                 '{"blah": "extra comma",}'
               )}`
             ),
@@ -640,7 +646,7 @@ describe("fields from header", () => {
 
     expect(resp.response?.fields).toMatchInlineSnapshot(`
       {
-        "blah": "foo=bar; arrow-schema-escaped-inner",
+        "blah": "foo=bar; ; arrow-schema=inner-do-not-replace",
       }
     `);
   });
@@ -696,8 +702,10 @@ describe("field inferrence", () => {
           // note: not accurate/required, but put it here to avoid warning from failed json parsing
           ctx.set(
             "Content-Type",
-            `application/json; arrow-schema-escaped=${encodeURIComponent(
-              JSON.stringify({ blah: "foo=bar; arrow-schema-escaped-inner" })
+            `application/json; arrow-schema=${encodeURIComponent(
+              JSON.stringify({
+                blah: "foo=bar; ; arrow-schema=inner-do-not-replace",
+              })
             )}`
           ),
           ctx.body(
@@ -1082,8 +1090,10 @@ describe("query fingerprinting and sending", () => {
           // note: not accurate/required, but put it here to avoid warning from failed json parsing
           ctx.set(
             "Content-Type",
-            `application/json; arrow-schema-escaped=${encodeURIComponent(
-              JSON.stringify({ blah: "foo=bar; arrow-schema-escaped-inner" })
+            `application/json; arrow-schema=${encodeURIComponent(
+              JSON.stringify({
+                blah: "foo=bar; ; arrow-schema=inner-do-not-replace",
+              })
             )}`
           ),
           ctx.body(
@@ -1119,7 +1129,7 @@ describe("query fingerprinting and sending", () => {
         "error": null,
         "response": {
           "fields": {
-            "blah": "foo=bar; arrow-schema-escaped-inner",
+            "blah": "foo=bar; ; arrow-schema=inner-do-not-replace",
           },
           "readable": [Function],
           "rows": [],
