@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { makeSeafowlHTTPContext } from "./seafowl";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
+import { setupMemo } from "@madatdata/test-helpers/setup-memo";
 import { shouldSkipSeafowlTests } from "@madatdata/test-helpers/env-config";
 import type { Host } from "@madatdata/base-client";
 import {
@@ -21,6 +22,8 @@ import {
 } from "apache-arrow";
 import * as dtypes from "apache-arrow/type";
 import { faker } from "@faker-js/faker";
+
+import type { IsomorphicRequest } from "@mswjs/interceptors";
 
 // @ts-expect-error https://stackoverflow.com/a/70711231
 const SEAFOWL_SECRET = import.meta.env.VITE_TEST_SEAFOWL_SECRET;
@@ -1116,6 +1119,91 @@ describe("makeQueryURL", () => {
     );
     expect(await makeQueryUrl("Drop table blah")).toMatchInlineSnapshot(
       '"http://127.0.0.1:8080/blahblah/q"'
+    );
+  });
+});
+
+describe("query fingerprinting and sending", () => {
+  setupMswServerTestHooks();
+  setupMemo();
+
+  beforeEach((testCtx) => {
+    const { mswServer, useTestMemo } = testCtx;
+
+    const reqMemo = useTestMemo!<string, IsomorphicRequest>();
+
+    mswServer?.use(
+      rest.get("http://localhost/default/q/fingerprint", (req, res, ctx) => {
+        reqMemo.set(testCtx.meta.id, req);
+
+        return res(
+          ctx.status(200),
+          // note: not accurate/required, but put it here to avoid warning from failed json parsing
+          ctx.set(
+            "Content-Type",
+            `application/json; arrow-schema-escaped=${encodeURIComponent(
+              JSON.stringify({ blah: "foo=bar; arrow-schema-escaped-inner" })
+            )}`
+          ),
+          ctx.body(
+            [] // Note: response doesn't matter in this test
+              .map((row) => JSON.stringify(row))
+              .join("\n")
+          )
+        );
+      })
+    );
+  });
+
+  it("urlencodes query", async ({ useTestMemo, meta }) => {
+    const ctx = createDataContext({
+      strategies: {
+        async makeQueryURL() {
+          return Promise.resolve("http://localhost/default/q/fingerprint");
+        },
+        makeFetchOptions() {
+          // HACK: return null to indicate deference to makeFetchOptions provided by DB
+          return null;
+        },
+        parseFieldsFromResponse: parseFieldsFromResponseContentTypeHeader,
+        parseFieldsFromResponseBodyJSON: skipParsingFieldsFromResponseBodyJSON,
+        transformFetchOptions: skipTransformFetchOptions,
+      },
+    });
+
+    const resp = await ctx.client.execute<any>("SELECT * from something;");
+
+    expect(resp).toMatchInlineSnapshot(`
+      {
+        "error": null,
+        "response": {
+          "fields": {
+            "blah": "foo=bar; arrow-schema-escaped-inner",
+          },
+          "readable": [Function],
+          "rows": [],
+          "success": true,
+        },
+      }
+    `);
+
+    const reqMemo = useTestMemo!().get(meta.id) as IsomorphicRequest;
+
+    expect(reqMemo["headers"]).toMatchInlineSnapshot(`
+      HeadersPolyfill {
+        Symbol(normalizedHeaders): {
+          "content-type": "application/json",
+          "x-seafowl-query": "SELECT%20*%20from%20something%3B",
+        },
+        Symbol(rawHeaderNames): Map {
+          "content-type" => "content-type",
+          "x-seafowl-query" => "x-seafowl-query",
+        },
+      }
+    `);
+
+    expect(reqMemo["headers"].get("x-seafowl-query")).toEqual(
+      "SELECT%20*%20from%20something%3B"
     );
   });
 });
