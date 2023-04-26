@@ -4,8 +4,8 @@ import {
   shouldSkipSeafowlTests,
 } from "@madatdata/test-helpers/env-config";
 import { randSuffix } from "@madatdata/test-helpers/rand-suffix";
-import { createRealDataContext as createRealSeafowlDataContext } from "./seafowl.test";
-import { createRealDataContext as createRealSplitgraphDataContext } from "./splitgraph.test";
+import { createRealDataContext as createRealSeafowlDataContext } from "./test-helpers/seafowl-test-helpers";
+import { createRealDataContext as createRealSplitgraphDataContext } from "./test-helpers/splitgraph-test-helpers";
 import type { SeafowlDestOptions } from "packages/db-seafowl/plugins/importers/base-seafowl-import-plugin";
 
 describe.skipIf(shouldSkipSeafowlTests() || shouldSkipIntegrationTests())(

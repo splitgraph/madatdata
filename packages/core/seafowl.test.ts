@@ -25,75 +25,15 @@ import { faker } from "@faker-js/faker";
 
 import type { IsomorphicRequest } from "@mswjs/interceptors";
 
-// @ts-expect-error https://stackoverflow.com/a/70711231
-const SEAFOWL_SECRET = import.meta.env.VITE_TEST_SEAFOWL_SECRET;
+import {
+  SEAFOWL_SECRET,
+  createDataContext,
+} from "./test-helpers/seafowl-test-helpers";
 
 // Depending on whether SEAFOWL_SECRET is defined (might not be in CI), we expect
 // serialized credentials to include different values
 const expectAnonymous = !SEAFOWL_SECRET;
 const expectToken = SEAFOWL_SECRET ?? "anonymous-token";
-
-export const createDataContext = (
-  opts?: Parameters<typeof makeSeafowlHTTPContext>[0]
-) => {
-  return makeSeafowlHTTPContext({
-    database: {
-      dbname: "default",
-    },
-    authenticatedCredential: SEAFOWL_SECRET
-      ? {
-          token: SEAFOWL_SECRET,
-          anonymous: false,
-        }
-      : undefined,
-    host: {
-      // temporary hacky mess
-      dataHost: "127.0.0.1:8080",
-      apexDomain: "bogus",
-      apiHost: "bogus",
-      baseUrls: {
-        gql: "bogus",
-        sql: "http://127.0.0.1:8080",
-        auth: "bogus",
-      },
-      postgres: {
-        host: "127.0.0.1",
-        port: 6432,
-        ssl: false,
-      },
-    },
-    ...opts, // note: only top level keys are merged
-  });
-};
-
-export const createRealDataContext = () => {
-  return makeSeafowlHTTPContext({
-    database: {
-      dbname: "default",
-    },
-    authenticatedCredential: {
-      // @ts-expect-error https://stackoverflow.com/a/70711231
-      token: import.meta.env.VITE_TEST_SEAFOWL_SECRET,
-      anonymous: false,
-    },
-    host: {
-      // temporary hacky mess
-      dataHost: "127.0.0.1:8080",
-      apexDomain: "bogus",
-      apiHost: "bogus",
-      baseUrls: {
-        gql: "bogus",
-        sql: "http://127.0.0.1:8080",
-        auth: "bogus",
-      },
-      postgres: {
-        host: "127.0.0.1",
-        port: 6432,
-        ssl: false,
-      },
-    },
-  });
-};
 
 // import type { JavaScriptDataType } from "apache-arrow"
 
@@ -123,6 +63,7 @@ describe.skipIf(shouldSkipSeafowlTests())(
   () => {
     const makeLiveDataContext = () => {
       return createDataContext({
+        secret: SEAFOWL_SECRET,
         database: {
           dbname: "default",
         },
@@ -863,7 +804,7 @@ describe("field inferrence", () => {
 
 describe("makeSeafowlHTTPContext", () => {
   it("initializes as expected", () => {
-    const ctx = createDataContext();
+    const ctx = createDataContext({ secret: SEAFOWL_SECRET });
 
     expect(ctx.client).toBeTruthy();
     expect(ctx.db).toBeTruthy();
@@ -1212,7 +1153,7 @@ describe("query fingerprinting and sending", () => {
 // and at the moment seafowl is only object mode
 describe.skipIf(shouldSkipSeafowlTests())("can query local seafowl", () => {
   it("select 1, 2 in (default) object mode in (default) jsonl body mode", async () => {
-    const { client } = createDataContext();
+    const { client } = createDataContext({ secret: SEAFOWL_SECRET });
 
     const res = await client.execute<[number, number]>("select 1, 2;", {
       rowMode: "object",
