@@ -44,11 +44,14 @@ export type MakeFetchOptionsStrategyArgs = {
   execOptions: ExecOptions;
 };
 
+// Return null to indicate that DB should construct fetch options itself
+// Otherwise, return RequestInit to override that completely
+// TODO: This is a hack.
 type MakeFetchOptionsStrategy = ({
   credential,
   query,
   execOptions,
-}: MakeFetchOptionsStrategyArgs) => RequestInit;
+}: MakeFetchOptionsStrategyArgs) => RequestInit | null;
 
 type TransformFetchOptionsStrategy = ({
   input,

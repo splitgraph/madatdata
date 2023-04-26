@@ -193,10 +193,24 @@ export class SqlHTTPClient<
     execOptions?: { rowMode?: "object" | "array" } & BaseExecOptions
   ) {
     const queryURL = await this.makeQueryURL({ query });
-    const fetchOptions = this.makeFetchOptions({
+    const maybeFetchOptions = this.makeFetchOptions({
       query,
       execOptions: SqlHTTPClient.defaultExecOptions(execOptions),
     });
+
+    // HACK: This comes down to not having a separate OptionalStrategies and RequiredStrategies,
+    // and abusing the ReturnType of makeFetchOptions for null to indicate that it should
+    // be handled by the default implementation (see db-seafowl::httpClientOptions)
+    if (!maybeFetchOptions) {
+      throw new Error(
+        "maybeFetchOptions returned null, which is allowed by its type definition, " +
+          "but there must be at least one maybeFetchOptions " +
+          "passed by now that does not return null"
+      );
+    }
+
+    // NOTE: Just renaming to drop the maybe. Same HACK as above applies.
+    const fetchOptions = maybeFetchOptions;
 
     const accumulators: {
       observedFields: FieldTypesFromObjectRowShape<UnknownObjectShape>;

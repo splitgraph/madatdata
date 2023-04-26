@@ -130,10 +130,23 @@ export class DbSeafowl<SeafowlPluginList extends PluginList>
     return {
       bodyMode: "jsonl",
       // TODO: db splitgraph needs this too
-      strategies: this.opts.strategies ?? {
+      strategies: {
+        // TODO: HACK: This is last priority because it was moved here, but this
+        // needs a better story for default fields, overrides, etc.
+        ...this.opts.strategies,
         // TODO: This should be overideable/injectable from the caller (e.g. the
         // react client should be able to set its own 'mode', etc.)
-        makeFetchOptions: ({ credential, query }) => {
+        makeFetchOptions: ({ credential, query, execOptions }) => {
+          // TODO: HACKY. This whole method should be overridable.
+          if (this.opts.strategies?.makeFetchOptions) {
+            const maybeMadeFetchOptions = this.opts.strategies.makeFetchOptions(
+              { credential, query, execOptions }
+            );
+            if (maybeMadeFetchOptions) {
+              return maybeMadeFetchOptions;
+            }
+          }
+
           // TODO: this is hacky
           const guessedMethod = guessMethodForQuery(query);
 
@@ -143,7 +156,15 @@ export class DbSeafowl<SeafowlPluginList extends PluginList>
               credential as AuthenticatedCredential
             )({
               ...(guessedMethod === "GET"
-                ? { "X-Seafowl-Query": this.normalizeQueryForHTTPHeader(query) }
+                ? {
+                    // NOTE: The query is fingerprinted _prior_ to encoding, which is
+                    // why we encode it at the last opportunity here (whereas it is "normalized"
+                    // prior to fingerprinting, which is why the fingerprint function also
+                    // calls the normalizeQueryForHTTPHeader function before fingerprinting)
+                    "X-Seafowl-Query": encodeURIComponent(
+                      this.normalizeQueryForHTTPHeader(query)
+                    ),
+                  }
                 : {}),
               "Content-Type": "application/json",
             }),
@@ -154,7 +175,18 @@ export class DbSeafowl<SeafowlPluginList extends PluginList>
               : {}),
           };
         },
-        makeQueryURL: async ({ host, query, database: { dbname } }) => {
+        makeQueryURL: async (makeQueryURLOpts) => {
+          // TODO: hack :(
+          if (this.opts.strategies?.makeQueryURL) {
+            return await this.opts.strategies.makeQueryURL(makeQueryURLOpts);
+          }
+
+          const {
+            host,
+            query,
+            database: { dbname },
+          } = makeQueryURLOpts;
+
           const withoutTrailingSlash = host.baseUrls.sql.replace(/\/+$/g, "");
 
           const baseQueryUrl = dbname
@@ -176,9 +208,29 @@ export class DbSeafowl<SeafowlPluginList extends PluginList>
             ? baseQueryUrl + "/" + fingerprint + extension
             : baseQueryUrl;
         },
-        parseFieldsFromResponse: parseFieldsFromResponseContentTypeHeader,
-        parseFieldsFromResponseBodyJSON: skipParsingFieldsFromResponseBodyJSON,
-        transformFetchOptions: skipTransformFetchOptions,
+        parseFieldsFromResponse: (...args) => {
+          // TODO: hack :(
+          if (this.opts.strategies?.parseFieldsFromResponse) {
+            return this.opts.strategies.parseFieldsFromResponse(...args);
+          }
+          return parseFieldsFromResponseContentTypeHeader(...args);
+        },
+        parseFieldsFromResponseBodyJSON: (...args) => {
+          // TODO: hack :(
+          if (this.opts.strategies?.parseFieldsFromResponseBodyJSON) {
+            return this.opts.strategies.parseFieldsFromResponseBodyJSON(
+              ...args
+            );
+          }
+          return skipParsingFieldsFromResponseBodyJSON();
+        },
+        transformFetchOptions: (...args) => {
+          // TODO: hack :(
+          if (this.opts.strategies?.transformFetchOptions) {
+            return this.opts.strategies.transformFetchOptions(...args);
+          }
+          return skipTransformFetchOptions(...args);
+        },
       },
     };
   }
