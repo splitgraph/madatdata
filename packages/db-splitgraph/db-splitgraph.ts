@@ -141,6 +141,19 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
         bodyMode: "json",
         strategies: {
           makeFetchOptions: ({ credential, query, execOptions }) => {
+            // TODO: HACKY. This whole method should be overridable.
+            if (this.opts.strategies?.makeFetchOptions) {
+              const maybeMadeFetchOptions =
+                this.opts.strategies.makeFetchOptions({
+                  credential,
+                  query,
+                  execOptions,
+                });
+              if (maybeMadeFetchOptions) {
+                return maybeMadeFetchOptions;
+              }
+            }
+
             // HACKY: atm, splitgraph API does not accept "object" as valid param
             // so remove it from execOptions (hacky because ideal is `...execOptions`)
             const httpExecOptions =
@@ -158,13 +171,39 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
               body: JSON.stringify({ sql: query, ...httpExecOptions }),
             };
           },
-          makeQueryURL: async ({ host, database }) => {
+          makeQueryURL: async (makeQueryURLOpts) => {
+            // TODO: hack :(
+            if (this.opts.strategies?.makeQueryURL) {
+              return await this.opts.strategies.makeQueryURL(makeQueryURLOpts);
+            }
+
+            const { host, database } = makeQueryURLOpts;
+
             return Promise.resolve(host.baseUrls.sql + "/" + database.dbname);
           },
-          parseFieldsFromResponse: skipParsingFieldsFromResponse,
-          parseFieldsFromResponseBodyJSON:
-            parseFieldsFromResponseBodyJSONFieldsKey,
-          transformFetchOptions: skipTransformFetchOptions,
+          parseFieldsFromResponse: (...args) => {
+            // TODO: hack :(
+            if (this.opts.strategies?.parseFieldsFromResponse) {
+              return this.opts.strategies.parseFieldsFromResponse(...args);
+            }
+            return skipParsingFieldsFromResponse();
+          },
+          parseFieldsFromResponseBodyJSON: (...args) => {
+            // TODO: hack :(
+            if (this.opts.strategies?.parseFieldsFromResponseBodyJSON) {
+              return this.opts.strategies.parseFieldsFromResponseBodyJSON(
+                ...args
+              );
+            }
+            return parseFieldsFromResponseBodyJSONFieldsKey(...args);
+          },
+          transformFetchOptions: (...args) => {
+            // TODO: hack :(
+            if (this.opts.strategies?.transformFetchOptions) {
+              return this.opts.strategies.transformFetchOptions(...args);
+            }
+            return skipTransformFetchOptions(...args);
+          },
         },
       }
     );

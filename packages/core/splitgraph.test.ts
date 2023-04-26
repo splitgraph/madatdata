@@ -1,39 +1,169 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 
-import { makeSplitgraphHTTPContext } from "./splitgraph";
+import {
+  parseFieldsFromResponseBodyJSONFieldsKey,
+  skipParsingFieldsFromResponse,
+} from "@madatdata/client-http";
+
+import { rest } from "msw";
+
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
+import { setupMemo } from "@madatdata/test-helpers/setup-memo";
 
-export const createDataContext = () => {
-  return makeSplitgraphHTTPContext({
-    authenticatedCredential: {
-      apiKey: "xxx",
-      apiSecret: "yyy",
-      anonymous: false,
+import type { IsomorphicRequest } from "@mswjs/interceptors";
+
+import { createDataContext } from "./test-helpers/splitgraph-test-helpers";
+
+const minSuccessfulJSON = {
+  success: true,
+  command: "SELECT",
+  rowCount: 1,
+  rows: [
+    {
+      "?column?": 1,
     },
-  });
+  ],
+  fields: [
+    {
+      name: "?column?",
+      tableID: 0,
+      columnID: 0,
+      dataTypeID: 23,
+      dataTypeSize: 4,
+      dataTypeModifier: -1,
+      format: "text",
+      formattedType: "INT4",
+    },
+  ],
+  executionTime: "128ms",
+  executionTimeHighRes: "0s 128.383115ms",
 };
 
-export const createRealDataContext = () => {
-  const credential = {
-    // @ts-expect-error https://stackoverflow.com/a/70711231
-    apiKey: import.meta.env.VITE_TEST_DDN_API_KEY,
-    // @ts-expect-error https://stackoverflow.com/a/70711231
-    apiSecret: import.meta.env.VITE_TEST_DDN_API_SECRET,
-  };
-  return makeSplitgraphHTTPContext({
-    authenticatedCredential: {
-      apiKey: credential.apiKey,
-      apiSecret: credential.apiSecret,
-      anonymous: false,
-    },
+describe("makeSplitgraphHTTPContext with http strategies", () => {
+  setupMswServerTestHooks();
+  setupMemo();
+
+  beforeEach(({ mswServer, useTestMemo, meta }) => {
+    const reqMemo = useTestMemo!<string, IsomorphicRequest>();
+
+    mswServer?.use(
+      rest.post("http://localhost/some/ddn/endpoint", (req, res, ctx) => {
+        reqMemo.set(meta.id, req);
+        return res(
+          ctx.status(200),
+          ctx.body(
+            JSON.stringify({
+              ...minSuccessfulJSON,
+            })
+          )
+        );
+      })
+    );
   });
-};
+
+  it("sets strategies", async ({ useTestMemo, meta }) => {
+    const ctx = createDataContext({
+      credential: null,
+      strategies: {
+        async makeQueryURL() {
+          return Promise.resolve("http://localhost/some/ddn/endpoint");
+        },
+        makeFetchOptions() {
+          return null;
+        },
+        parseFieldsFromResponse: skipParsingFieldsFromResponse,
+        parseFieldsFromResponseBodyJSON:
+          parseFieldsFromResponseBodyJSONFieldsKey,
+        transformFetchOptions: ({ input, init }) => {
+          return {
+            input,
+            init: {
+              ...init,
+              headers: {
+                ...init?.headers,
+                "new-header": "was-not-in-initial-headers",
+
+                // !!!! TODO: Warn about? Fix this?
+                // NOTE: header name is lowercase, but original is Content-Type. If both
+                // keys are there, then they are duplicate keys and get appended to each other,
+                // rather than overwriting.
+                "content-type":
+                  "appended-to-content-type-because-duplicate-keys",
+              },
+            },
+          };
+        },
+      },
+    });
+
+    expect(ctx.client).toBeTruthy();
+    expect(ctx.db).toBeTruthy();
+
+    const resp = await ctx.client.execute<{}>("SELECT 1;");
+
+    expect(resp).toMatchInlineSnapshot(`
+      {
+        "error": null,
+        "response": {
+          "command": "SELECT",
+          "executionTime": "128ms",
+          "executionTimeHighRes": "0s 128.383115ms",
+          "fields": [
+            {
+              "columnID": 0,
+              "dataTypeID": 23,
+              "dataTypeModifier": -1,
+              "dataTypeSize": 4,
+              "format": "text",
+              "formattedType": "INT4",
+              "name": "?column?",
+              "tableID": 0,
+            },
+          ],
+          "readable": [Function],
+          "rowCount": 1,
+          "rows": [
+            {
+              "?column?": 1,
+            },
+          ],
+          "success": true,
+        },
+      }
+    `);
+
+    const reqMemo = useTestMemo!().get(meta.id) as IsomorphicRequest;
+    expect(reqMemo["headers"]).toMatchInlineSnapshot(`
+      HeadersPolyfill {
+        Symbol(normalizedHeaders): {
+          "content-type": "application/json, appended-to-content-type-because-duplicate-keys",
+          "new-header": "was-not-in-initial-headers",
+        },
+        Symbol(rawHeaderNames): Map {
+          "content-type" => "content-type",
+          "new-header" => "new-header",
+        },
+      }
+    `);
+
+    // NOTE: See note above. This was _appended_ because different casing made duplicate keys
+    expect(reqMemo["headers"].get("content-type")).toMatchInlineSnapshot(
+      '"application/json, appended-to-content-type-because-duplicate-keys"'
+    );
+  });
+});
 
 describe("makeSplitgraphHTTPContext", () => {
   setupMswServerTestHooks();
 
   it("initializes as expected", async () => {
-    const ctx = createDataContext();
+    const ctx = createDataContext({
+      authenticatedCredential: {
+        apiKey: "xxx",
+        apiSecret: "yyy",
+        anonymous: false,
+      },
+    });
 
     expect(ctx.client).toBeTruthy();
     expect(ctx.db).toBeTruthy();
