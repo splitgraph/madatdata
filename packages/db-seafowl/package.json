@@ -1,6 +1,6 @@
 {
   "name": "@madatdata/db-seafowl",
-  "version": "0.0.9",
+  "version": "0.0.10-0",
   "packageManager": "yarn@3.2.0",
   "main": "index.ts",
   "types": "./build/es2020/index.d.ts",
@@ -43,5 +43,6 @@
   "scripts": {
     "version": "yarn version",
     "publish": "yarn npm publish"
-  }
+  },
+  "stableVersion": "0.0.9"
 }
