@@ -5,7 +5,7 @@ import { setupMemo } from "@madatdata/test-helpers/setup-memo";
 import { shouldSkipSeafowlTests } from "@madatdata/test-helpers/env-config";
 import type { Host } from "@madatdata/base-client";
 import {
-  parseFieldsFromResponseContentTypeHeader,
+  parseArrowFieldsFromResponseContentTypeHeader,
   skipParsingFieldsFromResponseBodyJSON,
   skipTransformFetchOptions,
 } from "@madatdata/client-http";
@@ -58,6 +58,8 @@ const tableFromJSONWithSchema = <
 // TODO: This asserts on the live fields of the seafowl backend, but we still
 // need to add the code that parses them to our shape. This is mostly here for
 // keeping track of what the actual response looks like so we can mock it accurately.
+// const shouldSkipSeafowl = true;
+
 describe.skipIf(shouldSkipSeafowlTests())(
   "parse fields from live seafowl backend",
   () => {
@@ -68,12 +70,12 @@ describe.skipIf(shouldSkipSeafowlTests())(
           dbname: "default",
         },
         host: {
-          dataHost: "header-testing.seafowl.cloud",
+          dataHost: "censored",
           apexDomain: "",
           apiHost: "",
           baseUrls: {
             gql: "",
-            sql: "https://header-testing.seafowl.cloud",
+            sql: "http://censored",
             auth: "",
           },
           postgres: {
@@ -100,29 +102,26 @@ describe.skipIf(shouldSkipSeafowlTests())(
       ]
     `);
 
-      const arrowFields = result.response?.fields;
+      const fields = result.response?.fields;
 
-      expect(typeof arrowFields).toEqual("object");
+      expect(Array.isArray(fields)).toBe(true);
 
-      expect(arrowFields).toMatchInlineSnapshot(`
-      {
-        "fields": [
+      expect(fields).toMatchInlineSnapshot(`
+        [
           {
-            "children": [],
+            "columnID": 0,
+            "dataTypeID": -1,
+            "dataTypeModifier": -1,
+            "dataTypeSize": -1,
+            "format": "BIGINT NOT NULL",
+            "formattedType": "BIGINT NOT NULL",
             "name": "Int64(1)",
-            "nullable": false,
-            "type": {
-              "bitWidth": 64,
-              "isSigned": true,
-              "name": "int",
-            },
+            "tableID": -1,
           },
-        ],
-        "metadata": {},
-      }
-    `);
+        ]
+      `);
 
-      expect((arrowFields as any)["fields"][0]["name"]).toEqual("Int64(1)");
+      expect(fields![0]["name"]).toEqual("Int64(1)");
     });
 
     it("simple query, two columns", async () => {
@@ -141,40 +140,37 @@ describe.skipIf(shouldSkipSeafowlTests())(
       ]
     `);
 
-      const arrowFields = result.response?.fields;
+      const fields = result.response?.fields;
 
-      expect(typeof arrowFields).toEqual("object");
+      expect(Array.isArray(fields)).toBe(true);
 
-      expect(arrowFields).toMatchInlineSnapshot(`
-      {
-        "fields": [
+      expect(fields).toMatchInlineSnapshot(`
+        [
           {
-            "children": [],
+            "columnID": 0,
+            "dataTypeID": -1,
+            "dataTypeModifier": -1,
+            "dataTypeSize": -1,
+            "format": "BIGINT NOT NULL",
+            "formattedType": "BIGINT NOT NULL",
             "name": "Int64(1)",
-            "nullable": false,
-            "type": {
-              "bitWidth": 64,
-              "isSigned": true,
-              "name": "int",
-            },
+            "tableID": -1,
           },
           {
-            "children": [],
+            "columnID": 1,
+            "dataTypeID": -1,
+            "dataTypeModifier": -1,
+            "dataTypeSize": -1,
+            "format": "BIGINT NOT NULL",
+            "formattedType": "BIGINT NOT NULL",
             "name": "Int64(2)",
-            "nullable": false,
-            "type": {
-              "bitWidth": 64,
-              "isSigned": true,
-              "name": "int",
-            },
+            "tableID": -1,
           },
-        ],
-        "metadata": {},
-      }
-    `);
+        ]
+      `);
 
-      expect((arrowFields as any)["fields"][0]["name"]).toEqual("Int64(1)");
-      expect((arrowFields as any)["fields"][1]["name"]).toEqual("Int64(2)");
+      expect(fields![0]["name"]).toEqual("Int64(1)");
+      expect(fields![1]["name"]).toEqual("Int64(2)");
     });
 
     it("nasty query", async () => {
@@ -194,30 +190,26 @@ describe.skipIf(shouldSkipSeafowlTests())(
       ]
     `);
 
-      const arrowFields = result.response?.fields;
+      const fields = result.response?.fields;
 
-      expect(typeof arrowFields).toEqual("object");
+      expect(Array.isArray(fields)).toBe(true);
 
-      expect(arrowFields).toMatchInlineSnapshot(`
-      {
-        "fields": [
+      expect(fields).toMatchInlineSnapshot(`
+        [
           {
-            "children": [],
+            "columnID": 0,
+            "dataTypeID": -1,
+            "dataTypeModifier": -1,
+            "dataTypeSize": -1,
+            "format": "FLOAT NOT NULL",
+            "formattedType": "FLOAT NOT NULL",
             "name": "_ :;.,/'?!(){}[]@<>=-+*#$&\`|~^%",
-            "nullable": false,
-            "type": {
-              "name": "floatingpoint",
-              "precision": "SINGLE",
-            },
+            "tableID": -1,
           },
-        ],
-        "metadata": {},
-      }
-    `);
+        ]
+      `);
 
-      expect((arrowFields as any)["fields"][0]["name"]).toEqual(
-        "_ :;.,/'?!(){}[]@<>=-+*#$&`|~^%"
-      );
+      expect(fields![0]["name"]).toEqual("_ :;.,/'?!(){}[]@<>=-+*#$&`|~^%");
     });
 
     it("one double quote in column name", async () => {
@@ -236,28 +228,26 @@ describe.skipIf(shouldSkipSeafowlTests())(
       ]
     `);
 
-      const arrowFields = result.response?.fields;
+      const fields = result.response?.fields;
 
-      expect(typeof arrowFields).toEqual("object");
+      expect(Array.isArray(fields)).toBe(true);
 
-      expect(arrowFields).toMatchInlineSnapshot(`
-      {
-        "fields": [
+      expect(fields).toMatchInlineSnapshot(`
+        [
           {
-            "children": [],
+            "columnID": 0,
+            "dataTypeID": -1,
+            "dataTypeModifier": -1,
+            "dataTypeSize": -1,
+            "format": "FLOAT NOT NULL",
+            "formattedType": "FLOAT NOT NULL",
             "name": "\\"",
-            "nullable": false,
-            "type": {
-              "name": "floatingpoint",
-              "precision": "SINGLE",
-            },
+            "tableID": -1,
           },
-        ],
-        "metadata": {},
-      }
-    `);
+        ]
+      `);
 
-      expect((arrowFields as any)["fields"][0]["name"]).toEqual('"');
+      expect(fields![0]["name"]).toEqual('"');
     });
 
     it("two double quotes in column name", async () => {
@@ -276,28 +266,226 @@ describe.skipIf(shouldSkipSeafowlTests())(
       ]
     `);
 
-      const arrowFields = result.response?.fields;
+      const fields = result.response?.fields;
 
-      expect(typeof arrowFields).toEqual("object");
+      expect(Array.isArray(fields)).toBe(true);
 
-      expect(arrowFields).toMatchInlineSnapshot(`
-      {
-        "fields": [
+      expect(fields).toMatchInlineSnapshot(`
+        [
           {
-            "children": [],
+            "columnID": 0,
+            "dataTypeID": -1,
+            "dataTypeModifier": -1,
+            "dataTypeSize": -1,
+            "format": "FLOAT NOT NULL",
+            "formattedType": "FLOAT NOT NULL",
             "name": "\\"\\"",
-            "nullable": false,
-            "type": {
-              "name": "floatingpoint",
-              "precision": "SINGLE",
-            },
+            "tableID": -1,
           },
-        ],
-        "metadata": {},
-      }
-    `);
+        ]
+      `);
 
-      expect((arrowFields as any)["fields"][0]["name"]).toEqual('""');
+      expect(fields![0]["name"]).toEqual('""');
+    });
+
+    const allTypesQuery = `WITH t (
+      c_int16_smallint,
+      c_int32_int,
+      c_int64_bigint,
+      c_utf8_char,
+      c_utf8_varchar,
+      c_utf8_text,
+      c_float32_float,
+      c_float32_real,
+      c_float64_double,
+      c_boolean_boolean,
+      c_date32_date,
+      c_timestamp_microseconds_timestamp
+
+    ) AS (
+      VALUES(
+        /* Int16 / SMALLINT */
+        42::SMALLINT,
+        /* Int32 / INT */
+        99::INT,
+        /* Int64 / BIGINT */
+        420420::BIGINT,
+        /* Utf8 / CHAR */
+        'x'::CHAR,
+        /* Utf8 / VARCHAR */
+        'abcdefghijklmnopqrstuvwxyz'::VARCHAR,
+        /* Utf8 / TEXT */
+        'zyxwvutsrqponmlkjihgfedcba'::TEXT,
+        /* Float32 / FLOAT */
+        4.4::FLOAT,
+        /* Float32 / REAL */
+        2.0::REAL,
+        /* Float64 / DOUBLE */
+        69.420420::DOUBLE,
+        /* Boolean / BOOLEAN */
+        't'::BOOLEAN,
+        /* Date32 / DATE */
+        '1997-06-17'::DATE,
+        /* Timestamp(us) / TIMESTAMP */
+        '2018-11-11T11:11:11.111111111'::TIMESTAMP
+      )
+    ) SELECT * FROM t;`;
+
+    it("all types", async () => {
+      const { client } = makeLiveDataContext();
+
+      // column name format: c_{arrow type}_{sql type}
+      const result = await client.execute<any>(allTypesQuery);
+
+      const rows = result.response?.rows;
+
+      expect(rows).toMatchInlineSnapshot(`
+        [
+          {
+            "c_boolean_boolean": true,
+            "c_date32_date": "1997-06-17",
+            "c_float32_float": 4.4,
+            "c_float32_real": 2,
+            "c_float64_double": 69.42042,
+            "c_int16_smallint": 42,
+            "c_int32_int": 99,
+            "c_int64_bigint": 420420,
+            "c_timestamp_microseconds_timestamp": "2018-11-11T11:11:11.111111111",
+            "c_utf8_char": "x",
+            "c_utf8_text": "zyxwvutsrqponmlkjihgfedcba",
+            "c_utf8_varchar": "abcdefghijklmnopqrstuvwxyz",
+          },
+        ]
+      `);
+
+      const fields = result.response?.fields;
+
+      expect(Array.isArray(fields)).toEqual(true);
+
+      expect(fields).toMatchInlineSnapshot(`
+        [
+          {
+            "columnID": 0,
+            "dataTypeID": -1,
+            "dataTypeModifier": -1,
+            "dataTypeSize": -1,
+            "format": "SMALLINT",
+            "formattedType": "SMALLINT",
+            "name": "c_int16_smallint",
+            "tableID": -1,
+          },
+          {
+            "columnID": 1,
+            "dataTypeID": -1,
+            "dataTypeModifier": -1,
+            "dataTypeSize": -1,
+            "format": "INT",
+            "formattedType": "INT",
+            "name": "c_int32_int",
+            "tableID": -1,
+          },
+          {
+            "columnID": 2,
+            "dataTypeID": -1,
+            "dataTypeModifier": -1,
+            "dataTypeSize": -1,
+            "format": "BIGINT",
+            "formattedType": "BIGINT",
+            "name": "c_int64_bigint",
+            "tableID": -1,
+          },
+          {
+            "columnID": 3,
+            "dataTypeID": -1,
+            "dataTypeModifier": -1,
+            "dataTypeSize": -1,
+            "format": "VARCHAR",
+            "formattedType": "VARCHAR",
+            "name": "c_utf8_char",
+            "tableID": -1,
+          },
+          {
+            "columnID": 4,
+            "dataTypeID": -1,
+            "dataTypeModifier": -1,
+            "dataTypeSize": -1,
+            "format": "VARCHAR",
+            "formattedType": "VARCHAR",
+            "name": "c_utf8_varchar",
+            "tableID": -1,
+          },
+          {
+            "columnID": 5,
+            "dataTypeID": -1,
+            "dataTypeModifier": -1,
+            "dataTypeSize": -1,
+            "format": "VARCHAR",
+            "formattedType": "VARCHAR",
+            "name": "c_utf8_text",
+            "tableID": -1,
+          },
+          {
+            "columnID": 6,
+            "dataTypeID": -1,
+            "dataTypeModifier": -1,
+            "dataTypeSize": -1,
+            "format": "FLOAT",
+            "formattedType": "FLOAT",
+            "name": "c_float32_float",
+            "tableID": -1,
+          },
+          {
+            "columnID": 7,
+            "dataTypeID": -1,
+            "dataTypeModifier": -1,
+            "dataTypeSize": -1,
+            "format": "FLOAT",
+            "formattedType": "FLOAT",
+            "name": "c_float32_real",
+            "tableID": -1,
+          },
+          {
+            "columnID": 8,
+            "dataTypeID": -1,
+            "dataTypeModifier": -1,
+            "dataTypeSize": -1,
+            "format": "DOUBLE",
+            "formattedType": "DOUBLE",
+            "name": "c_float64_double",
+            "tableID": -1,
+          },
+          {
+            "columnID": 9,
+            "dataTypeID": -1,
+            "dataTypeModifier": -1,
+            "dataTypeSize": -1,
+            "format": "BOOLEAN",
+            "formattedType": "BOOLEAN",
+            "name": "c_boolean_boolean",
+            "tableID": -1,
+          },
+          {
+            "columnID": 10,
+            "dataTypeID": -1,
+            "dataTypeModifier": -1,
+            "dataTypeSize": -1,
+            "format": "DATE",
+            "formattedType": "DATE",
+            "name": "c_date32_date",
+            "tableID": -1,
+          },
+          {
+            "columnID": 11,
+            "dataTypeID": -1,
+            "dataTypeModifier": -1,
+            "dataTypeSize": -1,
+            "format": "TIMESTAMP",
+            "formattedType": "TIMESTAMP",
+            "name": "c_timestamp_microseconds_timestamp",
+            "tableID": -1,
+          },
+        ]
+      `);
     });
   }
 );
@@ -317,7 +505,7 @@ describe("arrow", () => {
             headers: {},
           };
         },
-        parseFieldsFromResponse: parseFieldsFromResponseContentTypeHeader,
+        parseFieldsFromResponse: parseArrowFieldsFromResponseContentTypeHeader,
         parseFieldsFromResponseBodyJSON: skipParsingFieldsFromResponseBodyJSON,
         transformFetchOptions: skipTransformFetchOptions,
       },
@@ -634,7 +822,7 @@ describe("fields from header", () => {
             headers: {},
           };
         },
-        parseFieldsFromResponse: parseFieldsFromResponseContentTypeHeader,
+        parseFieldsFromResponse: parseArrowFieldsFromResponseContentTypeHeader,
         parseFieldsFromResponseBodyJSON: skipParsingFieldsFromResponseBodyJSON,
         transformFetchOptions: skipTransformFetchOptions,
       },
@@ -667,7 +855,7 @@ describe("fields from header", () => {
             headers: {},
           };
         },
-        parseFieldsFromResponse: parseFieldsFromResponseContentTypeHeader,
+        parseFieldsFromResponse: parseArrowFieldsFromResponseContentTypeHeader,
         parseFieldsFromResponseBodyJSON: skipParsingFieldsFromResponseBodyJSON,
         transformFetchOptions: skipTransformFetchOptions,
       },
@@ -737,7 +925,7 @@ describe("field inferrence", () => {
             headers: {},
           };
         },
-        parseFieldsFromResponse: parseFieldsFromResponseContentTypeHeader,
+        parseFieldsFromResponse: parseArrowFieldsFromResponseContentTypeHeader,
         parseFieldsFromResponseBodyJSON: skipParsingFieldsFromResponseBodyJSON,
         transformFetchOptions: skipTransformFetchOptions,
       },
@@ -1116,7 +1304,7 @@ describe("query fingerprinting and sending", () => {
           // HACK: return null to indicate deference to makeFetchOptions provided by DB
           return null;
         },
-        parseFieldsFromResponse: parseFieldsFromResponseContentTypeHeader,
+        parseFieldsFromResponse: parseArrowFieldsFromResponseContentTypeHeader,
         parseFieldsFromResponseBodyJSON: skipParsingFieldsFromResponseBodyJSON,
         transformFetchOptions: skipTransformFetchOptions,
       },
