@@ -86,10 +86,20 @@ export type ExecutionResultFromRowShape<RowShape extends UnknownRowShape> =
     ? ExecutionResultWithObjectShapedRows<RowShape>
     : never;
 
+export interface CommonExecuteParameters {
+  abortSignal: AbortSignal;
+}
+
+export type CommonExecuteOptions = Partial<CommonExecuteParameters>;
+
+export type ClientExecuteOptions = {
+  rowMode: "array" | "object" | undefined;
+} & CommonExecuteOptions;
+
 export interface Client {
   execute<RowShape extends UnknownArrayShape>(
     query: string,
-    executeOptions: { rowMode: "array" }
+    executeOptions: { rowMode: "array" } & CommonExecuteOptions
   ): Promise<{
     response: ExecutionResultWithArrayShapedRows<RowShape> | null;
     error: QueryError | null;
@@ -97,7 +107,7 @@ export interface Client {
 
   execute<RowShape extends UnknownObjectShape>(
     query: string,
-    executeOptions?: { rowMode: "object" }
+    executeOptions?: { rowMode: "object" } & CommonExecuteOptions
   ): Promise<{
     response: ExecutionResultWithObjectShapedRows<RowShape> | null;
     error: QueryError | null;
@@ -105,7 +115,7 @@ export interface Client {
 
   execute<RowShape extends UnknownRowShape>(
     query: string,
-    executeOptions: { rowMode?: "object" | "array" }
+    executeOptions: { rowMode?: "object" | "array" } & CommonExecuteOptions
   ): Promise<{
     response: ExecutionResultFromRowShape<RowShape> | null;
     error: QueryError | null;
