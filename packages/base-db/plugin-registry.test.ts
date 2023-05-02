@@ -65,16 +65,16 @@ const makeSomethingPluggable = <
 
       {
         true as Expect<
-          Equal<typeof championPlugins[number], SomeKindOfChampionPlugin>
+          Equal<(typeof championPlugins)[number], SomeKindOfChampionPlugin>
         >;
 
         true as Expect<
-          NotEqual<typeof championPlugins[number], SomeKindOfLoserPlugin>
+          NotEqual<(typeof championPlugins)[number], SomeKindOfLoserPlugin>
         >;
 
         // cannot be PluggableInterface because type predicate only matches SomeKindOfChampionPlugin
         true as Expect<
-          NotEqual<typeof championPlugins[number], PluggableInterface>
+          NotEqual<(typeof championPlugins)[number], PluggableInterface>
         >;
       }
 
@@ -168,7 +168,7 @@ describe("plugin registry", () => {
     {
       true as Expect<
         Equal<
-          typeof pluggable["plugins"]["plugins"],
+          (typeof pluggable)["plugins"]["plugins"],
           WithPluginRegistry<
             ReturnType<typeof makeFakePlugins>,
             typeof pluginHostContext,
@@ -181,7 +181,7 @@ describe("plugin registry", () => {
 
       true as Expect<
         Equal<
-          typeof pluggable["plugins"]["plugins"],
+          (typeof pluggable)["plugins"]["plugins"],
           ReturnType<typeof makeFakePlugins>
         >
       >;
@@ -189,7 +189,7 @@ describe("plugin registry", () => {
       true as Expect<
         Equal<
           Extract<
-            typeof pluggable["plugins"]["plugins"][number],
+            (typeof pluggable)["plugins"]["plugins"][number],
             SomeKindOfChampionPlugin
           >["__name"],
           "happy-winner"
@@ -206,7 +206,7 @@ describe("plugin registry", () => {
       true as Expect<
         Equal<
           Extract<
-            typeof pluggable["plugins"]["plugins"][number],
+            (typeof pluggable)["plugins"]["plugins"][number],
             SomeKindOfChampionPlugin
           >["__name"],
           "happy-winner"
@@ -214,7 +214,7 @@ describe("plugin registry", () => {
       >;
       true as Expect<
         Equal<
-          Parameters<typeof pluggable["celebrateVictory"]>[0],
+          Parameters<(typeof pluggable)["celebrateVictory"]>[0],
           "happy-winner"
         >
       >;

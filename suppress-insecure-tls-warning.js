@@ -59,9 +59,10 @@ function suppress() {
     process.exit(1);
   }
 
-  console.warn(
-    `[pid=${process.pid}] Suppress NODE_TLS_REJECT_UNAUTHORIZED warning`
-  );
+  // Uncomment to restore warning spam (note: prints once for every child process)
+  // console.warn(
+  //   `[pid=${process.pid}] Suppress NODE_TLS_REJECT_UNAUTHORIZED warning`
+  // );
 
   suppressed = true;
 

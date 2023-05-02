@@ -43,6 +43,9 @@ export const makeSplitgraphHTTPContext = (
           .gql,
         authenticatedCredential: opts?.db?.authenticatedCredential,
       }),
+
+    ...(opts?.client?.strategies ? { strategies: opts.client.strategies } : {}),
+    ...(opts?.strategies ? { strategies: opts.strategies } : {}),
   };
 
   // TODO: Figure out where dbOpts and clientOpts should/shouldn't overlap
@@ -54,6 +57,10 @@ export const makeSplitgraphHTTPContext = (
       null,
     database: opts?.client?.database ?? opts?.database ?? defaultDatabase,
     host: opts?.client?.host ?? opts?.host ?? defaultHost,
+
+    // NOTE: this is useless because it only gets injected by db
+    ...(opts?.client?.strategies ? { strategies: opts.client.strategies } : {}),
+    ...(opts?.strategies ? { strategies: opts.strategies } : {}),
   };
 
   const db = makeDb(dbOpts);

@@ -19,6 +19,8 @@ import {
   defaultHost,
 } from "@madatdata/base-client";
 
+import type { HTTPStrategies } from "@madatdata/client-http";
+
 export interface ImportPlugin extends Plugin {
   importData: (
     sourceOptions: any,
@@ -89,6 +91,7 @@ export interface DbOptions<ConcretePluginList extends PluginList> {
   authenticatedCredential?: AuthenticatedCredential;
   host?: Host;
   database?: Database;
+  strategies?: HTTPStrategies;
 }
 export abstract class BaseDb<
   ConcretePluginList extends PluginList,

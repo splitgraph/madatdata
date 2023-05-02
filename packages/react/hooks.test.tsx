@@ -161,6 +161,9 @@ describe("makeDefaultAnonymousContext", () => {
           "strategies": {
             "makeFetchOptions": [Function],
             "makeQueryURL": [Function],
+            "parseFieldsFromResponse": [Function],
+            "parseFieldsFromResponseBodyJSON": [Function],
+            "transformFetchOptions": [Function],
           },
         },
         "db": DbSplitgraph {

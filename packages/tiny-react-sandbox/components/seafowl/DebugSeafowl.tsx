@@ -32,7 +32,7 @@ export const createRealSeafowlDataContext = ({
       apiHost: "bogus",
       baseUrls: {
         gql: "bogus",
-        sql: `${dataUrl.protocol}//${dataUrl.host}/q`,
+        sql: `${dataUrl.protocol}//${dataUrl.host}`,
         auth: "bogus",
       },
       postgres: {

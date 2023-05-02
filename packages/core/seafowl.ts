@@ -16,12 +16,18 @@ export const makeSeafowlHTTPContext = (
   opts?: {
     client?: Parameters<typeof makeClient>[0];
     db?: Parameters<typeof makeDb>[0];
-  } & Partial<
-    Omit<
-      Parameters<typeof makeClient>[0] & Parameters<typeof makeDb>[0],
-      "client" | "db"
-    >
-  >
+  } & Omit<
+    Partial<
+      Omit<
+        Parameters<typeof makeClient>[0] & Parameters<typeof makeDb>[0],
+        "client" | "db"
+      >
+    >,
+    "strategies"
+  > &
+    Partial<{
+      strategies: Parameters<typeof makeClient>[0]["strategies"];
+    }>
 ) => {
   const dbOpts = {
     authenticatedCredential:
@@ -35,6 +41,9 @@ export const makeSeafowlHTTPContext = (
     database: opts?.db?.database ?? opts?.database ?? defaultDatabase,
     host: opts?.db?.host ?? opts?.host ?? defaultHost,
     plugins: opts?.db?.plugins ?? opts?.plugins ?? makeDefaultPluginList({}),
+
+    ...(opts?.client?.strategies ? { strategies: opts.client.strategies } : {}),
+    ...(opts?.strategies ? { strategies: opts.strategies } : {}),
   };
 
   // TODO: Figure out where dbOpts and clientOpts should/shouldn't overlap
@@ -46,6 +55,12 @@ export const makeSeafowlHTTPContext = (
       null,
     database: opts?.client?.database ?? opts?.database ?? defaultDatabase,
     host: opts?.client?.host ?? opts?.host ?? defaultHost,
+
+    // TODO: Copy this to makeSplitgraphHTTPContext
+
+    // NOTE: this is useless because it only gets injected by db
+    ...(opts?.client?.strategies ? { strategies: opts.client.strategies } : {}),
+    ...(opts?.strategies ? { strategies: opts.strategies } : {}),
   };
 
   const db = makeDb(dbOpts);

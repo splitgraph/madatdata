@@ -41,6 +41,28 @@ export type UnknownRowShape = UnknownObjectShape | UnknownArrayShape;
 
 export interface ExecutionResultBase {
   success: boolean;
+
+  /**
+   * HACK: Nothing enforces that this exists, it's up to to each DB to implement
+   * the field, and that DB is free to add more fields. I just want to avoid another
+   * layer of generic typechecking right now.
+   */
+  fields: {
+    /** The name of the column */
+    name: string;
+    /** The column index in the returned data */
+    columnID: number | string;
+    /** The machine readable format of the column*/
+    format: string;
+    /** The type that should be displayed for human consumption */
+    formattedType: string;
+
+    // TODO: implemented by Splitgraph, but not by Seafowl (need to add some generic messiness)
+    // dataTypeID: number;
+    // dataTypeModifier: number;
+    // dataTypeSize: number;
+    // tableID: number;
+  }[];
 }
 
 export interface ExecutionResultWithObjectShapedRows<

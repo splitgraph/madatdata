@@ -1,6 +1,6 @@
 {
   "extends": "../../tsconfig.build-base.json",
-  "exclude": ["*.test.ts", "build"],
+  "exclude": ["*.test.ts", "test-helpers/*.ts", "build"],
   "include": ["*.ts", "**/*.ts", "**/**/*.ts"],
   "compilerOptions": {
     "outDir": "./packages/core/build",

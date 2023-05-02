@@ -3,68 +3,19 @@ import {
   type QueryError,
   type ClientOptions,
   type CredentialOptions,
-  type Database,
-  type Host,
-  type UnknownCredential,
-  type UnknownRowShape,
   type ExecutionResultWithObjectShapedRows,
   type ExecutionResultWithArrayShapedRows,
   type UnknownArrayShape,
   type UnknownObjectShape,
 } from "@madatdata/base-client";
 
-export interface WebBridgeResponse<RowShape extends UnknownRowShape> {
-  command: string;
-  fields: {
-    columnID: number;
-    dataTypeID: number;
-    dataTypeModifier: number;
-    dataTypeSize: number;
-    format: string;
-    formattedType: string;
-    name: string;
-    tableID: number;
-  }[];
-  rowCount: 1;
-  rows: RowShape[];
-  readable: () => ReadableStream<RowShape>;
-  success: true;
-  /** FIXME: optional to allow deleting it for inline snapshots */
-  executionTime?: string;
-  /** FIXME: optional to allow deleting it for inline snapshots */
-  executionTimeHighRes?: string;
-}
-
-// todo: "streaming" just here for debug, should be deleted
-type BodyMode = "json" | "jsonl" | "streaming";
-
-type MakeFetchOptionsStrategyArgs = {
-  credential: UnknownCredential;
-  query: string;
-  execOptions: ExecOptions;
-};
-
-type MakeFetchOptionsStrategy = ({
-  credential,
-  query,
-  execOptions,
-}: MakeFetchOptionsStrategyArgs) => RequestInit;
-
-type MakeQueryURLStrategyArgs = {
-  database: Database;
-  host: Host;
-  query?: string;
-};
-
-type MakeQueryURLStrategy = ({
-  database,
-  host,
-}: MakeQueryURLStrategyArgs) => Promise<string>;
-
-export type HTTPStrategies = {
-  makeFetchOptions: MakeFetchOptionsStrategy;
-  makeQueryURL: MakeQueryURLStrategy;
-};
+import type {
+  HTTPStrategies,
+  BodyMode,
+  WebBridgeResponse,
+  MakeQueryURLStrategyArgs,
+  MakeFetchOptionsStrategyArgs,
+} from "./strategies/types";
 
 export type HTTPClientOptions = {
   bodyMode?: BodyMode;
@@ -84,6 +35,91 @@ export interface HTTPClientQueryError extends QueryError {
   response?: Response;
 }
 
+const TypeOfAny = (x: any) => typeof x;
+type ValidType = Exclude<ReturnType<typeof TypeOfAny>, "function"> | "null";
+
+type FieldTypesFromObjectRowShape<RowShape extends UnknownObjectShape> = {
+  [k in keyof RowShape]: Set<ValidType>;
+};
+
+// RIDICULOUS HACK
+const fieldsReducerForObjectRows = <RowShape extends UnknownObjectShape>(
+  observedFields: FieldTypesFromObjectRowShape<RowShape>,
+  row: RowShape
+) => {
+  const rowKeys = Object.keys(row) as (keyof RowShape)[];
+
+  for (const rowKey of rowKeys) {
+    if (!observedFields[rowKey]) {
+      observedFields[rowKey] = new Set();
+    }
+
+    let fieldType = typeof row[rowKey];
+
+    if (row[rowKey] === null) {
+      observedFields[rowKey].add("null");
+    } else if (fieldType === "function") {
+      throw new Error("Got function type in value");
+    } else {
+      observedFields[rowKey].add(fieldType);
+    }
+  }
+
+  if (rowKeys.length !== Object.keys(observedFields).length) {
+    const missingFields = Object.keys(observedFields).filter(
+      (seenField) => !rowKeys.includes(seenField)
+    ) as (keyof RowShape)[];
+
+    for (const missingField of missingFields) {
+      observedFields[missingField].add("undefined");
+    }
+  }
+
+  return observedFields;
+};
+
+// RIDICULOUS HACK
+const fieldsFromObservedFields = <RowShape extends UnknownObjectShape>(
+  observedFields: FieldTypesFromObjectRowShape<RowShape>
+) => {
+  const fields = Object.entries(observedFields).map(
+    ([fieldKey, fieldTypes]) => {
+      if (fieldTypes.size === 1) {
+        return {
+          name: fieldKey,
+          columnID: fieldKey,
+          format: Array.from(fieldTypes)[0],
+          formattedType: `${Array.from(fieldTypes)[0]} (JSON)`,
+        };
+      }
+
+      const fieldTypesArray = Array.from(fieldTypes);
+
+      const nullishTypes = fieldTypesArray.filter(
+        (fieldType) => fieldType === "null" || fieldType === "undefined"
+      ) as ("null" | "undefined")[];
+
+      if (nullishTypes.length === 0) {
+        return {
+          name: fieldKey,
+          columnID: fieldKey,
+          format: fieldTypesArray[0],
+          formattedType: `${fieldTypesArray[0]} (JSON)`,
+        };
+      }
+
+      return {
+        name: fieldKey,
+        columnID: fieldKey,
+        format: fieldTypesArray.join(" | "),
+        formattedType: fieldTypesArray.join(" | "),
+      };
+    }
+  );
+
+  return fields;
+};
+
 export class SqlHTTPClient<
   InputCredentialOptions extends CredentialOptions
 > extends BaseClient<InputCredentialOptions, HTTPStrategies> {
@@ -101,6 +137,10 @@ export class SqlHTTPClient<
     this.strategies = {
       makeFetchOptions: opts.strategies?.makeFetchOptions,
       makeQueryURL: opts.strategies?.makeQueryURL,
+      parseFieldsFromResponse: opts.strategies?.parseFieldsFromResponse,
+      parseFieldsFromResponseBodyJSON:
+        opts.strategies?.parseFieldsFromResponseBodyJSON,
+      transformFetchOptions: opts.strategies?.transformFetchOptions,
     };
   }
 
@@ -153,12 +193,41 @@ export class SqlHTTPClient<
     execOptions?: { rowMode?: "object" | "array" } & BaseExecOptions
   ) {
     const queryURL = await this.makeQueryURL({ query });
-    const fetchOptions = this.makeFetchOptions({
+    const maybeFetchOptions = this.makeFetchOptions({
       query,
       execOptions: SqlHTTPClient.defaultExecOptions(execOptions),
     });
 
-    const { response, error } = await fetch(queryURL, fetchOptions)
+    // HACK: This comes down to not having a separate OptionalStrategies and RequiredStrategies,
+    // and abusing the ReturnType of makeFetchOptions for null to indicate that it should
+    // be handled by the default implementation (see db-seafowl::httpClientOptions)
+    if (!maybeFetchOptions) {
+      throw new Error(
+        "maybeFetchOptions returned null, which is allowed by its type definition, " +
+          "but there must be at least one maybeFetchOptions " +
+          "passed by now that does not return null"
+      );
+    }
+
+    // NOTE: Just renaming to drop the maybe. Same HACK as above applies.
+    const fetchOptions = maybeFetchOptions;
+
+    const accumulators: {
+      observedFields: FieldTypesFromObjectRowShape<UnknownObjectShape>;
+    } = {
+      observedFields: {},
+    };
+
+    const { input: transformedQueryURL, init: transformedFetchOptions } =
+      this.strategies.transformFetchOptions({
+        input: queryURL,
+        init: fetchOptions,
+      });
+
+    const { response, error } = await fetch(
+      transformedQueryURL,
+      transformedFetchOptions
+    )
       .catch((err) => Promise.reject({ type: "network", ...err }))
       .then(async (r) => {
         if (r.type === "error") {
@@ -170,6 +239,10 @@ export class SqlHTTPClient<
         if (!r.ok) {
           return Promise.reject({ type: "response-not-ok", response: r });
         }
+
+        const maybeFieldsFromResponse = await this.strategies
+          .parseFieldsFromResponse({ response: r })
+          .catch(() => null);
 
         // TODO: streaming jus there for debug, should be deleted
         // if (this.bodyMode === "streaming") {
@@ -190,7 +263,13 @@ export class SqlHTTPClient<
             }
 
             try {
-              parsedLines.push(JSON.parse(line));
+              const parsedLine = JSON.parse(line);
+              // RIDICULOUS HACK
+              accumulators.observedFields = fieldsReducerForObjectRows(
+                accumulators.observedFields,
+                parsedLine
+              );
+              parsedLines.push(parsedLine);
             } catch (err) {
               console.warn(
                 `Failed to parse row. Row:\n${line}Error:\n${err}\n`
@@ -200,16 +279,30 @@ export class SqlHTTPClient<
           }
           return {
             rows: parsedLines,
+            fields: maybeFieldsFromResponse ?? undefined,
             success: true,
           };
         } else if (this.bodyMode === "json") {
-          return await r.json();
+          const responseJson = await r.json();
+
+          const maybeFieldsFromResponseBody =
+            await this.strategies.parseFieldsFromResponseBodyJSON({
+              parsedJSONBody: responseJson,
+            });
+
+          return {
+            ...responseJson,
+            fields:
+              maybeFieldsFromResponseBody ??
+              maybeFieldsFromResponse ??
+              undefined,
+          };
         } else {
           throw "Unexpected bodyMode (should never happen, default is json)";
         }
       })
-      .then((rJson) =>
-        execOptions?.rowMode === "array"
+      .then((rJson) => {
+        return execOptions?.rowMode === "array"
           ? {
               response: {
                 readable: () => new ReadableStream<UnknownArrayShape>(),
@@ -220,11 +313,19 @@ export class SqlHTTPClient<
           : {
               response: {
                 readable: () => new ReadableStream<UnknownObjectShape>(),
+                ...("fields" in rJson
+                  ? {}
+                  : {
+                      // RIDICULOUS HACK
+                      fields: fieldsFromObservedFields(
+                        accumulators.observedFields
+                      ),
+                    }),
                 ...rJson,
               } as WebBridgeResponse<UnknownObjectShape>,
               error: null,
-            }
-      )
+            };
+      })
       .catch((err) => ({
         response: null,
         error: {
