@@ -7,6 +7,8 @@ import {
   type ExecutionResultWithArrayShapedRows,
   type UnknownArrayShape,
   type UnknownObjectShape,
+  type CommonExecuteOptions,
+  type ClientExecuteOptions,
 } from "@madatdata/base-client";
 
 import type {
@@ -22,18 +24,27 @@ export type HTTPClientOptions = {
   strategies?: HTTPStrategies;
 };
 
-type BaseExecOptions = {
-  bodyMode?: BodyMode;
-};
-
-type ExecOptions = BaseExecOptions & {
-  rowMode?: "object" | "array" | undefined;
-};
-
-export interface HTTPClientQueryError extends QueryError {
-  type: "unknown" | "network" | "response-not-ok";
+export interface HTTPClientBaseError extends QueryError {
   response?: Response;
 }
+
+export interface HTTPClientNetworkError extends HTTPClientBaseError {
+  type: "network";
+  name: DOMException["name"];
+}
+
+export interface HTTPClientResponseNotOkError extends HTTPClientBaseError {
+  type: "response-not-ok";
+}
+
+export interface HTTPClientUnknownError extends HTTPClientBaseError {
+  type: "unknown";
+}
+
+export type HTTPClientQueryError =
+  | HTTPClientNetworkError
+  | HTTPClientResponseNotOkError
+  | HTTPClientUnknownError;
 
 const TypeOfAny = (x: any) => typeof x;
 type ValidType = Exclude<ReturnType<typeof TypeOfAny>, "function"> | "null";
@@ -164,8 +175,8 @@ export class SqlHTTPClient<
   }
 
   static defaultExecOptions(
-    inputExecOptions?: Partial<ExecOptions>
-  ): ExecOptions {
+    inputExecOptions?: Partial<ClientExecuteOptions>
+  ): ClientExecuteOptions {
     return {
       rowMode: "object",
       ...(inputExecOptions ?? {}),
@@ -174,7 +185,7 @@ export class SqlHTTPClient<
 
   async execute<RowShape extends UnknownArrayShape>(
     query: string,
-    executeOptions: { rowMode: "array" } & BaseExecOptions
+    executeOptions: { rowMode: "array" } & CommonExecuteOptions
   ): Promise<{
     response: ExecutionResultWithArrayShapedRows<RowShape> | null;
     error: HTTPClientQueryError | null;
@@ -182,7 +193,7 @@ export class SqlHTTPClient<
 
   async execute<RowShape extends UnknownObjectShape>(
     query: string,
-    executeOptions?: { rowMode: "object" } & BaseExecOptions
+    executeOptions?: { rowMode: "object" } & CommonExecuteOptions
   ): Promise<{
     response: ExecutionResultWithObjectShapedRows<RowShape> | null;
     error: HTTPClientQueryError | null;
@@ -190,7 +201,7 @@ export class SqlHTTPClient<
 
   async execute(
     query: string,
-    execOptions?: { rowMode?: "object" | "array" } & BaseExecOptions
+    execOptions?: { rowMode?: "object" | "array" } & CommonExecuteOptions
   ) {
     const queryURL = await this.makeQueryURL({ query });
     const maybeFetchOptions = this.makeFetchOptions({
@@ -207,6 +218,10 @@ export class SqlHTTPClient<
           "but there must be at least one maybeFetchOptions " +
           "passed by now that does not return null"
       );
+    }
+
+    if (execOptions?.abortSignal && !maybeFetchOptions.signal) {
+      maybeFetchOptions.signal = execOptions.abortSignal;
     }
 
     // NOTE: Just renaming to drop the maybe. Same HACK as above applies.
@@ -228,12 +243,20 @@ export class SqlHTTPClient<
       transformedQueryURL,
       transformedFetchOptions
     )
-      .catch((err) => Promise.reject({ type: "network", ...err }))
+      .catch((err) =>
+        Promise.reject({
+          type: "network",
+          // NOTE: Usually a DOMException, and thus has .name, but who knows?
+          name: err.name ?? "unknown",
+          // NOTE: Cannot spread DOMException properties (hence the explicit assignment of .name)
+          ...err,
+        })
+      )
       .then(async (r) => {
         if (r.type === "error") {
           // note: very rare (usually fetch itself rejects promise)
           // see: https://developer.mozilla.org/en-US/docs/Web/API/Response/type
-          return Promise.reject({ type: "network", response: r });
+          return Promise.reject({ type: "unknown", response: r });
         }
 
         if (!r.ok) {

@@ -30,6 +30,49 @@ const expectToken = SEAFOWL_SECRET ?? "anonymous-token";
 // keeping track of what the actual response looks like so we can mock it accurately.
 // const shouldSkipSeafowl = true;
 
+describe("abort signal", () => {
+  it("can take it as an option to execute", async () => {
+    const ctx = createDataContext({
+      strategies: {
+        async makeQueryURL() {
+          return Promise.resolve(
+            "http://localhost/default/q/test-abort-signal"
+          );
+        },
+        makeFetchOptions() {
+          // HACK: return null to indicate deference to makeFetchOptions provided by DB
+          return null;
+        },
+        parseFieldsFromResponse: parseArrowFieldsFromResponseContentTypeHeader,
+        parseFieldsFromResponseBodyJSON: skipParsingFieldsFromResponseBodyJSON,
+        transformFetchOptions: skipTransformFetchOptions,
+      },
+    });
+
+    const abortController = new AbortController();
+    const abortSignal = abortController.signal;
+
+    abortController.abort();
+
+    const abortedResp = await ctx.client.execute<{ "Int64(1)": number }>(
+      "SELECT 1",
+      { abortSignal: abortSignal }
+    );
+
+    // Error is caught and passed to the error property with .name=AbortError
+    expect(abortedResp).toMatchInlineSnapshot(`
+      {
+        "error": {
+          "name": "AbortError",
+          "success": false,
+          "type": "network",
+        },
+        "response": null,
+      }
+    `);
+  });
+});
+
 describe.skipIf(shouldSkipSeafowlTests())(
   "parse fields from live seafowl backend",
   () => {
