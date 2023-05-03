@@ -102,21 +102,21 @@ client
   .catch(console.trace);
 ```
 
-### Query Splitgraph with SQL from Observable notebooks
+### Query Splitgraph with SQL from Observable notebooks, browsers or Deno using ESM Modules
 
-For Observable, you might be more interested in using Seafowl with the native
-[Seafowl Observable client](https://observablehq.com/@seafowl/client), like in
-this
-[example notebook](https://observablehq.com/@seafowl/interactive-visualization-demo).
+You can import the Madatdata client via a bundling CDN like [esm.sh]esm-sh,
+which should work in any environment where ES modules are supported, including
+browsers and Deno.
 
-_Note_: Importing Madatdata via Skypack is currently broken because the `crypto`
-module does not exist in browsers, which breaks Skypack imports.
+(Note: For Observable, you might be more interested in using Seafowl with the
+native [Seafowl Observable client][seafowl-observable-client], like in this
+[example notebook][seafowl-native-observable-demo].)
 
-<details>
-<summary>Click Here to See the Example Anyway</summary>
+For example, this is the [code for an observable notebook to query data with
+madatdata][observable-esm-example] and plot it:
 
 ```js
-madatdata = import("https://cdn.skypack.dev/@madatdata/core@latest");
+madatdata = import("https://esm.sh/@madatdata/core@latest");
 client = madatdata.makeSplitgraphHTTPContext({ credential: null }).client;
 result = await client.execute(`
   select
@@ -143,11 +143,6 @@ Plot.plot({
   ],
 });
 ```
-
-Also see this
-[outdated example](https://observablehq.com/@milesrichardson/madatdata-client-testing).
-
-</details>
 
 ### Query Splitgraph with SQL from Postgres on the server
 
@@ -386,14 +381,10 @@ see [./CONTRIBUTING.md](./CONTRIBUTING.md)
 [splitgraph-connect-query]: https://www.splitgraph.com/connect/query
 [docs-sgr-cli]: https://www.splitgraph.com/docs/sgr-cli/introduction
 [docs-web-bridge-api]: https://www.splitgraph.com/docs/query/ddn-http
-[docs-splitgraph-yml]:
-  https://www.splitgraph.com/docs/splitgraph.yml/introduction
 [strategy-pattern]: https://refactoring.guru/design-patterns/strategy
 [github-porsager-postgres]: https://github.com/porsager/postgres
 [github-cross-fetch]: https://github.com/lquixada/cross-fetch
 [github-node-pg]: https://github.com/brianc/node-postgres
-[observable-madatdata-testing]:
-  https://observablehq.com/@milesrichardson/madatdata-client-testing
 [tsc-multi]: https://github.com/tommy351/tsc-multi
 [in-anger]:
   https://english.stackexchange.com/questions/30939/is-used-in-anger-a-britishism-for-something
@@ -401,3 +392,9 @@ see [./CONTRIBUTING.md](./CONTRIBUTING.md)
 [splitgraph-ddn]: https://www.splitgraph.com/connect
 [seafowl-flyio]:
   https://seafowl.io/docs/getting-started/tutorial-fly-io/part-2-deploying-to-fly-io
+[esm-sh]: https://esm.sh
+[observable-esm-example]:
+  https://observablehq.com/@milesrichardson/madatdata-esm-splitgraph-client
+[seafowl-native-observable-demo]:
+  https://observablehq.com/@seafowl/interactive-visualization-demo
+[seafowl-observable-client]: https://observablehq.com/@seafowl/client
