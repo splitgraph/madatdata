@@ -58,10 +58,10 @@ export interface ExecutionResultBase {
     formattedType: string;
 
     // TODO: implemented by Splitgraph, but not by Seafowl (need to add some generic messiness)
-    // dataTypeID: number;
-    // dataTypeModifier: number;
-    // dataTypeSize: number;
-    // tableID: number;
+    dataTypeID: number;
+    dataTypeModifier: number;
+    dataTypeSize: number;
+    tableID: number;
   }[];
 }
 
