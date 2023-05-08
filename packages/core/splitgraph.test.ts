@@ -13,6 +13,7 @@ import { setupMemo } from "@madatdata/test-helpers/setup-memo";
 import type { IsomorphicRequest } from "@mswjs/interceptors";
 
 import { createDataContext } from "./test-helpers/splitgraph-test-helpers";
+import { makeSplitgraphHTTPContext } from "./splitgraph";
 
 const minSuccessfulJSON = {
   success: true,
@@ -38,6 +39,43 @@ const minSuccessfulJSON = {
   executionTime: "128ms",
   executionTimeHighRes: "0s 128.383115ms",
 };
+
+describe("simplified interface", () => {
+  it("can be called with no options", () => {
+    const simplifiedContext = makeSplitgraphHTTPContext();
+
+    expect(
+      // @ts-expect-error Abuse private property "credential" to avoid giant snapshot serialization
+      simplifiedContext.client.credential
+    ).toMatchInlineSnapshot(`
+      {
+        "anonymous": true,
+        "token": "anonymous-token",
+      }
+    `);
+
+    expect(
+      // @ts-expect-error Abuse private property "credential" to avoid giant snapshot serialization
+      simplifiedContext.client.host
+    ).toMatchInlineSnapshot(`
+      {
+        "apexDomain": "splitgraph.com",
+        "apiHost": "api.splitgraph.com",
+        "baseUrls": {
+          "auth": "https://api.splitgraph.com/auth",
+          "gql": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+          "sql": "https://data.splitgraph.com/sql/query",
+        },
+        "dataHost": "data.splitgraph.com",
+        "postgres": {
+          "host": "data.splitgraph.com",
+          "port": 5432,
+          "ssl": true,
+        },
+      }
+    `);
+  });
+});
 
 describe("makeSplitgraphHTTPContext with http strategies", () => {
   setupMswServerTestHooks();
