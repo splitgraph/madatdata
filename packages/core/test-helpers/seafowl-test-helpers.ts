@@ -1,10 +1,13 @@
 import { makeSeafowlHTTPContext } from "../seafowl";
+import type { SeafowlDataContextOpts } from "../seafowl";
 
 // @ts-expect-error https://stackoverflow.com/a/70711231
 export const SEAFOWL_SECRET = import.meta.env.VITE_TEST_SEAFOWL_SECRET;
 
 export const createDataContext = (
-  opts?: Parameters<typeof makeSeafowlHTTPContext>[0] & { secret?: string }
+  opts?: SeafowlDataContextOpts & {
+    secret?: string;
+  }
 ) => {
   return makeSeafowlHTTPContext({
     database: {
