@@ -5,29 +5,7 @@ import "../reset.css";
 
 export default function SearchMetricsApp({ Component, pageProps }: AppProps) {
   const seafowlDataContext = useMemo(
-    () =>
-      makeSeafowlHTTPContext({
-        database: {
-          dbname: "default",
-        },
-        authenticatedCredential: undefined,
-        host: {
-          // temporary hacky mess
-          dataHost: "demo.seafowl.cloud",
-          apexDomain: "bogus",
-          apiHost: "bogus",
-          baseUrls: {
-            gql: "bogus",
-            sql: "https://demo.seafowl.cloud",
-            auth: "bogus",
-          },
-          postgres: {
-            host: "demo.seafowl.cloud",
-            port: 6432,
-            ssl: false,
-          },
-        },
-      }),
+    () => makeSeafowlHTTPContext("https://demo.seafowl.cloud"),
     []
   );
 
