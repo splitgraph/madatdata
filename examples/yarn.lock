@@ -493,93 +493,93 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@madatdata/base-client@npm:0.0.10":
-  version: 0.0.10
-  resolution: "@madatdata/base-client@npm:0.0.10"
+"@madatdata/base-client@npm:0.0.11":
+  version: 0.0.11
+  resolution: "@madatdata/base-client@npm:0.0.11"
   peerDependencies:
     typescript: "*"
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: dfb00a7c7a90201f83067bc5cd2563363e80c7eddd9844db7bc4b47b41d738ddfc184e11260873afbab8f19ec515ecdfddf43cbb7e3cb224e1b69255cf648d50
+  checksum: 9f0b7a7df2c88232f3a25b7ef912ab6df6d1e92582d39662521a1ae0d6384694473e8d94baf4b32da077655a22ce6b5ea5268c4f8836f18c43bd3de2dcbb78cb
   languageName: node
   linkType: hard
 
-"@madatdata/base-db@npm:0.0.10":
-  version: 0.0.10
-  resolution: "@madatdata/base-db@npm:0.0.10"
+"@madatdata/base-db@npm:0.0.11":
+  version: 0.0.11
+  resolution: "@madatdata/base-db@npm:0.0.11"
   dependencies:
-    "@madatdata/base-client": 0.0.10
+    "@madatdata/base-client": 0.0.11
   peerDependencies:
     typescript: "*"
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 368dd3386450c7baca8304761d55852625a454158acb28c012a78e6587dcff1eaf409c7ea873f9a0d95a737df9d719c8b0fb5293c5b963c1f4783a5d08fa1a96
+  checksum: 22d8fd9aae7ace5a19f11d661b0ba0c075fd7516367063726782c05831b6b109566a51d9d5991d61dac71dd3d8ae9cea6069ace52f262e85bd7c89ad303a622a
   languageName: node
   linkType: hard
 
-"@madatdata/client-http@npm:0.0.10":
-  version: 0.0.10
-  resolution: "@madatdata/client-http@npm:0.0.10"
+"@madatdata/client-http@npm:0.0.11":
+  version: 0.0.11
+  resolution: "@madatdata/client-http@npm:0.0.11"
   dependencies:
-    "@madatdata/base-client": 0.0.10
+    "@madatdata/base-client": 0.0.11
   peerDependencies:
     cross-fetch: "*"
   peerDependenciesMeta:
     cross-fetch:
       optional: true
-  checksum: ed20ade5a4ed3f40ad5324c2980850a7de175fd110cbba46324c3e57c9da7b0c1d777e0c1b6cbe0c82fb48104437ca3cc12c6ba8037af36af8fa7ef9424c9520
+  checksum: e4d8f45aaa3e124a3131606b0468121d747c1a4484b6f403d14bc567819761b0a8d4f6a99c22659fb37fc6fbec11c428e55fbdb7703c39af943221bec07dbc57
   languageName: node
   linkType: hard
 
-"@madatdata/core@npm:0.0.10":
-  version: 0.0.10
-  resolution: "@madatdata/core@npm:0.0.10"
+"@madatdata/core@npm:0.0.11":
+  version: 0.0.11
+  resolution: "@madatdata/core@npm:0.0.11"
   dependencies:
-    "@madatdata/base-client": 0.0.10
-    "@madatdata/base-db": 0.0.10
-    "@madatdata/client-http": 0.0.10
-    "@madatdata/db-seafowl": 0.0.10
-    "@madatdata/db-splitgraph": 0.0.10
-  checksum: 7c9dd8dad6341c766abc58440b01c62f00b3e30e4a5dfaea0fc1f22f0041775b48d8f57d45033c2d4b2f5d5f5ad0101b5cf74ca332c101fd3dc8dab85494d56f
+    "@madatdata/base-client": 0.0.11
+    "@madatdata/base-db": 0.0.11
+    "@madatdata/client-http": 0.0.11
+    "@madatdata/db-seafowl": 0.0.11
+    "@madatdata/db-splitgraph": 0.0.11
+  checksum: 6947554c913dba3b387f5c0b7810cd1e199ac86294aba72330414d67802f3a41d9011893010db5942b744055eb93485c3c486dc2f1b6eaf0acea4093e5285e12
   languageName: node
   linkType: hard
 
-"@madatdata/db-seafowl@npm:0.0.10":
-  version: 0.0.10
-  resolution: "@madatdata/db-seafowl@npm:0.0.10"
+"@madatdata/db-seafowl@npm:0.0.11":
+  version: 0.0.11
+  resolution: "@madatdata/db-seafowl@npm:0.0.11"
   dependencies:
-    "@madatdata/base-client": 0.0.10
-    "@madatdata/base-db": 0.0.10
-    "@madatdata/client-http": 0.0.10
-  checksum: a372759c7ecaf098eea1422a0c4402b8879b2ecb512c8aae44a463782d5857f9dcdbc6aa5814da71a26cb61c7afaefc4d41d4fbfcc87c2183b108456b9adc70b
+    "@madatdata/base-client": 0.0.11
+    "@madatdata/base-db": 0.0.11
+    "@madatdata/client-http": 0.0.11
+  checksum: 80412c93930c09b649cc5f49e128c3276f8259e5cdde62d167ec70151df951f7abce3eab0a7860378b83950b8a93efa613982812b9d25eebdd94a45628560b50
   languageName: node
   linkType: hard
 
-"@madatdata/db-splitgraph@npm:0.0.10":
-  version: 0.0.10
-  resolution: "@madatdata/db-splitgraph@npm:0.0.10"
+"@madatdata/db-splitgraph@npm:0.0.11":
+  version: 0.0.11
+  resolution: "@madatdata/db-splitgraph@npm:0.0.11"
   dependencies:
-    "@madatdata/base-client": 0.0.10
-    "@madatdata/base-db": 0.0.10
-    "@madatdata/client-http": 0.0.10
+    "@madatdata/base-client": 0.0.11
+    "@madatdata/base-db": 0.0.11
+    "@madatdata/client-http": 0.0.11
     graphql: 16.5.0
     graphql-request: 5.1.0
     typescript-retry-decorator: 2.0.5
-  checksum: 7ad3db8de832f186fd709f7703ac4bc678dbb60820d6bd55d35347887a055d689b10fb5f48d59e42b41b2f1a01f60b80e23f94e4d0daabbd0222516ef7749a64
+  checksum: 2252270c32158d53f37dbe6734c15dbc9ff6e891a36309b4ad9be38f69066006de35e593267cb7cb198419972d7204e53636abc5ecb4edb3d45e15a28281829b
   languageName: node
   linkType: hard
 
 "@madatdata/react@npm:latest":
-  version: 0.0.10
-  resolution: "@madatdata/react@npm:0.0.10"
+  version: 0.0.11
+  resolution: "@madatdata/react@npm:0.0.11"
   dependencies:
-    "@madatdata/core": 0.0.10
+    "@madatdata/core": 0.0.11
   peerDependencies:
     react: ">=17 || >=18"
     react-dom: ">=17 || >=18"
-  checksum: 6d1c1fb65db474823ddff0b25f991c24ecdc1f88f3912fb3c216a0634e13c2620ae512282b17ab869321bba8d704f1b46ca17e34b0d4a2d0ffe4913cc0ac3256
+  checksum: 9cc515d3303e2d89c132dbc7a3b5206b01b0a6027a6ae1f805ddcee18f2dbfe914f039b6c320b4eb8cf5e9bdef972703ff4834d230eb71f99fe223a02840bbce
   languageName: node
   linkType: hard
 
