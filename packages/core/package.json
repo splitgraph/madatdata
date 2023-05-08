@@ -1,6 +1,6 @@
 {
   "name": "@madatdata/core",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "packageManager": "yarn@3.2.0",
   "main": "index.ts",
   "types": "./build/es2020/index.d.ts",
