@@ -10,20 +10,35 @@ export { defaultDatabase as defaultSplitgraphDatabase };
 export { defaultHost as defaultSplitgraphHost };
 
 export type SplitgraphDataContext = ReturnType<
-  typeof makeSplitgraphHTTPContext
+  typeof makeSplitgraphHTTPContextWithOpts
 >;
 
-export const makeSplitgraphHTTPContext = (
-  opts?: {
-    client?: Parameters<typeof makeClient>[0];
-    db?: Parameters<typeof makeDb>[0];
-  } & Partial<
-    Omit<
-      Parameters<typeof makeClient>[0] & Parameters<typeof makeDb>[0],
-      "client" | "db"
-    >
+export type SplitgraphDataContextOpts = {
+  client?: Parameters<typeof makeClient>[0];
+  db?: Parameters<typeof makeDb>[0];
+} & Partial<
+  Omit<
+    Parameters<typeof makeClient>[0] & Parameters<typeof makeDb>[0],
+    "client" | "db"
   >
-) => {
+>;
+
+/**
+ * Call with no options to create a data context that is anonymous and targeting
+ * the public Splitgraph DDN at data.splitgraph.com.
+ *
+ *
+ * @param opts Optional options argument. If none are defined, default to anonymous public DDN
+ */
+export const makeSplitgraphHTTPContext = (opts?: SplitgraphDataContextOpts) => {
+  if (typeof opts === "undefined") {
+    return makeSplitgraphHTTPContextWithOpts({ credential: null });
+  }
+
+  return makeSplitgraphHTTPContextWithOpts(opts);
+};
+
+const makeSplitgraphHTTPContextWithOpts = (opts: SplitgraphDataContextOpts) => {
   const dbOpts = {
     authenticatedCredential:
       opts?.db?.authenticatedCredential ??

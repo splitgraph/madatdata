@@ -81,7 +81,18 @@ const guessMethodForQuery = (query: string) => {
   if (writeStatements.some((write) => normalizedQuery.startsWith(write))) {
     return "POST";
   }
-  if (!query.includes("SELECT")) {
+
+  // NOTE: This might include non-write CTE statements, but that failure case is just not caching them
+  // which is better than sending a write CTE statement as a GET (which would fail)
+  if (
+    normalizedQuery.startsWith("WITH") &&
+    normalizedQuery.includes("CREATE")
+  ) {
+    console.warn("Query starts with WITH and includes CREATE, assume write:");
+    return "POST";
+  }
+
+  if (!normalizedQuery.includes("SELECT")) {
     console.warn("No SELECT in query, but assuming GET:", query);
   }
 

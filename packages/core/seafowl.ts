@@ -10,25 +10,73 @@ export { makeDb as makeSeafowlDb };
 export { defaultDatabase as defaultSeafowlDatabase };
 export { defaultHost as defaultSeafowlHost };
 
-export type SeafowlDataContext = ReturnType<typeof makeSeafowlHTTPContext>;
+export type SeafowlDataContext = ReturnType<
+  typeof makeSeafowlHTTPContextWithOpts
+>;
 
-export const makeSeafowlHTTPContext = (
-  opts?: {
-    client?: Parameters<typeof makeClient>[0];
-    db?: Parameters<typeof makeDb>[0];
-  } & Omit<
-    Partial<
-      Omit<
-        Parameters<typeof makeClient>[0] & Parameters<typeof makeDb>[0],
-        "client" | "db"
-      >
-    >,
-    "strategies"
-  > &
-    Partial<{
-      strategies: Parameters<typeof makeClient>[0]["strategies"];
-    }>
-) => {
+type SeafowlDbOpts = {
+  dbname: string;
+};
+
+/**
+ * Either provide a string and dbOpts, or a SeafowlDataContextOpts object.
+ *
+ * If the first argument is a string, then it's assumed to be the instance
+ * URL, which is the full URL up to but not including the /q, for example
+ * it would be `https://demo.seafowl.cloud`. Also, in this case, the second
+ * argument is optionally a dbOpts object which can contain a dbname if it's
+ * not default.
+ *
+ * NOTE: This function signature is a hack before we simplify the config API
+ */
+export function makeSeafowlHTTPContext(
+  optsOrInstanceURL: string | SeafowlDataContextOpts,
+  dbOpts?: SeafowlDbOpts
+): SeafowlDataContext {
+  if (typeof optsOrInstanceURL !== "string") {
+    return makeSeafowlHTTPContextWithOpts(optsOrInstanceURL);
+  }
+
+  const instanceURL = optsOrInstanceURL;
+  return makeSeafowlHTTPContextWithOpts({
+    database: {
+      dbname: dbOpts?.dbname ?? "default",
+    },
+    host: {
+      dataHost: new URL(instanceURL).host,
+      apexDomain: "bogus",
+      apiHost: "bogus",
+      baseUrls: {
+        gql: "bogus",
+        sql: instanceURL,
+        auth: "bogus",
+      },
+      postgres: {
+        host: "127.0.0.1",
+        port: 6432,
+        ssl: false,
+      },
+    },
+  });
+}
+
+export type SeafowlDataContextOpts = {
+  client?: Parameters<typeof makeClient>[0];
+  db?: Parameters<typeof makeDb>[0];
+} & Omit<
+  Partial<
+    Omit<
+      Parameters<typeof makeClient>[0] & Parameters<typeof makeDb>[0],
+      "client" | "db"
+    >
+  >,
+  "strategies"
+> &
+  Partial<{
+    strategies: Parameters<typeof makeClient>[0]["strategies"];
+  }>;
+
+const makeSeafowlHTTPContextWithOpts = (opts: SeafowlDataContextOpts) => {
   const dbOpts = {
     authenticatedCredential:
       opts?.db?.authenticatedCredential ??

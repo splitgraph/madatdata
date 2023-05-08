@@ -30,6 +30,43 @@ const expectToken = SEAFOWL_SECRET ?? "anonymous-token";
 // keeping track of what the actual response looks like so we can mock it accurately.
 // const shouldSkipSeafowl = true;
 
+describe("interface", () => {
+  it("can be created with instance URL string", () => {
+    const simpleContext = makeSeafowlHTTPContext("https://demo.seafowl.cloud");
+
+    expect(
+      // @ts-expect-error Abuse private property "host" to skip serializing a giant snapshot
+      simpleContext.client.host.baseUrls.sql
+    ).toEqual("https://demo.seafowl.cloud");
+
+    expect(
+      // @ts-expect-error Abuse private property "host" to skip serializing a giant snapshot
+      simpleContext.client.host.dataHost
+    ).toEqual("demo.seafowl.cloud");
+  });
+
+  it("can be created with instance URL string, and simplified opts (dbname)", () => {
+    const simpleContext = makeSeafowlHTTPContext("https://demo.seafowl.cloud", {
+      dbname: "alternative",
+    });
+
+    expect(
+      // @ts-expect-error Abuse private property "database" to skip serializing a giant snapshot
+      simpleContext.client.database.dbname
+    ).toEqual("alternative");
+
+    expect(
+      // @ts-expect-error Abuse private property "host" to skip serializing a giant snapshot
+      simpleContext.client.host.baseUrls.sql
+    ).toEqual("https://demo.seafowl.cloud");
+
+    expect(
+      // @ts-expect-error Abuse private property "host" to skip serializing a giant snapshot
+      simpleContext.client.host.dataHost
+    ).toEqual("demo.seafowl.cloud");
+  });
+});
+
 describe("abort signal", () => {
   it("can take it as an option to execute", async () => {
     const ctx = createDataContext({
