@@ -208,7 +208,8 @@ describe("makeDefaultAnonymousContext", () => {
               },
             },
             "plugins": [
-              _SplitgraphImportCSVPlugin {
+              SplitgraphImportCSVPlugin {
+                "DerivedClass": [Function],
                 "__name": "csv",
                 "graphqlClient": SplitgraphGraphQLClient {
                   "graphqlClient": GraphQLClient {
@@ -251,7 +252,8 @@ describe("makeDefaultAnonymousContext", () => {
           "plugins": PluginRegistry {
             "hostContext": {},
             "plugins": [
-              _SplitgraphImportCSVPlugin {
+              SplitgraphImportCSVPlugin {
+                "DerivedClass": [Function],
                 "__name": "csv",
                 "graphqlClient": SplitgraphGraphQLClient {
                   "graphqlClient": GraphQLClient {

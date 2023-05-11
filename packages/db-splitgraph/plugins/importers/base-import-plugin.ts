@@ -6,16 +6,12 @@ import { Retryable, BackOffPolicy } from "typescript-retry-decorator";
 
 import { SplitgraphGraphQLClient } from "../../gql-client/splitgraph-graphql-client";
 
-import type { Csv as CsvTableParamsSchema } from "./generated/csv/TableParamsSchema";
-import type { Csv as CsvParamsSchema } from "./generated/csv/ParamsSchema";
-import type { Csv as CsvCredentialsSchema } from "./generated/csv/CredentialsSchema";
-
 import type {
   RepositoryIngestionJobStatusQuery,
   RepositoryIngestionJobStatusQueryVariables,
   StartExternalRepositoryLoadMutation,
   StartExternalRepositoryLoadMutationVariables,
-} from "./splitgraph-import-csv-plugin.generated";
+} from "./base-import-plugin.generated";
 
 export type SplitgraphDestOptions = {
   namespace: string;
@@ -23,47 +19,27 @@ export type SplitgraphDestOptions = {
   tableName: string;
 };
 
-interface ImportCSVDestOptions extends SplitgraphDestOptions {
-  params?: CsvParamsSchema;
+export interface ImportDestOptions<
+  TableParamsSchema extends object,
+  CredentialsSchema extends object
+> extends SplitgraphDestOptions {
+  // TODO: note this is duplicated (idk why lol... think it's as a hack while supporting only 1 table)
+  params?: TableParamsSchema;
   tableName: SplitgraphDestOptions["tableName"];
+
   // TODO: support > 1 table
-  tableParams?: CsvTableParamsSchema;
-  credentials?: CsvCredentialsSchema;
+  tableParams?: TableParamsSchema;
+  credentials?: CredentialsSchema;
   /* default private */
   initialPermissions?: StartExternalRepositoryLoadMutationVariables["initialPermissions"];
 }
 
-interface ImportCSVPluginOptions {
+interface SplitgraphImportPluginOptions {
   graphqlEndpoint: string;
   transformRequestHeaders?: (requestHeaders: HeadersInit) => HeadersInit;
 }
 
-interface ImportCSVBaseOptions {
-  // _type: "import-csv-base";
-  // importType: "csv";
-}
-
-interface ImportCSVFromURLOptions extends ImportCSVBaseOptions {
-  data?: never;
-  url: string;
-
-  presignedUploadURL?: never;
-  presignedDownloadURL?: never;
-}
-
-interface ImportCSVFromDataOptions extends ImportCSVBaseOptions {
-  data: BodyInit;
-  url?: never;
-
-  presignedUploadURL?: string;
-  presignedDownloadURL?: string;
-}
-
-type ImportCSVSourceOptions =
-  | ImportCSVFromURLOptions
-  | ImportCSVFromDataOptions;
-
-type DbInjectedOptions = Partial<ImportCSVPluginOptions>;
+type DbInjectedOptions = Partial<SplitgraphImportPluginOptions>;
 
 // 1 hour
 const MAX_POLL_TIMEOUT = 1_000 * 60 * 60;
@@ -79,18 +55,46 @@ const retryOptions = {
   exponentialOption: { maxInterval: MAX_BACKOFF_INTERVAL, multiplier: 2 },
 };
 
-export class SplitgraphImportPlugin
-  implements ImportPlugin, WithOptionsInterface<SplitgraphImportPlugin>
+export abstract class SplitgraphImportPlugin<
+  /** The "table params" schema for the plugin, i.e. provided by auto-generated type */
+  PluginTableParamsSchema extends object,
+  /** The "credentials" schema for the plugin, i.e. provided by auto-generated type */
+  PluginCredentialsSchema extends object,
+  /** Concrete type of the derived class, for annotating return value of builder methods like withOptions */
+  DerivedSplitgraphImportPlugin extends SplitgraphImportPlugin<
+    PluginTableParamsSchema,
+    PluginCredentialsSchema,
+    DerivedSplitgraphImportPlugin,
+    ConcreteImportDestOptions,
+    ConcreteImportSourceOptions
+  >,
+  ConcreteImportDestOptions extends ImportDestOptions<
+    PluginTableParamsSchema,
+    PluginCredentialsSchema
+  > = ImportDestOptions<PluginTableParamsSchema, PluginCredentialsSchema>,
+  ConcreteImportSourceOptions extends object = Record<string, never>
+> implements ImportPlugin, WithOptionsInterface<DerivedSplitgraphImportPlugin>
 {
-  public readonly __name = "csv";
-  public static readonly __name = "csv";
+  public abstract readonly __name: string;
 
-  public readonly opts: ImportCSVPluginOptions;
-  public readonly graphqlEndpoint: ImportCSVPluginOptions["graphqlEndpoint"];
+  // NOTE: Bit of a hack. Derived class should store reference to itself here, so
+  // that the parent class can define a builder method (like withOptions) that
+  // returns a new instance of the derived class.
+  public abstract readonly DerivedClass: new (
+    ...args: ConstructorParameters<typeof SplitgraphImportPlugin>
+  ) => DerivedSplitgraphImportPlugin;
+
+  // TODO: make sense? will be overridden?
+  public static readonly __name: string;
+
+  // TODO: deleted because static property doesn't make sense on abstract class? cannot have static property
+  // public static readonly __name = "csv";
+  public readonly opts: SplitgraphImportPluginOptions;
+  public readonly graphqlEndpoint: SplitgraphImportPluginOptions["graphqlEndpoint"];
   public readonly graphqlClient: SplitgraphGraphQLClient;
-  public readonly transformRequestHeaders: Required<ImportCSVPluginOptions>["transformRequestHeaders"];
+  public readonly transformRequestHeaders: Required<SplitgraphImportPluginOptions>["transformRequestHeaders"];
 
-  constructor(opts: ImportCSVPluginOptions) {
+  constructor(opts: SplitgraphImportPluginOptions) {
     this.opts = opts;
 
     this.graphqlEndpoint = opts.graphqlEndpoint;
@@ -102,12 +106,18 @@ export class SplitgraphImportPlugin
     });
   }
 
-  // TODO: improve it (e.g. allow either mutation or copy), and/or generalize it
-  withOptions(injectOpts: DbInjectedOptions) {
-    return new SplitgraphImportPlugin({
+  /**
+   * Return a new instance of the derived class with the given options merged
+   * with any existng objects in the current instance.
+   *
+   * NOTE: Requires DerivedClass to be set (kind of a hack)
+   */
+  withOptions(injectOpts: DbInjectedOptions): DerivedSplitgraphImportPlugin {
+    // This implements the "builder pattern" in a way that the abstract class
+    // can define the method, by using the stored reference of this.DerivedClass
+    return new this.DerivedClass({
       ...this.opts,
       ...injectOpts,
-      // TODO: replace transformer with some kind of chainable "link" plugin
       transformRequestHeaders: (reqHeaders) => {
         const withOriginal = {
           ...reqHeaders,
@@ -127,10 +137,26 @@ export class SplitgraphImportPlugin
     });
   }
 
+  /**
+   * Return the params and tables variable for the load
+   */
+  protected abstract makeLoadMutationVariables(
+    sourceOptions: ConcreteImportSourceOptions,
+    destOptions: ConcreteImportDestOptions
+  ): Pick<
+    StartExternalRepositoryLoadMutationVariables,
+    "params" | "tables" | "pluginName"
+  >;
+
   private async startLoad(
-    sourceOptions: ImportCSVFromURLOptions,
-    destOptions: ImportCSVDestOptions
+    sourceOptions: ConcreteImportSourceOptions,
+    destOptions: ConcreteImportDestOptions
   ) {
+    const { params, tables, pluginName } = this.makeLoadMutationVariables(
+      sourceOptions,
+      destOptions
+    );
+
     return this.graphqlClient.send<
       StartExternalRepositoryLoadMutation,
       StartExternalRepositoryLoadMutationVariables
@@ -167,23 +193,9 @@ export class SplitgraphImportPlugin
         sync: undefined,
         namespace: destOptions.namespace,
         repository: destOptions.repository,
-        params: JSON.stringify({
-          url: sourceOptions.url,
-          connection_type: "http",
-          ...destOptions.params,
-        }),
-        tables: [
-          {
-            name: destOptions.tableName,
-            options: JSON.stringify({
-              url: sourceOptions.url,
-              ...destOptions.tableParams,
-            }),
-            // TODO: allow user to specify schema in destOptions
-            schema: [],
-          },
-        ],
-        pluginName: "csv",
+        params,
+        tables,
+        pluginName,
       }
     );
   }
@@ -193,7 +205,7 @@ export class SplitgraphImportPlugin
     {
       namespace,
       repository,
-    }: Pick<ImportCSVDestOptions, "namespace" | "repository">
+    }: Pick<ConcreteImportDestOptions, "namespace" | "repository">
   ) {
     const { response, error, info } = await this.graphqlClient.send<
       {
@@ -247,7 +259,7 @@ export class SplitgraphImportPlugin
     {
       namespace,
       repository,
-    }: Pick<ImportCSVDestOptions, "namespace" | "repository">
+    }: Pick<ConcreteImportDestOptions, "namespace" | "repository">
   ) {
     const { response, error, info } = await this.graphqlClient.send<
       RepositoryIngestionJobStatusQuery,
@@ -311,7 +323,7 @@ export class SplitgraphImportPlugin
     {
       namespace,
       repository,
-    }: Pick<ImportCSVDestOptions, "namespace" | "repository">
+    }: Pick<ConcreteImportDestOptions, "namespace" | "repository">
   ) {
     const {
       response: jobStatusResponse,
@@ -364,33 +376,37 @@ export class SplitgraphImportPlugin
 
   /**
    * Derived classes should implement this method to perform any pre-import steps,
-   * such as uploading a CSV file to object storage.
+   * such as uploading a CSV file to object storage. It should return sourceOptions
+   * and destOptions if they are mutated in the process.
    */
   async beforeImport(
-    _sourceOptions: ImportCSVSourceOptions,
-    _destOptions: ImportCSVDestOptions
-  ) {
+    sourceOptions: ConcreteImportSourceOptions,
+    destOptions: ConcreteImportDestOptions
+  ): Promise<{
+    response: null | Response;
+    error: unknown;
+    info: object;
+    sourceOptions: ConcreteImportSourceOptions;
+    destOptions: ConcreteImportDestOptions;
+  }> {
     return Promise.resolve({
+      sourceOptions,
+      destOptions,
+      info: {},
       response: null,
       error: null,
-      info: {},
     });
   }
 
   async importData(
-    sourceOptions: ImportCSVSourceOptions,
-    destOptions: ImportCSVDestOptions
+    rawSourceOptions: ConcreteImportSourceOptions,
+    rawDestOptions: ConcreteImportDestOptions
   ) {
-    // TODO: cleanup this hack with "import ctx" which is only here because
-    // tests want to make assertions on headers of intermediate requests
-    const importCtx: Pick<
-      Unpromise<ReturnType<typeof this.beforeImport>>,
-      "info"
-    > = {
-      info: {},
-    };
-
-    sourceOptions = sourceOptions as ImportCSVFromURLOptions;
+    const {
+      sourceOptions = rawSourceOptions,
+      destOptions = rawDestOptions,
+      ...importCtx
+    } = await this.beforeImport(rawSourceOptions, rawDestOptions);
 
     const {
       response: loadResponse,
@@ -443,10 +459,6 @@ export class SplitgraphImportPlugin
 }
 
 const IdentityFunc = <T>(x: T) => x;
-
-// TODO: Consider adding `type-fest`: https://github.com/sindresorhus/type-fest
-// which has AsyncReturnValue<T> to replace Unpromise<ReturnType<T>>
-type Unpromise<T extends Promise<any>> = T extends Promise<infer U> ? U : never;
 
 enum TaskStatus {
   // Standard Celery statuses

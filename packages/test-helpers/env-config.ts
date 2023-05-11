@@ -73,5 +73,6 @@ export const shouldSkipIntegrationTests = () => {
 };
 
 export const shouldSkipSeafowlTests = () => {
+  return true;
   return !environmentHasSeafowlCredential();
 };

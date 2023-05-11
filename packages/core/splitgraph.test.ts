@@ -291,7 +291,8 @@ describe("makeSplitgraphHTTPContext", () => {
               },
             },
             "plugins": [
-              _SplitgraphImportCSVPlugin {
+              SplitgraphImportCSVPlugin {
+                "DerivedClass": [Function],
                 "__name": "csv",
                 "graphqlClient": SplitgraphGraphQLClient {
                   "graphqlClient": GraphQLClient {
@@ -334,7 +335,8 @@ describe("makeSplitgraphHTTPContext", () => {
           "plugins": PluginRegistry {
             "hostContext": {},
             "plugins": [
-              _SplitgraphImportCSVPlugin {
+              SplitgraphImportCSVPlugin {
+                "DerivedClass": [Function],
                 "__name": "csv",
                 "graphqlClient": SplitgraphGraphQLClient {
                   "graphqlClient": GraphQLClient {
