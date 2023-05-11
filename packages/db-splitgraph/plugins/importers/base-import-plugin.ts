@@ -77,13 +77,6 @@ export abstract class SplitgraphImportPlugin<
 {
   public abstract readonly __name: string;
 
-  // NOTE: Bit of a hack. Derived class should store reference to itself here, so
-  // that the parent class can define a builder method (like withOptions) that
-  // returns a new instance of the derived class.
-  public abstract readonly DerivedClass: new (
-    ...args: ConstructorParameters<typeof SplitgraphImportPlugin>
-  ) => DerivedSplitgraphImportPlugin;
-
   // TODO: make sense? will be overridden?
   public static readonly __name: string;
 
@@ -107,15 +100,13 @@ export abstract class SplitgraphImportPlugin<
   }
 
   /**
-   * Return a new instance of the derived class with the given options merged
-   * with any existng objects in the current instance.
-   *
-   * NOTE: Requires DerivedClass to be set (kind of a hack)
+   * Builder method to return a new instance of the derived class with the given
+   * options merged with any existng options in the current instance. The returned
+   * object will be an instance of the derived class (DerivedSplitgraphImportPlugin),
+   * as returned by `Object.getPrototypeOf(this).constructor()`
    */
   withOptions(injectOpts: DbInjectedOptions): DerivedSplitgraphImportPlugin {
-    // This implements the "builder pattern" in a way that the abstract class
-    // can define the method, by using the stored reference of this.DerivedClass
-    return new this.DerivedClass({
+    const mergedInjectOpts: SplitgraphImportPluginOptions = {
       ...this.opts,
       ...injectOpts,
       transformRequestHeaders: (reqHeaders) => {
@@ -134,7 +125,9 @@ export abstract class SplitgraphImportPlugin<
           ...withNext,
         };
       },
-    });
+    };
+
+    return new (Object.getPrototypeOf(this).constructor)(mergedInjectOpts);
   }
 
   /**

@@ -50,7 +50,6 @@ export class SplitgraphImportCSVPlugin
 {
   public readonly __name = "csv";
   public static readonly __name = "csv";
-  public readonly DerivedClass = SplitgraphImportCSVPlugin;
 
   private async fetchPresignedURL() {
     const { response, error, info } = await this.graphqlClient.send<{
