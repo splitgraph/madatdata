@@ -188,7 +188,7 @@ export class SplitgraphImportCSVPlugin
     };
   }
 
-  async beforeImport(
+  protected async beforeImport(
     sourceOptions: ImportCSVSourceOptions,
     destOptions: ImportCSVDestOptions
   ) {

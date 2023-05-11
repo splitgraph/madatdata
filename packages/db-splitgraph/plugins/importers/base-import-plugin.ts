@@ -372,7 +372,7 @@ export abstract class SplitgraphImportPlugin<
    * such as uploading a CSV file to object storage. It should return sourceOptions
    * and destOptions if they are mutated in the process.
    */
-  async beforeImport(
+  protected async beforeImport(
     sourceOptions: ConcreteImportSourceOptions,
     destOptions: ConcreteImportDestOptions
   ): Promise<{
@@ -391,7 +391,7 @@ export abstract class SplitgraphImportPlugin<
     });
   }
 
-  async importData(
+  public async importData(
     rawSourceOptions: ConcreteImportSourceOptions,
     rawDestOptions: ConcreteImportDestOptions
   ) {
