@@ -3,8 +3,8 @@ import type { ImportDestOptions } from "./base-import-plugin";
 
 import { gql } from "graphql-request";
 
-import type { Csv as CsvTableParamsSchema } from "./generated/csv/TableParamsSchema";
-import type { Csv as CsvCredentialsSchema } from "./generated/csv/CredentialsSchema";
+import type { CsvTableParamsSchema } from "./generated/csv/TableParamsSchema";
+import type { CsvCredentialsSchema } from "./generated/csv/CredentialsSchema";
 
 import { SplitgraphImportPlugin } from "./base-import-plugin";
 

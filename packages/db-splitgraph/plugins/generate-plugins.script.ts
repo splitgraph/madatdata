@@ -1,4 +1,5 @@
 import { compile } from "json-schema-to-typescript";
+import { generateName } from "json-schema-to-typescript/dist/src/utils";
 import path from "path";
 import { writeFile, mkdir } from "fs/promises";
 import { request, gql } from "graphql-request";
@@ -12,6 +13,11 @@ const targetDir = path.join(thisSourceFileDir, "importers", "generated");
 
 const generateTypes = async () => {
   const allPlugins = await fetchSchemas();
+
+  // Store list of used interface names to ensure global uniqueness so that we
+  // can export * from generated files. However, note this may not work because
+  // the intermediate types are also exported, and those will have collisions
+  const usedInterfaceNames = new Set<string>();
 
   for (let plugin of allPlugins.externalPlugins) {
     log("generateTypes:", plugin.pluginName);
@@ -29,11 +35,19 @@ const generateTypes = async () => {
     for (let [schema, schemaName] of schemas) {
       let schemaOutFile = path.join(pluginTargetDir, `${schemaName}.ts`);
 
-      let generatedTypescript = await compile(
-        // @ts-ignore-error Some jsonschema issues, apparently with array items
-        schema,
-        plugin.pluginName
+      // Generate a name that's safe for interface type name and hasn't been used yet
+      // We don't expect collisions, since pluginName is unique, but just in case
+      let interfaceName = generateName(
+        plugin.pluginName + schemaName,
+        usedInterfaceNames
       );
+      usedInterfaceNames.add(interfaceName);
+
+      log("interfaceName:", interfaceName);
+
+      let generatedTypescript = await compile(schema, interfaceName, {
+        strictIndexSignatures: true,
+      });
 
       log("write schema:", fdir(schemaOutFile));
       await writeFile(schemaOutFile, generatedTypescript);
