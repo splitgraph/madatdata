@@ -68,6 +68,24 @@ where a separate process like `mitmproxy` can intercept outbound requests:
 yarn test-mitm --mode integration
 ```
 
+### Run tests in VSCode "JavaScript Debug Terminal"
+
+If using VSCode, the easiest debugging method is to open a "JavaScript Debug
+Terminal" (which you can do via the command palette
+"`Debug: JavaScript Debug Terminal`"). Put a `debugger;` statement where you
+want to break, and then run vitest in single-threaded mode:
+
+```bash
+yarn test --single-thread
+```
+
+Or, if you also want to use mitmproxy (assumed to be listening on port `7979`),
+then:
+
+```bash
+yarn test-mitm --single-thread
+```
+
 ### Typecheck
 
 We use `tsc` for typechecking, with the default solution file `tsconfig.json`
