@@ -3,6 +3,7 @@ import type { ImportDestOptions } from "./base-import-plugin";
 
 import { gql } from "graphql-request";
 
+import type { CsvParamsSchema } from "./generated/csv/ParamsSchema";
 import type { CsvTableParamsSchema } from "./generated/csv/TableParamsSchema";
 import type { CsvCredentialsSchema } from "./generated/csv/CredentialsSchema";
 
@@ -40,13 +41,17 @@ type ImportCSVSourceOptions =
 
 export class SplitgraphImportCSVPlugin
   extends SplitgraphImportPlugin<
+    "csv",
+    CsvParamsSchema,
     CsvTableParamsSchema,
     CsvCredentialsSchema,
     SplitgraphImportCSVPlugin,
     ImportCSVDestOptions,
     ImportCSVSourceOptions
   >
-  implements ImportPlugin, WithOptionsInterface<SplitgraphImportCSVPlugin>
+  implements
+    ImportPlugin<"csv">,
+    WithOptionsInterface<SplitgraphImportCSVPlugin>
 {
   public readonly __name = "csv";
   public static readonly __name = "csv";

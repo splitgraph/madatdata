@@ -21,10 +21,15 @@ import {
 
 import type { HTTPStrategies } from "@madatdata/client-http";
 
-export interface ImportPlugin extends Plugin {
+export interface ImportPlugin<
+  PluginName extends string,
+  ConcreteSourceOptions extends object = any,
+  ConcreteDestOptions extends object = any
+> extends Plugin {
+  __name: PluginName;
   importData: (
-    sourceOptions: any,
-    destOptions: any
+    sourceOptions: ConcreteSourceOptions,
+    destOptions: ConcreteDestOptions
   ) => Promise<{ response: any | null; error: any | null; info?: any | null }>;
 }
 
@@ -74,9 +79,9 @@ export type ImportPluginFromList<
   ConcretePluginList extends PluginList,
   PluginName extends ExtractPlugin<
     ConcretePluginList,
-    ImportPlugin
+    ImportPlugin<string>
   >["__name"] = string
-> = ExtractPlugin<ConcretePluginList, ImportPlugin & { __name: PluginName }>;
+> = ExtractPlugin<ConcretePluginList, ImportPlugin<PluginName>>;
 
 export type ExportPluginFromList<
   ConcretePluginList extends PluginList,

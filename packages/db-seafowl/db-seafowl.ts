@@ -33,8 +33,8 @@ import {
 import type { HTTPStrategies, HTTPClientOptions } from "@madatdata/client-http";
 
 export type DefaultSeafowlPluginList<
-  ConcretePluginList extends (ImportPlugin | ExportPlugin)[] = (
-    | ImportPlugin
+  ConcretePluginList extends (ImportPlugin<string> | ExportPlugin)[] = (
+    | ImportPlugin<string>
     | ExportPlugin
   )[]
 > = ConcretePluginList[number][];
@@ -281,10 +281,15 @@ export class DbSeafowl<SeafowlPluginList extends PluginList>
     };
   }
 
-  async importData(
-    pluginName: ExtractPlugin<SeafowlPluginList, ImportPlugin>["__name"],
+  async importData<
+    PluginName extends ExtractPlugin<
+      SeafowlPluginList,
+      ImportPlugin<string>
+    >["__name"]
+  >(
+    pluginName: PluginName,
     ...rest: Parameters<
-      ExtractPlugin<SeafowlPluginList, ImportPlugin>["importData"]
+      ExtractPlugin<SeafowlPluginList, ImportPlugin<PluginName>>["importData"]
     >
   ) {
     const [sourceOpts, destOpts] = rest;
@@ -295,10 +300,11 @@ export class DbSeafowl<SeafowlPluginList extends PluginList>
           plugin
         ): plugin is ExtractPlugin<
           SeafowlPluginList,
-          ImportPlugin & { __name: typeof pluginName } & Partial<
-              WithOptionsInterface<ImportPlugin>
-            >
-        > => "importData" in Object.getPrototypeOf(plugin)
+          ImportPlugin<PluginName> &
+            Partial<WithOptionsInterface<ImportPlugin<PluginName>>>
+        > =>
+          "importData" in Object.getPrototypeOf(plugin) &&
+          plugin.__name === pluginName
       )
       .pop();
 

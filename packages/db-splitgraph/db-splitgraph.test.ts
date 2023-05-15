@@ -13,6 +13,7 @@ import { compose, graphql, rest, type DefaultBodyType } from "msw";
 import { defaultHost } from "@madatdata/base-client";
 
 import { faker } from "@faker-js/faker";
+import { AirbyteGithubImportPlugin } from "./plugins/importers/airbyte-github-plugin";
 
 describe("importData", () => {
   it("returns false for unknown plugin", async () => {
@@ -76,6 +77,10 @@ const createDb = () => {
         graphqlEndpoint: defaultHost.baseUrls.gql,
         transformRequestHeaders,
       }),
+      new AirbyteGithubImportPlugin({
+        graphqlEndpoint: defaultHost.baseUrls.gql,
+        transformRequestHeaders,
+      }),
     ],
   });
 };
@@ -114,6 +119,20 @@ const createRealDb = () => {
     ],
   });
 };
+
+// describe("importData for AirbyeGitHubImportPlugin", () => {
+//   it("can use the plugin", async () => {
+//     const db = createDb();
+
+//     // db.importData("airbyte-github", {params: {repository: "madatdata/test-repo"}})
+
+//     // await db.importData("airbyte-github", { params: }
+
+//     // db.importData("csv", {data})
+
+//     // db.importData("airbyte-github"
+//   });
+// });
 
 // Useful when writing initial tests against real server (where anon is allowed)
 // const _makeAnonymousDb = () => {

@@ -72,6 +72,7 @@ export const makeDefaultPluginList = (
 
   return [
     new SplitgraphImportCSVPlugin({ ...graphqlOptions }),
+    // new AirbyteGithubImportPlugin({ ...graphqlOptions }),
     new ExportQueryPlugin({ ...graphqlOptions }),
   ];
 };
@@ -326,10 +327,18 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
       .exportData(sourceOpts, destOpts);
   }
 
-  async importData(
-    pluginName: ExtractPlugin<SplitgraphPluginList, ImportPlugin>["__name"],
+  async importData<
+    PluginName extends ExtractPlugin<
+      SplitgraphPluginList,
+      ImportPlugin<string>
+    >["__name"]
+  >(
+    pluginName: PluginName,
     ...rest: Parameters<
-      ExtractPlugin<SplitgraphPluginList, ImportPlugin>["importData"]
+      ExtractPlugin<
+        SplitgraphPluginList,
+        ImportPlugin<PluginName>
+      >["importData"]
     >
   ) {
     // TODO: type error in ...rest
@@ -343,10 +352,12 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
           plugin
         ): plugin is ExtractPlugin<
           SplitgraphPluginList,
-          ImportPlugin & {
+          ImportPlugin<typeof pluginName> & {
             __name: typeof pluginName;
-          } & Partial<WithOptionsInterface<ImportPlugin>>
-        > => "importData" in Object.getPrototypeOf(plugin)
+          } & Partial<WithOptionsInterface<ImportPlugin<typeof pluginName>>>
+        > =>
+          "importData" in Object.getPrototypeOf(plugin) &&
+          plugin.__name === pluginName
       )
       .pop();
 

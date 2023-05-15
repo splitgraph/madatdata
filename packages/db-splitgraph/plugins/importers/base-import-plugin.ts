@@ -34,7 +34,7 @@ export interface ImportDestOptions<
   initialPermissions?: StartExternalRepositoryLoadMutationVariables["initialPermissions"];
 }
 
-interface SplitgraphImportPluginOptions {
+export interface SplitgraphImportPluginOptions {
   graphqlEndpoint: string;
   transformRequestHeaders?: (requestHeaders: HeadersInit) => HeadersInit;
 }
@@ -56,12 +56,17 @@ const retryOptions = {
 };
 
 export abstract class SplitgraphImportPlugin<
+  PluginName extends string,
+  /** The "params" schema for the plugin, i.e. provided by auto-generated type */
+  PluginParamsSchema extends object,
   /** The "table params" schema for the plugin, i.e. provided by auto-generated type */
   PluginTableParamsSchema extends object,
   /** The "credentials" schema for the plugin, i.e. provided by auto-generated type */
   PluginCredentialsSchema extends object,
   /** Concrete type of the derived class, for annotating return value of builder methods like withOptions */
   DerivedSplitgraphImportPlugin extends SplitgraphImportPlugin<
+    PluginName,
+    PluginParamsSchema,
     PluginTableParamsSchema,
     PluginCredentialsSchema,
     DerivedSplitgraphImportPlugin,
@@ -73,12 +78,14 @@ export abstract class SplitgraphImportPlugin<
     PluginCredentialsSchema
   > = ImportDestOptions<PluginTableParamsSchema, PluginCredentialsSchema>,
   ConcreteImportSourceOptions extends object = Record<string, never>
-> implements ImportPlugin, WithOptionsInterface<DerivedSplitgraphImportPlugin>
+> implements
+    ImportPlugin<PluginName>,
+    WithOptionsInterface<DerivedSplitgraphImportPlugin>
 {
-  public abstract readonly __name: string;
+  public abstract readonly __name: PluginName;
 
   // TODO: make sense? will be overridden?
-  public static readonly __name: string;
+  // public static readonly __name: PluginName;
 
   // TODO: deleted because static property doesn't make sense on abstract class? cannot have static property
   // public static readonly __name = "csv";
