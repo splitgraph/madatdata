@@ -16,23 +16,9 @@ import type {
 export type SplitgraphDestOptions = {
   namespace: string;
   repository: string;
-  tableName: string;
-};
-
-export interface ImportDestOptions<
-  TableParamsSchema extends object,
-  CredentialsSchema extends object
-> extends SplitgraphDestOptions {
-  // TODO: note this is duplicated (idk why lol... think it's as a hack while supporting only 1 table)
-  params?: TableParamsSchema;
-  tableName: SplitgraphDestOptions["tableName"];
-
-  // TODO: support > 1 table
-  tableParams?: TableParamsSchema;
-  credentials?: CredentialsSchema;
-  /* default private */
+  /* default is public */
   initialPermissions?: StartExternalRepositoryLoadMutationVariables["initialPermissions"];
-}
+};
 
 export interface SplitgraphImportPluginOptions {
   graphqlEndpoint: string;
@@ -55,6 +41,14 @@ const retryOptions = {
   exponentialOption: { maxInterval: MAX_BACKOFF_INTERVAL, multiplier: 2 },
 };
 
+type ProvidedExternalLoadMutationVariables = Pick<
+  StartExternalRepositoryLoadMutationVariables,
+  "tables"
+> &
+  Partial<
+    Omit<StartExternalRepositoryLoadMutationVariables, "tables" | "pluginName">
+  >;
+
 export abstract class SplitgraphImportPlugin<
   PluginName extends string,
   /** The "params" schema for the plugin, i.e. provided by auto-generated type */
@@ -73,10 +67,7 @@ export abstract class SplitgraphImportPlugin<
     ConcreteImportDestOptions,
     ConcreteImportSourceOptions
   >,
-  ConcreteImportDestOptions extends ImportDestOptions<
-    PluginTableParamsSchema,
-    PluginCredentialsSchema
-  > = ImportDestOptions<PluginTableParamsSchema, PluginCredentialsSchema>,
+  ConcreteImportDestOptions extends SplitgraphDestOptions = SplitgraphDestOptions,
   ConcreteImportSourceOptions extends object = Record<string, never>
 > implements
     ImportPlugin<PluginName>,
@@ -143,16 +134,15 @@ export abstract class SplitgraphImportPlugin<
   protected abstract makeLoadMutationVariables(
     sourceOptions: ConcreteImportSourceOptions,
     destOptions: ConcreteImportDestOptions
-  ): Pick<
-    StartExternalRepositoryLoadMutationVariables,
-    "params" | "tables" | "pluginName"
-  >;
+  ): ProvidedExternalLoadMutationVariables;
+
+  // TODO: preview step should return available table names
 
   private async startLoad(
     sourceOptions: ConcreteImportSourceOptions,
     destOptions: ConcreteImportDestOptions
   ) {
-    const { params, tables, pluginName } = this.makeLoadMutationVariables(
+    const { tables, ...optionalVariables } = this.makeLoadMutationVariables(
       sourceOptions,
       destOptions
     );
@@ -170,6 +160,7 @@ export abstract class SplitgraphImportPlugin<
           $pluginName: String
           $params: JSON
           $credentialId: String
+          $credentialData: JSON
           $sync: Boolean
         ) {
           startExternalRepositoryLoad(
@@ -180,6 +171,7 @@ export abstract class SplitgraphImportPlugin<
             initialPermissions: $initialPermissions
             tables: $tables
             credentialId: $credentialId
+            credentialData: $credentialData
             sync: $sync
           ) {
             taskId
@@ -187,15 +179,19 @@ export abstract class SplitgraphImportPlugin<
         }
       `,
       {
-        initialPermissions: destOptions.initialPermissions,
-        // NOTE: Optional params are required for typescript, ignored when sent
-        credentialId: undefined,
-        sync: undefined,
-        namespace: destOptions.namespace,
-        repository: destOptions.repository,
-        params,
+        // Only required variable, but can be empty list to indicate loading all tables
         tables,
-        pluginName,
+        // Not required or passable, because it must be same as this.__name
+        pluginName: this.__name,
+        // These are required, but we default to destOptions.{namespace,repository}
+        namespace: optionalVariables.namespace ?? destOptions.namespace,
+        repository: optionalVariables.repository ?? destOptions.repository,
+        // Truly optional variables
+        params: optionalVariables.params ?? {},
+        credentialData: optionalVariables.credentialData ?? undefined,
+        initialPermissions: destOptions.initialPermissions ?? undefined,
+        credentialId: optionalVariables.credentialId ?? undefined,
+        sync: optionalVariables.sync ?? undefined,
       }
     );
   }
@@ -373,6 +369,9 @@ export abstract class SplitgraphImportPlugin<
       },
     };
   }
+
+  // TODO: Clean this up to use an intermediate private member inside the derived class
+  // instead of passing some magical object through some magical pipeline
 
   /**
    * Derived classes should implement this method to perform any pre-import steps,

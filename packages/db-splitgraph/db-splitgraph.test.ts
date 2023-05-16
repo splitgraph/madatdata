@@ -5,7 +5,10 @@ import { makeDb } from "./db-splitgraph";
 import { SplitgraphImportCSVPlugin } from "./plugins/importers/splitgraph-import-csv-plugin";
 import { ExportQueryPlugin } from "./plugins/exporters/export-query-plugin";
 
-import { shouldSkipIntegrationTests } from "@madatdata/test-helpers/env-config";
+import {
+  shouldSkipIntegrationTests,
+  shouldSkipIntegrationTestsForGitHubExternalDataSource,
+} from "@madatdata/test-helpers/env-config";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
 import { setupMemo } from "@madatdata/test-helpers/setup-memo";
 import { compose, graphql, rest, type DefaultBodyType } from "msw";
@@ -113,6 +116,10 @@ const createRealDb = () => {
         graphqlEndpoint: defaultHost.baseUrls.gql,
       }),
 
+      new AirbyteGithubImportPlugin({
+        graphqlEndpoint: defaultHost.baseUrls.gql,
+      }),
+
       new ExportQueryPlugin({
         graphqlEndpoint: defaultHost.baseUrls.gql,
       }),
@@ -120,19 +127,58 @@ const createRealDb = () => {
   });
 };
 
-// describe("importData for AirbyeGitHubImportPlugin", () => {
-//   it("can use the plugin", async () => {
-//     const db = createDb();
+// @ts-expect-error https://stackoverflow.com/a/70711231
+const GITHUB_PAT_SECRET = import.meta.env.VITE_TEST_GITHUB_PAT_SECRET;
 
-//     // db.importData("airbyte-github", {params: {repository: "madatdata/test-repo"}})
+describe.skipIf(shouldSkipIntegrationTestsForGitHubExternalDataSource())(
+  "importData for AirbyeGitHubImportPlugin",
+  () => {
+    it("can use the plugin", async () => {
+      const db = createRealDb();
 
-//     // await db.importData("airbyte-github", { params: }
+      const { username: namespace } = await fetchToken(db);
 
-//     // db.importData("csv", {data})
+      const res = await db.importData(
+        "airbyte-github",
+        {
+          credentials: {
+            credentials: {
+              personal_access_token: GITHUB_PAT_SECRET,
+            },
+          },
+          params: {
+            repository: "splitgraph/seafowl",
+            start_date: "2021-06-01T00:00:00Z",
+          },
+        },
+        {
+          namespace: namespace,
+          repository: "madatdata-test-github-ingestion",
+          tables: [
+            {
+              name: "stargazers",
+              options: {
+                airbyte_cursor_field: ["starred_at"],
+                airbyte_primary_key_field: [],
+              },
+              schema: [],
+            },
+          ],
+        }
+      );
 
-//     // db.importData("airbyte-github"
-//   });
-// });
+      expect(res.response.status).toEqual(200);
+
+      // db.importData("airbyte-github", {}, })
+
+      // await db.importData("airbyte-github", { params: }
+
+      // db.importData("csv", {data})
+
+      // db.importData("airbyte-github"
+    }, 60_000);
+  }
+);
 
 // Useful when writing initial tests against real server (where anon is allowed)
 // const _makeAnonymousDb = () => {

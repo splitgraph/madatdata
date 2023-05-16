@@ -1,11 +1,52 @@
 import type { ImportPlugin, WithOptionsInterface } from "@madatdata/base-db";
-import type { ImportDestOptions } from "./base-import-plugin";
 
 import { SplitgraphImportPlugin } from "./base-import-plugin";
+import type { SplitgraphDestOptions } from "./base-import-plugin";
 import type { SplitgraphImportPluginOptions } from "./base-import-plugin";
 
-interface GeneratedImportSourceOptions<PluginParamsSchema extends object> {
+import type { ExternalTableColumnInput } from "../../gql-client/unified-types";
+
+export interface BaseGeneratedImportSourceOptions<
+  PluginParamsSchema extends object
+> {
   params: PluginParamsSchema;
+  sync?: boolean;
+}
+
+export interface GeneratedImportSourceOptionsWithInlineCredentialData<
+  PluginParamsSchema extends object,
+  PluginCredentialsSchema extends object
+> extends BaseGeneratedImportSourceOptions<PluginParamsSchema> {
+  credentials: PluginCredentialsSchema;
+}
+
+export interface GeneratedImportSourceOptionsWithSavedCredentialId<
+  PluginParamsSchema extends object
+> extends BaseGeneratedImportSourceOptions<PluginParamsSchema> {
+  credentialId: string;
+}
+
+export type GeneratedImportSourceOptions<
+  PluginParamsSchema extends object,
+  PluginCredentialsSchema extends object
+> =
+  | GeneratedImportSourceOptionsWithInlineCredentialData<
+      PluginParamsSchema,
+      PluginCredentialsSchema
+    >
+  | GeneratedImportSourceOptionsWithSavedCredentialId<PluginParamsSchema>;
+
+export interface GeneratedImportDestOptions<TableParamsSchema extends object>
+  extends SplitgraphDestOptions {
+  tables?: {
+    name: string;
+    options: TableParamsSchema;
+    /**
+     * Array containing which columns to include in the ingestion. Set to an
+     * empty array (`[]`) to default to including all columns.
+     * */
+    schema: ExternalTableColumnInput[];
+  }[];
 }
 
 export function makeGeneratedImportPlugin<
@@ -13,11 +54,11 @@ export function makeGeneratedImportPlugin<
   ParamsSchema extends object,
   TableParamsSchema extends object,
   CredentialsSchema extends object,
-  ConcreteImportDestOptions extends ImportDestOptions<
-    TableParamsSchema,
+  ConcreteImportDestOptions extends GeneratedImportDestOptions<TableParamsSchema> = GeneratedImportDestOptions<TableParamsSchema>,
+  ConcreteImportSourceOptions extends GeneratedImportSourceOptions<
+    ParamsSchema,
     CredentialsSchema
-  > = ImportDestOptions<TableParamsSchema, CredentialsSchema>,
-  ConcreteImportSourceOptions extends GeneratedImportSourceOptions<ParamsSchema> = GeneratedImportSourceOptions<ParamsSchema>
+  > = GeneratedImportSourceOptions<ParamsSchema, CredentialsSchema>
 >(
   pluginName: PluginName
 ): new (opts: SplitgraphImportPluginOptions) => ImportPlugin<
@@ -51,21 +92,22 @@ export function makeGeneratedImportPlugin<
       sourceOptions: ConcreteImportSourceOptions,
       destOptions: ConcreteImportDestOptions
     ) {
+      // NOTE: only need to return variables that aren't already defaulted e.g. from destOptions
+      //       which is why we can skip namespace, repository, and pluginName
       return {
         params: JSON.stringify({
           ...sourceOptions.params,
         }),
-        tables: [
-          {
-            name: destOptions.tableName,
-            options: JSON.stringify({
-              ...destOptions.tableParams,
-            }),
-            // TODO: allow user to specify schema in destOptions
-            schema: [],
-          },
-        ],
-        pluginName: "csv",
+        tables: destOptions.tables ?? [],
+        credentialData:
+          "credentials" in sourceOptions
+            ? JSON.stringify(sourceOptions.credentials)
+            : undefined,
+        credentialId:
+          "credentialId" in sourceOptions
+            ? sourceOptions.credentialId
+            : undefined,
+        sync: "sync" in sourceOptions ? sourceOptions.sync : undefined,
       };
     }
   }

@@ -1,22 +1,27 @@
 import type { ImportPlugin, WithOptionsInterface } from "@madatdata/base-db";
-import type { ImportDestOptions } from "./base-import-plugin";
-
 import { gql } from "graphql-request";
 
 import type { CsvParamsSchema } from "./generated/csv/ParamsSchema";
 import type { CsvTableParamsSchema } from "./generated/csv/TableParamsSchema";
 import type { CsvCredentialsSchema } from "./generated/csv/CredentialsSchema";
 
-import { SplitgraphImportPlugin } from "./base-import-plugin";
+import {
+  SplitgraphDestOptions,
+  SplitgraphImportPlugin,
+} from "./base-import-plugin";
 
-type ImportCSVDestOptions = ImportDestOptions<
-  CsvTableParamsSchema,
-  CsvCredentialsSchema
->;
+// NOTE: CSV only supports loading one table at a time
+// TODO: maybe go back kto importing this or using a generic from base-import-plugin
+//       to share the commonalities (e.g. for single-table: tableName; multi-table: tables, etc.)
+interface ImportCSVDestOptions extends SplitgraphDestOptions {
+  tableName: string;
+  tableParams?: CsvTableParamsSchema;
+  credentials?: CsvCredentialsSchema;
+}
 
+// TODO: should params always be required? and therefore part of an imported generic
 interface ImportCSVBaseOptions {
-  // _type: "import-csv-base";
-  // importType: "csv";
+  params?: CsvParamsSchema;
 }
 
 interface ImportCSVFromURLOptions extends ImportCSVBaseOptions {
@@ -176,7 +181,7 @@ export class SplitgraphImportCSVPlugin
       params: JSON.stringify({
         url: sourceOptions.url,
         connection_type: "http",
-        ...destOptions.params,
+        ...sourceOptions.params,
       }),
       tables: [
         {

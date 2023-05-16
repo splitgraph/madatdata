@@ -4,19 +4,14 @@ import type { AirbyteGithubCredentialsSchema } from "./generated/airbyte-github/
 
 import { makeGeneratedImportPlugin } from "./splitgraph-generated-import-plugin";
 
-import type { ImportDestOptions } from "./base-import-plugin";
+// import type { ImportDestOptions } from "./base-import-plugin";
 // import { SplitgraphImportCSVPlugin } from "./splitgraph-import-csv-plugin";
 
 export const AirbyteGithubImportPlugin = makeGeneratedImportPlugin<
   "airbyte-github",
   AirbyteGithubParamsSchema,
   AirbyteGithubTableParamsSchema,
-  AirbyteGithubCredentialsSchema,
-  ImportDestOptions<
-    AirbyteGithubTableParamsSchema,
-    AirbyteGithubCredentialsSchema
-  >,
-  { params: AirbyteGithubParamsSchema }
+  AirbyteGithubCredentialsSchema
 >("airbyte-github");
 
 // const plugin = new AirbyteGithubImportPlugin({

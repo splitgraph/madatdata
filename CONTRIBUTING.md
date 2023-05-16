@@ -42,6 +42,7 @@ VITE_TEST_INTEGRATION=1
 VITE_TEST_DDN_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 VITE_TEST_DDN_API_SECRET=yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
 VITE_TEST_SEAFOWL_SECRET=zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+VITE_TEST_GITHUB_PAT=uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu
 ```
 
 Then simply append `--mode integration` flag to any variant of `yarn test` that
