@@ -16,7 +16,7 @@ import { compose, graphql, rest, type DefaultBodyType } from "msw";
 import { defaultHost } from "@madatdata/base-client";
 
 import { faker } from "@faker-js/faker";
-import { AirbyteGithubImportPlugin } from "./plugins/importers/airbyte-github-plugin";
+import { SplitgraphAirbyteGithubImportPlugin } from "./plugins/importers/generated/airbyte-github/plugin";
 
 describe("importData", () => {
   it("returns false for unknown plugin", async () => {
@@ -80,7 +80,7 @@ const createDb = () => {
         graphqlEndpoint: defaultHost.baseUrls.gql,
         transformRequestHeaders,
       }),
-      new AirbyteGithubImportPlugin({
+      new SplitgraphAirbyteGithubImportPlugin({
         graphqlEndpoint: defaultHost.baseUrls.gql,
         transformRequestHeaders,
       }),
@@ -116,7 +116,7 @@ const createRealDb = () => {
         graphqlEndpoint: defaultHost.baseUrls.gql,
       }),
 
-      new AirbyteGithubImportPlugin({
+      new SplitgraphAirbyteGithubImportPlugin({
         graphqlEndpoint: defaultHost.baseUrls.gql,
       }),
 
@@ -138,7 +138,14 @@ describe.skipIf(shouldSkipIntegrationTestsForGitHubExternalDataSource())(
 
       const { username: namespace } = await fetchToken(db);
 
-      const res = await db.importData(
+      // NOTE: not actually asserting anything here atm, and these tests
+      // should usually be skipped until we have a better way of integration
+      // testing that doesn't require spam-ingesting GitHub repos into Splitgraph,
+      // or at least has the capability to delete them afterward
+      // SEE: packages/test-helpers/env-config.ts for hardcoded skip logic
+
+      // For now this is just a way to manually check everything is working
+      await db.importData(
         "airbyte-github",
         {
           credentials: {
@@ -166,16 +173,6 @@ describe.skipIf(shouldSkipIntegrationTestsForGitHubExternalDataSource())(
           ],
         }
       );
-
-      expect(res.response.status).toEqual(200);
-
-      // db.importData("airbyte-github", {}, })
-
-      // await db.importData("airbyte-github", { params: }
-
-      // db.importData("csv", {data})
-
-      // db.importData("airbyte-github"
     }, 60_000);
   }
 );

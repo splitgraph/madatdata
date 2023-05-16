@@ -81,16 +81,16 @@ export const shouldSkipIntegrationTests = () => {
 export const shouldSkipIntegrationTestsForGitHubExternalDataSource = () => {
   // TODO: Temporarily hardcoded to avoid ingesting a bunch of data without deleting it
   return true;
+
+  // const environmentHasGitHubPATSecret = () => {
+  //   return (
+  //     // @ts-expect-error https://stackoverflow.com/a/70711231
+  //     !!import.meta.env.VITE_TEST_GITHUB_PAT_SECRET
+  //   );
+  // };
   // return shouldSkipIntegrationTests() || !environmentHasGitHubPATSecret();
 };
 
 export const shouldSkipSeafowlTests = () => {
   return !environmentHasSeafowlCredential();
 };
-
-// const environmentHasGitHubPATSecret = () => {
-//   return (
-//     // @ts-expect-error https://stackoverflow.com/a/70711231
-//     !!import.meta.env.VITE_TEST_GITHUB_PAT_SECRET
-//   );
-// };
