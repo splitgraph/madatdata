@@ -128,6 +128,65 @@ export abstract class SplitgraphImportPlugin<
     return new (Object.getPrototypeOf(this).constructor)(mergedInjectOpts);
   }
 
+  public async importData(
+    rawSourceOptions: ConcreteImportSourceOptions,
+    rawDestOptions: ConcreteImportDestOptions
+  ) {
+    const {
+      sourceOptions = rawSourceOptions,
+      destOptions = rawDestOptions,
+      ...importCtx
+    } = await this.beforeImport(rawSourceOptions, rawDestOptions);
+
+    const {
+      response: loadResponse,
+      error: loadError,
+      info: loadInfo,
+    } = await this.startLoad(sourceOptions, destOptions);
+
+    if (loadError || !loadResponse) {
+      return {
+        response: null,
+        error: loadError,
+        info: { ...importCtx.info, ...loadInfo },
+      };
+    }
+
+    const { taskId } = loadResponse.startExternalRepositoryLoad;
+
+    const { response: statusResponse, error: statusError } =
+      await this.waitForTask(taskId, destOptions);
+
+    const lastKnownJobStatus = statusResponse?.jobStatus.status;
+
+    const info = {
+      ...importCtx.info,
+      ...statusResponse,
+    };
+
+    if (lastKnownJobStatus != TaskStatus.Success) {
+      return {
+        response: {
+          success: false,
+        },
+        error: {
+          success: false,
+          pending: lastKnownJobStatus && taskUnresolved(lastKnownJobStatus),
+          ...statusError,
+        },
+        info,
+      };
+    }
+
+    return {
+      response: {
+        success: true,
+      },
+      error: null,
+      info,
+    };
+  }
+
   /**
    * Return the params and tables variable for the load
    */
@@ -135,6 +194,33 @@ export abstract class SplitgraphImportPlugin<
     sourceOptions: ConcreteImportSourceOptions,
     destOptions: ConcreteImportDestOptions
   ): ProvidedExternalLoadMutationVariables;
+
+  // TODO: Clean this up to use an intermediate private member inside the derived class
+  // instead of passing some magical object through some magical pipeline
+
+  /**
+   * Derived classes should implement this method to perform any pre-import steps,
+   * such as uploading a CSV file to object storage. It should return sourceOptions
+   * and destOptions if they are mutated in the process.
+   */
+  protected async beforeImport(
+    sourceOptions: ConcreteImportSourceOptions,
+    destOptions: ConcreteImportDestOptions
+  ): Promise<{
+    response: null | Response;
+    error: unknown;
+    info: object;
+    sourceOptions: ConcreteImportSourceOptions;
+    destOptions: ConcreteImportDestOptions;
+  }> {
+    return Promise.resolve({
+      sourceOptions,
+      destOptions,
+      info: {},
+      response: null,
+      error: null,
+    });
+  }
 
   // TODO: preview step should return available table names
 
@@ -367,92 +453,6 @@ export abstract class SplitgraphImportPlugin<
         jobStatus: jobStatusInfo,
         jobLog: jobLogInfo,
       },
-    };
-  }
-
-  // TODO: Clean this up to use an intermediate private member inside the derived class
-  // instead of passing some magical object through some magical pipeline
-
-  /**
-   * Derived classes should implement this method to perform any pre-import steps,
-   * such as uploading a CSV file to object storage. It should return sourceOptions
-   * and destOptions if they are mutated in the process.
-   */
-  protected async beforeImport(
-    sourceOptions: ConcreteImportSourceOptions,
-    destOptions: ConcreteImportDestOptions
-  ): Promise<{
-    response: null | Response;
-    error: unknown;
-    info: object;
-    sourceOptions: ConcreteImportSourceOptions;
-    destOptions: ConcreteImportDestOptions;
-  }> {
-    return Promise.resolve({
-      sourceOptions,
-      destOptions,
-      info: {},
-      response: null,
-      error: null,
-    });
-  }
-
-  public async importData(
-    rawSourceOptions: ConcreteImportSourceOptions,
-    rawDestOptions: ConcreteImportDestOptions
-  ) {
-    const {
-      sourceOptions = rawSourceOptions,
-      destOptions = rawDestOptions,
-      ...importCtx
-    } = await this.beforeImport(rawSourceOptions, rawDestOptions);
-
-    const {
-      response: loadResponse,
-      error: loadError,
-      info: loadInfo,
-    } = await this.startLoad(sourceOptions, destOptions);
-
-    if (loadError || !loadResponse) {
-      return {
-        response: null,
-        error: loadError,
-        info: { ...importCtx.info, ...loadInfo },
-      };
-    }
-
-    const { taskId } = loadResponse.startExternalRepositoryLoad;
-
-    const { response: statusResponse, error: statusError } =
-      await this.waitForTask(taskId, destOptions);
-
-    const lastKnownJobStatus = statusResponse?.jobStatus.status;
-
-    const info = {
-      ...importCtx.info,
-      ...statusResponse,
-    };
-
-    if (lastKnownJobStatus != TaskStatus.Success) {
-      return {
-        response: {
-          success: false,
-        },
-        error: {
-          success: false,
-          pending: lastKnownJobStatus && taskUnresolved(lastKnownJobStatus),
-          ...statusError,
-        },
-        info,
-      };
-    }
-
-    return {
-      response: {
-        success: true,
-      },
-      error: null,
-      info,
     };
   }
 }
