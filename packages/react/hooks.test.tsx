@@ -227,7 +227,7 @@ describe("makeDefaultAnonymousContext", () => {
                 },
                 "transformRequestHeaders": [Function],
               },
-              _ExportQueryPlugin {
+              ExportQueryPlugin {
                 "__name": "exportQuery",
                 "graphqlClient": SplitgraphGraphQLClient {
                   "graphqlClient": GraphQLClient {
@@ -270,7 +270,7 @@ describe("makeDefaultAnonymousContext", () => {
                 },
                 "transformRequestHeaders": [Function],
               },
-              _ExportQueryPlugin {
+              ExportQueryPlugin {
                 "__name": "exportQuery",
                 "graphqlClient": SplitgraphGraphQLClient {
                   "graphqlClient": GraphQLClient {
