@@ -33,9 +33,9 @@ import {
 import type { HTTPStrategies, HTTPClientOptions } from "@madatdata/client-http";
 
 export type DefaultSeafowlPluginList<
-  ConcretePluginList extends (ImportPlugin<string> | ExportPlugin)[] = (
+  ConcretePluginList extends (ImportPlugin<string> | ExportPlugin<string>)[] = (
     | ImportPlugin<string>
-    | ExportPlugin
+    | ExportPlugin<string>
   )[]
 > = ConcretePluginList[number][];
 
@@ -265,10 +265,16 @@ export class DbSeafowl<SeafowlPluginList extends PluginList>
     );
   }
 
-  async exportData(
-    _pluginName: ExtractPlugin<SeafowlPluginList, ExportPlugin>["__name"],
+  // TODO: atm, there are no Seafowl export plugins
+  async exportData<
+    PluginName extends ExtractPlugin<
+      SeafowlPluginList,
+      ExportPlugin<string>
+    >["__name"]
+  >(
+    _pluginName: PluginName,
     ..._rest: Parameters<
-      ExtractPlugin<SeafowlPluginList, ExportPlugin>["exportData"]
+      ExtractPlugin<SeafowlPluginList, ExportPlugin<PluginName>>["exportData"]
     >
   ): Promise<unknown> {
     await Promise.resolve();

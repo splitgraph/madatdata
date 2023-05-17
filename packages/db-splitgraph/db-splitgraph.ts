@@ -285,10 +285,18 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
     };
   }
 
-  async exportData(
-    pluginName: ExtractPlugin<SplitgraphPluginList, ExportPlugin>["__name"],
+  async exportData<
+    PluginName extends ExtractPlugin<
+      SplitgraphPluginList,
+      ExportPlugin<string>
+    >["__name"]
+  >(
+    pluginName: PluginName,
     ...rest: Parameters<
-      ExtractPlugin<SplitgraphPluginList, ExportPlugin>["exportData"]
+      ExtractPlugin<
+        SplitgraphPluginList,
+        ExportPlugin<PluginName>
+      >["exportData"]
     >
   ) {
     const [sourceOpts, destOpts] = rest;
@@ -299,10 +307,12 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
           plugin
         ): plugin is ExtractPlugin<
           SplitgraphPluginList,
-          ExportPlugin & { __name: typeof pluginName } & Partial<
-              WithOptionsInterface<ExportPlugin>
-            >
-        > => "exportData" in Object.getPrototypeOf(plugin)
+          ExportPlugin<typeof pluginName> & {
+            __name: typeof pluginName;
+          } & Partial<WithOptionsInterface<ExportPlugin<typeof pluginName>>>
+        > =>
+          "exportData" in Object.getPrototypeOf(plugin) &&
+          plugin.__name === pluginName
       )
       .pop();
 

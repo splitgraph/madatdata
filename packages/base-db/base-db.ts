@@ -37,10 +37,15 @@ export interface ImportPlugin<
 //   withOptions: WithOptions<ImportPlugin>;
 // }
 
-export interface ExportPlugin extends Plugin {
+export interface ExportPlugin<
+  PluginName extends string,
+  ConcreteSourceOptions extends object = any,
+  ConcreteDestOptions extends object = any
+> extends Plugin {
+  __name: PluginName;
   exportData: (
-    sourceOptions: any,
-    destOptions: any
+    sourceOptions: ConcreteSourceOptions,
+    destOptions: ConcreteDestOptions
   ) => Promise<{ response: any | null; error: any | null; info?: any | null }>;
 }
 
@@ -87,9 +92,9 @@ export type ExportPluginFromList<
   ConcretePluginList extends PluginList,
   PluginName extends ExtractPlugin<
     ConcretePluginList,
-    ExportPlugin
+    ExportPlugin<string>
   >["__name"] = string
-> = ExtractPlugin<ConcretePluginList, ExportPlugin & { __name: PluginName }>;
+> = ExtractPlugin<ConcretePluginList, ExportPlugin<PluginName>>;
 
 export interface DbOptions<ConcretePluginList extends PluginList> {
   plugins: ConcretePluginList;
