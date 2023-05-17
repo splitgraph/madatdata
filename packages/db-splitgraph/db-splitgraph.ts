@@ -12,7 +12,7 @@ import {
 
 // TODO: These could be injected in the constructor as the actual plugin map
 import { SplitgraphImportCSVPlugin } from "./plugins/importers/splitgraph-import-csv-plugin";
-import { ExportQueryPlugin } from "./plugins/exporters/export-query-plugin";
+import { SplitgraphExportQueryToFilePlugin } from "./plugins/exporters/splitgraph-export-query-to-file-plugin";
 
 // TODO: It's not ideal for db-splitgraph to depend on base-client
 import {
@@ -50,7 +50,7 @@ const makeTransformRequestHeadersForAuthenticatedRequest =
 
 export type DefaultSplitgraphPluginList = (
   | SplitgraphImportCSVPlugin
-  | ExportQueryPlugin
+  | SplitgraphExportQueryToFilePlugin
 )[];
 
 export const makeDefaultPluginList = (
@@ -73,7 +73,7 @@ export const makeDefaultPluginList = (
   return [
     new SplitgraphImportCSVPlugin({ ...graphqlOptions }),
     // new AirbyteGithubImportPlugin({ ...graphqlOptions }),
-    new ExportQueryPlugin({ ...graphqlOptions }),
+    new SplitgraphExportQueryToFilePlugin({ ...graphqlOptions }),
   ];
 };
 

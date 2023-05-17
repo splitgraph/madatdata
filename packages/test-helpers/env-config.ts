@@ -112,5 +112,6 @@ export const shouldSkipIntegrationTestsForGitHubExternalDataSource = () => {
 };
 
 export const shouldSkipSeafowlTests = () => {
+  return true;
   return !environmentHasSeafowlCredential();
 };

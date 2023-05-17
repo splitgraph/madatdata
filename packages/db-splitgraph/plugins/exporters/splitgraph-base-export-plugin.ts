@@ -6,7 +6,7 @@ import { gql } from "graphql-request";
 import type {
   ExportJobStatusQuery,
   ExportJobStatusQueryVariables,
-} from "./base-export-plugin.generated";
+} from "./splitgraph-base-export-plugin.generated";
 
 // from unified spec
 // type _ExportJobStatus = "status" | "finished" | "output" | "started";

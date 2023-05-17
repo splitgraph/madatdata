@@ -11,7 +11,7 @@ import type {
   RepositoryIngestionJobStatusQueryVariables,
   StartExternalRepositoryLoadMutation,
   StartExternalRepositoryLoadMutationVariables,
-} from "./base-import-plugin.generated";
+} from "./splitgraph-base-import-plugin.generated";
 
 export type SplitgraphDestOptions = {
   namespace: string;

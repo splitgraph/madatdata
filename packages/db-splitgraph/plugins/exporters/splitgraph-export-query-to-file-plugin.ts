@@ -8,8 +8,8 @@ import { gql } from "graphql-request";
 import type {
   StartExportJobMutation,
   StartExportJobMutationVariables,
-} from "./export-query-plugin.generated";
-import { SplitgraphExportPlugin } from "./base-export-plugin";
+} from "./splitgraph-export-query-to-file-plugin.generated";
+import { SplitgraphExportPlugin } from "./splitgraph-base-export-plugin";
 
 type ExportQuerySourceOptions = {
   /**
@@ -27,21 +27,21 @@ type ExportQueryDestOptions = {
   filename?: string;
 };
 
-export class ExportQueryPlugin
+export class SplitgraphExportQueryToFilePlugin
   extends SplitgraphExportPlugin<
-    "exportQuery",
-    ExportQueryPlugin,
+    "export-query-to-file",
+    SplitgraphExportQueryToFilePlugin,
     ExportQuerySourceOptions,
     ExportQueryDestOptions,
     Record<string, unknown>,
-    Awaited<ReturnType<ExportPlugin<"exportQuery">["exportData"]>>
+    Awaited<ReturnType<ExportPlugin<"export-query-to-file">["exportData"]>>
   >
   implements
-    ExportPlugin<"exportQuery">,
-    WithOptionsInterface<ExportQueryPlugin>
+    ExportPlugin<"export-query-to-file">,
+    WithOptionsInterface<SplitgraphExportQueryToFilePlugin>
 {
-  public readonly __name = "exportQuery";
-  public static readonly __name = "exportQuery";
+  public readonly __name = "export-query-to-file";
+  public static readonly __name = "export-query-to-file";
 
   async exportData(
     sourceOptions: ExportQuerySourceOptions,

@@ -8,10 +8,10 @@ import type { CsvCredentialsSchema } from "./generated/csv/CredentialsSchema";
 import {
   SplitgraphDestOptions,
   SplitgraphImportPlugin,
-} from "./base-import-plugin";
+} from "./splitgraph-base-import-plugin";
 
 // NOTE: CSV only supports loading one table at a time
-// TODO: maybe go back kto importing this or using a generic from base-import-plugin
+// TODO: maybe go back kto importing this or using a generic from splitgraph-base-import-plugin
 //       to share the commonalities (e.g. for single-table: tableName; multi-table: tables, etc.)
 interface ImportCSVDestOptions extends SplitgraphDestOptions {
   tableName: string;

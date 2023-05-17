@@ -3,7 +3,7 @@ import { randSuffix } from "@madatdata/test-helpers/rand-suffix";
 import type { Expect, Equal } from "@madatdata/test-helpers/type-test-utils";
 import { makeDb } from "./db-splitgraph";
 import { SplitgraphImportCSVPlugin } from "./plugins/importers/splitgraph-import-csv-plugin";
-import { ExportQueryPlugin } from "./plugins/exporters/export-query-plugin";
+import { SplitgraphExportQueryToFilePlugin } from "./plugins/exporters/splitgraph-export-query-to-file-plugin";
 
 import {
   shouldSkipExportFromSplitgraphToSeafowlIntegrationTests,
@@ -76,7 +76,7 @@ const createDb = () => {
     graphqlEndpoint: defaultHost.baseUrls.gql,
     transformRequestHeaders,
 
-    // NOTE: exportQuery is not mocked yet
+    // NOTE: not all plugins are fully mocked
     plugins: [
       new SplitgraphImportCSVPlugin({
         graphqlEndpoint: defaultHost.baseUrls.gql,
@@ -122,7 +122,7 @@ const createRealDb = () => {
         graphqlEndpoint: defaultHost.baseUrls.gql,
       }),
 
-      new ExportQueryPlugin({
+      new SplitgraphExportQueryToFilePlugin({
         graphqlEndpoint: defaultHost.baseUrls.gql,
       }),
 
@@ -638,7 +638,7 @@ describe.skipIf(shouldSkipIntegrationTests())("real export query", () => {
     const db = createRealDb();
 
     const { response, error, info } = await db.exportData(
-      "exportQuery",
+      "export-query-to-file",
       {
         query: `SELECT a as int_val, string_agg(random()::text, '') as text_val
 FROM generate_series(1, 5) a, generate_series(1, 50) b

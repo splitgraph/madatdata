@@ -1,8 +1,8 @@
 import type { ImportPlugin, WithOptionsInterface } from "@madatdata/base-db";
 
-import { SplitgraphImportPlugin } from "./base-import-plugin";
-import type { SplitgraphDestOptions } from "./base-import-plugin";
-import type { SplitgraphImportPluginOptions } from "./base-import-plugin";
+import { SplitgraphImportPlugin } from "./splitgraph-base-import-plugin";
+import type { SplitgraphDestOptions } from "./splitgraph-base-import-plugin";
+import type { SplitgraphImportPluginOptions } from "./splitgraph-base-import-plugin";
 
 import type { ExternalTableColumnInput } from "../../gql-client/unified-types";
 

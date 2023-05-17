@@ -16,7 +16,7 @@ describe.skipIf(shouldSkipSeafowlTests() || shouldSkipIntegrationTests())(
       const seafowl = createRealSeafowlDataContext();
 
       const { response } = await splitgraph.db.exportData(
-        "exportQuery",
+        "export-query-to-file",
         {
           query: `SELECT a as int_val, string_agg(random()::text, '') as text_val
 FROM generate_series(1, 5) a, generate_series(1, 50) b

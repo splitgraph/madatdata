@@ -1,6 +1,6 @@
 import { gql } from "graphql-request";
 import type { ExportPlugin } from "@madatdata/base-db/base-db";
-import { SplitgraphExportPlugin } from "./base-export-plugin";
+import { SplitgraphExportPlugin } from "./splitgraph-base-export-plugin";
 import type { WithOptionsInterface } from "@madatdata/base-db/plugin-bindings";
 import type {
   SeafowlExportQuerySourceDestinationTupleInput,
@@ -35,7 +35,7 @@ export class SplitgraphExportToSeafowlPlugin
     ExportToSeafowlSourceOptions,
     ExportToSeafowlDestOptions,
     Record<string, unknown>,
-    Awaited<ReturnType<ExportPlugin<"exportQuery">["exportData"]>>
+    Awaited<ReturnType<ExportPlugin<"export-to-seafowl">["exportData"]>>
   >
   implements
     ExportPlugin<"export-to-seafowl">,
