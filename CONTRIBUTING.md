@@ -43,6 +43,10 @@ VITE_TEST_DDN_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 VITE_TEST_DDN_API_SECRET=yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
 VITE_TEST_SEAFOWL_SECRET=zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 VITE_TEST_GITHUB_PAT=uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu
+VITE_TEST_SEAFOWL_EXPORT_DEST_URL=https://demo.seafowl.cloud
+# should match the username associated with the API_KEY for Splitgraph
+VITE_TEST_SEAFOWL_EXPORT_DEST_DBNAME=miles
+VITE_TEST_SEAFOWL_EXPORT_DEST_SECRET=tttttttttttttttttttttttttttttttt
 ```
 
 Then simply append `--mode integration` flag to any variant of `yarn test` that

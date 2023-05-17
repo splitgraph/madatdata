@@ -25,6 +25,26 @@ const shouldIncludeIntegrationTests = () => {
   );
 };
 
+// True if there is a secret defined for testing Seafowl export destination,
+// which might be different from the Seafowl instance used for Seafowl integration tests
+const environmentHasSeafowlExportDestinationCredential = () => {
+  return (
+    // @ts-expect-error https://stackoverflow.com/a/70711231
+    !!import.meta.env.VITE_TEST_SEAFOWL_EXPORT_DEST_URL &&
+    // @ts-expect-error https://stackoverflow.com/a/70711231
+    !!import.meta.env.VITE_TEST_SEAFOWL_EXPORT_DEST_DBNAME &&
+    // @ts-expect-error https://stackoverflow.com/a/70711231
+    !!import.meta.env.VITE_TEST_SEAFOWL_EXPORT_DEST_SECRET
+  );
+};
+
+export const shouldSkipExportFromSplitgraphToSeafowlIntegrationTests = () => {
+  return (
+    shouldSkipIntegrationTests() ||
+    !environmentHasSeafowlExportDestinationCredential()
+  );
+};
+
 /**
  * Inspect environment for configuration indicating whether to run integration
  * tests against the real production DDN at Splitgraph.com.

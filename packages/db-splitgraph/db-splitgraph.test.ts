@@ -6,6 +6,7 @@ import { SplitgraphImportCSVPlugin } from "./plugins/importers/splitgraph-import
 import { ExportQueryPlugin } from "./plugins/exporters/export-query-plugin";
 
 import {
+  shouldSkipExportFromSplitgraphToSeafowlIntegrationTests,
   shouldSkipIntegrationTests,
   shouldSkipIntegrationTestsForGitHubExternalDataSource,
 } from "@madatdata/test-helpers/env-config";
@@ -17,6 +18,7 @@ import { defaultHost } from "@madatdata/base-client";
 
 import { faker } from "@faker-js/faker";
 import { SplitgraphAirbyteGithubImportPlugin } from "./plugins/importers/generated/airbyte-github/plugin";
+import { SplitgraphExportToSeafowlPlugin } from "./plugins/exporters/splitgraph-export-to-seafowl-plugin";
 
 describe("importData", () => {
   it("returns false for unknown plugin", async () => {
@@ -121,6 +123,10 @@ const createRealDb = () => {
       }),
 
       new ExportQueryPlugin({
+        graphqlEndpoint: defaultHost.baseUrls.gql,
+      }),
+
+      new SplitgraphExportToSeafowlPlugin({
         graphqlEndpoint: defaultHost.baseUrls.gql,
       }),
     ],
@@ -679,6 +685,131 @@ GROUP BY a ORDER BY a;`,
     expect(error).toMatchInlineSnapshot("null");
   }, 30_000);
 });
+
+// @ts-expect-error https://stackoverflow.com/a/70711231
+const SEAFOWL_DEST_SECRET = import.meta.env
+  .VITE_TEST_SEAFOWL_EXPORT_DEST_SECRET;
+
+// @ts-expect-error https://stackoverflow.com/a/70711231
+const SEAFOWL_DEST_URL = import.meta.env.VITE_TEST_SEAFOWL_EXPORT_DEST_URL;
+
+// @ts-expect-error https://stackoverflow.com/a/70711231
+const SEAFOWL_DEST_DBNAME = import.meta.env
+  .VITE_TEST_SEAFOWL_EXPORT_DEST_DBNAME;
+
+describe.skipIf(shouldSkipExportFromSplitgraphToSeafowlIntegrationTests())(
+  "export from splitgraph to seafowl",
+  () => {
+    it("exports a query to seafowl", async () => {
+      const db = createRealDb();
+
+      const { username: splitgraphUsername } = await fetchToken(db);
+
+      expect(splitgraphUsername).toEqual(SEAFOWL_DEST_DBNAME);
+
+      // Should be _only the base URL_, like: https://demo.seafowl.cloud
+      expect(SEAFOWL_DEST_URL.endsWith("/")).toEqual(false);
+      expect(SEAFOWL_DEST_URL.endsWith("/q")).toEqual(false);
+
+      const destTableSuffix = randSuffix();
+      const destTable = `random_series_${destTableSuffix}`;
+
+      const res = await db.exportData(
+        "export-to-seafowl",
+        {
+          queries: [
+            {
+              source: {
+                query: `SELECT a as int_val, string_agg(random()::text, '') as text_val
+            FROM generate_series(1, 5) a, generate_series(1, 50) b
+            GROUP BY a ORDER BY a;`,
+              },
+              destination: {
+                schema: "madatdata_testing",
+                table: destTable,
+              },
+            },
+          ],
+        },
+        {
+          seafowlInstance: {
+            selfHosted: {
+              url: SEAFOWL_DEST_URL,
+              dbname: SEAFOWL_DEST_DBNAME,
+              secret: SEAFOWL_DEST_SECRET,
+            },
+          },
+        }
+      );
+
+      expect(
+        (({ error, info }: typeof res) => ({
+          error,
+          info: {
+            allFailed: info.allFailed,
+            allPassed: info.allPassed,
+            somePassed: info.somePassed,
+            totalFailed: info.totalFailed,
+            totalPassed: info.totalPassed,
+          },
+        }))(res)
+      ).toMatchInlineSnapshot(`
+        {
+          "error": null,
+          "info": {
+            "allFailed": false,
+            "allPassed": true,
+            "somePassed": false,
+            "totalFailed": 0,
+            "totalPassed": 1,
+          },
+        }
+      `);
+
+      expect(res.response.passedJobs.queries.length).toEqual(1);
+      expect(res.response.passedJobs.tables.length).toEqual(0);
+      expect(res.response.passedJobs.vdbs.length).toEqual(0);
+
+      expect(
+        res.response.passedJobs.queries[0].result.response.exportFormat
+      ).toEqual("sync");
+      expect(res.response.passedJobs.queries[0].result.response.status).toEqual(
+        "SUCCESS"
+      );
+      expect(
+        res.response.passedJobs.queries[0].result.response.output.tables.length
+      ).toEqual(1);
+
+      const exportedTableTuple =
+        res.response.passedJobs.queries[0].result.response.output.tables[0];
+
+      const [
+        exportedQuery,
+        destDbname,
+        destSchema,
+        destTableName,
+        ingestedParquetURL,
+      ] = exportedTableTuple;
+
+      expect(destTableName).toEqual(destTable);
+      expect(destDbname).toEqual(SEAFOWL_DEST_DBNAME);
+
+      expect({
+        exportedQuery,
+        destSchema,
+      }).toMatchInlineSnapshot(`
+        {
+          "destSchema": "madatdata_testing",
+          "exportedQuery": "SELECT a as int_val, string_agg(random()::text, '') as text_val
+                    FROM generate_series(1, 5) a, generate_series(1, 50) b
+                    GROUP BY a ORDER BY a",
+        }
+      `);
+
+      expect(ingestedParquetURL.includes(".parquet")).toEqual(true);
+    }, 60_000);
+  }
+);
 
 describe.skipIf(shouldSkipIntegrationTests())("real DDN", () => {
   it("uploads with TableParamsSchema semicolon delimiter", async () => {
