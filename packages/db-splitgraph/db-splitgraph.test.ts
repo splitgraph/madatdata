@@ -674,7 +674,7 @@ GROUP BY a ORDER BY a;`,
     expect(startedTask.response!.exportFormat).toBe("parquet");
   });
 
-  it("exports a basic postgres query to parquet", async () => {
+  it("exports a basic postgres query to parquet (and pollDeferredTask returns completed task)", async () => {
     const db = createRealDb();
 
     const { response, error, info } = await db.exportData(
@@ -723,6 +723,27 @@ GROUP BY a ORDER BY a;`,
     `);
 
     expect(error).toMatchInlineSnapshot("null");
+
+    // PIGGYBACK on this test to also test pollDeferredTask
+    // This is kind of cheating: we didn't initialize it as a deferred task, but
+    // we know that with the taskId, we can get the tatus of a deferred task. And
+    // we want to test that pollDeferredTask returns completed: true when a task
+    // has completed, and it's convenient to check that here since we know for
+    // sure that this task has completed (since we didn't defer it and therefore waited for it)
+    const shouldBeCompletedTask = await db.pollDeferredTask(
+      "export-query-to-file",
+      { taskId: response.taskId }
+    );
+
+    expect(shouldBeCompletedTask.completed).toBe(true);
+    expect(shouldBeCompletedTask.error).toBeNull();
+    expect(shouldBeCompletedTask.response?.exportFormat).toBe("parquet");
+
+    const taskOutput = shouldBeCompletedTask.response?.output;
+
+    expect(typeof taskOutput).toBe("object");
+    expect("url" in (taskOutput as object)).toBe(true);
+    expect(typeof (taskOutput as { url: string })["url"]).toBe("string");
   }, 30_000);
 });
 
