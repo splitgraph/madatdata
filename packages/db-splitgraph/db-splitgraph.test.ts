@@ -634,6 +634,7 @@ describe("importData for SplitgraphImportCSVPlugin", () => {
 
 // TODO: Make a mocked version of this test
 describe.skipIf(shouldSkipIntegrationTests())("real export query", () => {
+  // NOTE: test assumes that the task hasn't completed by the time we send the first check
   it("deferred exports basic postgres query to parquet returns a taskId", async () => {
     const db = createRealDb();
     const {
@@ -895,6 +896,84 @@ describe.skipIf(shouldSkipIntegrationTests())("real DDN", () => {
     expect(info?.jobStatus.status).toEqual("SUCCESS");
 
     expect(info?.jobLog?.url.includes(info.jobStatus.taskId)).toBe(true);
+
+    // PIGGYBACK on this test to also test pollDeferredTask (just like with export)
+    // We wouldn't normally do this since we didn't defer the task and have already
+    // awaited it, but since we know it's complete we can conveniently check the
+    // test case of pollDeferredTask returning a completed task
+    const shouldBeCompletedTask = await db.pollDeferredTask("csv", {
+      // This is the hacky part, note that this didn't come from the return value
+      taskId: info.jobStatus.taskId,
+      namespace,
+      repository: "dunno",
+    });
+
+    expect(shouldBeCompletedTask.completed).toBe(true);
+    expect(shouldBeCompletedTask.error).toBeNull();
+    expect(shouldBeCompletedTask.info?.jobStatus).not.toBeNull();
+    expect(shouldBeCompletedTask.info?.jobLog).not.toBeNull();
+
+    expect(shouldBeCompletedTask.response).not.toBeNull();
+    expect(typeof shouldBeCompletedTask.response?.jobLog?.url).toEqual(
+      "string"
+    );
+    expect(shouldBeCompletedTask.response?.jobStatus?.status).toEqual(
+      "SUCCESS"
+    );
+    expect(shouldBeCompletedTask.response?.jobStatus?.taskId).toEqual(
+      info.jobStatus.taskId
+    );
+    expect(shouldBeCompletedTask.response?.jobStatus?.isManual).toEqual(true);
+    expect(typeof shouldBeCompletedTask.response?.jobStatus?.finished).toEqual(
+      "string"
+    );
+    expect(typeof shouldBeCompletedTask.response?.jobStatus?.started).toEqual(
+      "string"
+    );
+  }, 20_000);
+
+  // NOTE: test assumes that the task hasn't completed by the time we send the first check
+  it("upload starts a deferred task", async () => {
+    const db = createRealDb();
+    const { username: namespace } = await fetchToken(db);
+
+    const { response, info, taskId } = await db.importData(
+      "csv",
+      { data: Buffer.from(`name;candies\r\nBob;5\r\nAlice;10`) },
+      {
+        tableName: `irrelevant-${randSuffix()}`,
+        namespace,
+        repository: "dunno",
+        tableParams: {
+          delimiter: ";",
+        },
+      },
+      { defer: true }
+    );
+
+    expect(typeof taskId).toBe("string");
+    expect(taskId?.length).toEqual(36);
+
+    expect(taskId).toBeDefined();
+
+    expect(response).toBeDefined();
+    expect(info).toBeDefined();
+
+    const startedTask = await db.pollDeferredTask("csv", {
+      taskId: taskId as string,
+      namespace,
+      repository: "dunno",
+    });
+
+    expect(startedTask.completed).toBe(false);
+    expect(startedTask.error).toBeNull();
+    expect(startedTask.info).toBeNull();
+    expect(startedTask.response?.jobStatus?.status).toBe("STARTED");
+    expect(startedTask.response?.jobStatus?.finished).toBeNull();
+    expect(startedTask.response?.jobStatus?.taskId).toEqual(taskId);
+    expect(typeof startedTask.response?.jobStatus?.started).toEqual("string");
+    expect(startedTask.response?.jobStatus?.finished).toBeNull();
+    expect(startedTask.response?.jobStatus?.isManual).toEqual(true);
   }, 20_000);
 });
 describe("makeFakeJwt and claimsFromJwt", () => {

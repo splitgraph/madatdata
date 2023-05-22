@@ -29,8 +29,14 @@ export interface ImportPlugin<
   __name: PluginName;
   importData: (
     sourceOptions: ConcreteSourceOptions,
-    destOptions: ConcreteDestOptions
-  ) => Promise<{ response: any | null; error: any | null; info?: any | null }>;
+    destOptions: ConcreteDestOptions,
+    importOptions?: { defer: boolean }
+  ) => Promise<{
+    taskId?: string | null;
+    response: any | null;
+    error: any | null;
+    info?: any | null;
+  }>;
 }
 
 // interface ImportPluginWithOptions extends ImportPlugin {

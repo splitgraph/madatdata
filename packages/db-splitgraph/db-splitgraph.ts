@@ -357,7 +357,7 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
     // TODO: type error in ...rest
     // this.plugins.callFunction(pluginName, "importData", ...rest);
 
-    const [sourceOpts, destOpts] = rest;
+    const [sourceOpts, destOpts, importOpts] = rest;
 
     const plugin = this.plugins
       .selectMatchingPlugins(
@@ -382,17 +382,19 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
       throw new Error("plugin does not implement withOptions");
     }
 
-    return await plugin
-      .withOptions({
-        ...this.pluginConfig,
-        ...plugin,
-        transformRequestHeaders: (headers: HeadersInit) =>
-          (
-            (plugin as PluginWithTransformRequestHeadersOption<typeof plugin>)
-              .transformRequestHeaders ?? IdentityFunc
-          )(this.pluginConfig.transformRequestHeaders(headers)),
-      })
-      .importData(sourceOpts, destOpts);
+    const instantiatedPlugin = plugin.withOptions({
+      ...this.pluginConfig,
+      ...plugin,
+      transformRequestHeaders: (headers: HeadersInit) =>
+        (
+          (plugin as PluginWithTransformRequestHeadersOption<typeof plugin>)
+            .transformRequestHeaders ?? IdentityFunc
+        )(this.pluginConfig.transformRequestHeaders(headers)),
+    });
+
+    return importOpts
+      ? await instantiatedPlugin.importData(sourceOpts, destOpts, importOpts)
+      : await instantiatedPlugin.importData(sourceOpts, destOpts);
   }
 
   async pollDeferredTask<
@@ -400,13 +402,13 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
       SplitgraphPluginList,
       DeferredTaskPlugin<string, any>
     >["__name"],
+    MatchingPlugin extends ExtractPlugin<
+      SplitgraphPluginList,
+      // discriminate on __name to avoid including return type of every plugin with pollDeferredTask
+      { __name: PluginName } & DeferredTaskPlugin<string, any>
+    >,
     DeferredTaskResponse extends Awaited<
-      ReturnType<
-        ExtractPlugin<
-          SplitgraphPluginList,
-          DeferredTaskPlugin<string, any>
-        >["pollDeferredTask"]
-      >
+      ReturnType<MatchingPlugin["pollDeferredTask"]>
     >
   >(
     pluginName: PluginName,

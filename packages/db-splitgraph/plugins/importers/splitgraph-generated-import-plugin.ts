@@ -1,10 +1,14 @@
 import type { ImportPlugin, WithOptionsInterface } from "@madatdata/base-db";
 
-import { SplitgraphImportPlugin } from "./splitgraph-base-import-plugin";
+import {
+  DeferredSplitgraphImportTask,
+  SplitgraphImportPlugin,
+} from "./splitgraph-base-import-plugin";
 import type { SplitgraphDestOptions } from "./splitgraph-base-import-plugin";
 import type { SplitgraphImportPluginOptions } from "./splitgraph-base-import-plugin";
 
 import type { ExternalTableColumnInput } from "../../gql-client/unified-types";
+import type { DeferredTaskPlugin } from "@madatdata/base-db/base-db";
 
 export interface BaseGeneratedImportSourceOptions<
   PluginParamsSchema extends object
@@ -74,6 +78,8 @@ export function makeGeneratedImportPlugin<
       TableParamsSchema,
       CredentialsSchema,
       SplitgraphGeneratedImportPlugin,
+      Record<string, unknown>,
+      Awaited<ReturnType<ImportPlugin<PluginName>["importData"]>>,
       ConcreteImportDestOptions,
       ConcreteImportSourceOptions
     >
@@ -83,6 +89,7 @@ export function makeGeneratedImportPlugin<
         ConcreteImportSourceOptions,
         ConcreteImportDestOptions
       >,
+      DeferredTaskPlugin<PluginName, DeferredSplitgraphImportTask>,
       WithOptionsInterface<SplitgraphGeneratedImportPlugin>
   {
     public readonly __name = pluginName;

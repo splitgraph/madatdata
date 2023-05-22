@@ -6,9 +6,11 @@ import type { CsvTableParamsSchema } from "./generated/csv/TableParamsSchema";
 import type { CsvCredentialsSchema } from "./generated/csv/CredentialsSchema";
 
 import {
+  DeferredSplitgraphImportTask,
   SplitgraphDestOptions,
   SplitgraphImportPlugin,
 } from "./splitgraph-base-import-plugin";
+import type { DeferredTaskPlugin } from "@madatdata/base-db/base-db";
 
 // NOTE: CSV only supports loading one table at a time
 // TODO: maybe go back kto importing this or using a generic from splitgraph-base-import-plugin
@@ -51,11 +53,14 @@ export class SplitgraphImportCSVPlugin
     CsvTableParamsSchema,
     CsvCredentialsSchema,
     SplitgraphImportCSVPlugin,
+    Record<string, unknown>,
+    Awaited<ReturnType<ImportPlugin<"csv">["importData"]>>,
     ImportCSVDestOptions,
     ImportCSVSourceOptions
   >
   implements
     ImportPlugin<"csv">,
+    DeferredTaskPlugin<"csv", DeferredSplitgraphImportTask>,
     WithOptionsInterface<SplitgraphImportCSVPlugin>
 {
   public readonly __name = "csv";

@@ -12,6 +12,7 @@ import type {
   StartExternalRepositoryLoadMutation,
   StartExternalRepositoryLoadMutationVariables,
 } from "./splitgraph-base-import-plugin.generated";
+import type { DeferredTaskPlugin } from "@madatdata/base-db/base-db";
 
 export type SplitgraphDestOptions = {
   namespace: string;
@@ -49,6 +50,25 @@ type ProvidedExternalLoadMutationVariables = Pick<
     Omit<StartExternalRepositoryLoadMutationVariables, "tables" | "pluginName">
   >;
 
+// We query for multple nods and then filter client-side for the node matching namespace and repository
+type JobStatusNode = Exclude<
+  RepositoryIngestionJobStatusQuery["repositoryIngestionJobStatus"],
+  null
+>["nodes"][number];
+
+export type DeferredSplitgraphImportTask = {
+  completed: boolean;
+  response: {
+    jobStatus: JobStatusNode | null;
+    jobLog?: { url: string };
+  } | null;
+  error: "no response" | "failed status" | null | any;
+  info: {
+    jobStatus: { status: number; headers: any } | null;
+    jobLog?: { status: number; headers: any } | null;
+  } | null;
+};
+
 export abstract class SplitgraphImportPlugin<
   PluginName extends string,
   /** The "params" schema for the plugin, i.e. provided by auto-generated type */
@@ -64,13 +84,20 @@ export abstract class SplitgraphImportPlugin<
     PluginTableParamsSchema,
     PluginCredentialsSchema,
     DerivedSplitgraphImportPlugin,
+    StartedImportJob,
+    CompletedImportJob,
     ConcreteImportDestOptions,
     ConcreteImportSourceOptions
+  >,
+  StartedImportJob extends object,
+  CompletedImportJob extends Awaited<
+    ReturnType<ImportPlugin<PluginName>["importData"]>
   >,
   ConcreteImportDestOptions extends SplitgraphDestOptions = SplitgraphDestOptions,
   ConcreteImportSourceOptions extends object = Record<string, never>
 > implements
     ImportPlugin<PluginName>,
+    DeferredTaskPlugin<PluginName, DeferredSplitgraphImportTask>,
     WithOptionsInterface<DerivedSplitgraphImportPlugin>
 {
   public abstract readonly __name: PluginName;
@@ -130,7 +157,8 @@ export abstract class SplitgraphImportPlugin<
 
   public async importData(
     rawSourceOptions: ConcreteImportSourceOptions,
-    rawDestOptions: ConcreteImportDestOptions
+    rawDestOptions: ConcreteImportDestOptions,
+    importOptions?: { defer: boolean }
   ) {
     const {
       sourceOptions = rawSourceOptions,
@@ -146,6 +174,7 @@ export abstract class SplitgraphImportPlugin<
 
     if (loadError || !loadResponse) {
       return {
+        ...(importOptions?.defer ? { taskId: null } : {}),
         response: null,
         error: loadError,
         info: { ...importCtx.info, ...loadInfo },
@@ -153,6 +182,15 @@ export abstract class SplitgraphImportPlugin<
     }
 
     const { taskId } = loadResponse.startExternalRepositoryLoad;
+
+    if (importOptions?.defer) {
+      return {
+        taskId,
+        response: loadResponse,
+        error: loadError ?? null,
+        info: { ...importCtx.info, ...loadInfo },
+      };
+    }
 
     const { response: statusResponse, error: statusError } =
       await this.waitForTask(taskId, destOptions);
@@ -396,11 +434,70 @@ export abstract class SplitgraphImportPlugin<
     };
   }
 
+  public async pollDeferredTask({
+    taskId,
+    namespace,
+    repository,
+  }: {
+    taskId: string;
+    namespace: string;
+    repository: string;
+  }): Promise<DeferredSplitgraphImportTask> {
+    try {
+      const taskStatus = await this.waitForTaskOnce(taskId, {
+        namespace,
+        repository,
+      });
+
+      return {
+        completed: true,
+        ...taskStatus,
+      };
+    } catch (err) {
+      if (
+        typeof err === "object" &&
+        err !== null &&
+        "type" in err &&
+        (err as { type: "retry"; response: JobStatusNode }).type === "retry"
+      ) {
+        return {
+          completed: false,
+          error: null, // it's just a retry, so we don't include error
+          response: {
+            jobStatus:
+              "response" in err
+                ? (err as { response: JobStatusNode }).response
+                : null,
+          },
+          info: null,
+        };
+      } else {
+        // We got an unknown/unexpected error (basically, caught something that was not retry)
+        return {
+          completed: true,
+          error: err,
+          response: null,
+          info: null,
+        };
+      }
+    }
+  }
+
   @Retryable({
     ...retryOptions,
     doRetry: ({ type }) => type === "retry",
   })
   private async waitForTask(
+    taskId: string,
+    {
+      namespace,
+      repository,
+    }: Pick<ConcreteImportDestOptions, "namespace" | "repository">
+  ) {
+    return await this.waitForTaskOnce(taskId, { namespace, repository });
+  }
+
+  private async waitForTaskOnce(
     taskId: string,
     {
       namespace,
@@ -426,7 +523,7 @@ export abstract class SplitgraphImportPlugin<
       throw { type: "retry" };
       // FIXME(codegen): this shouldn't be nullable
     } else if (taskUnresolved(jobStatusResponse.status!)) {
-      throw { type: "retry" };
+      throw { type: "retry", response: jobStatusResponse };
     }
 
     const {
