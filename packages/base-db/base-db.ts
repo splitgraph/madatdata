@@ -54,10 +54,11 @@ export interface ExportPlugin<
     destOptions: ConcreteDestOptions,
     exportOptions?: { defer: boolean }
   ) => Promise<{
-    taskId?: string | null;
     response: any | null;
     error: any | null;
     info?: any | null;
+    taskId?: string | null;
+    taskIds?: any;
   }>;
 }
 
@@ -66,7 +67,6 @@ export interface DeferredTaskPlugin<
   // TODO: maybe should extend { __name: PluginName }  to ensure finding
   // correct task plugin by serialized deferred task
 
-  // TODO: Can we change this to = Record<string, unknown> ?
   DeferredTaskResponse extends {
     completed: boolean;
     response: any | null;

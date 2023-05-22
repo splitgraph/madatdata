@@ -44,9 +44,18 @@ export class SplitgraphExportToSeafowlPlugin
   public readonly __name = "export-to-seafowl";
   public static readonly __name = "export-to-seafowl";
 
+  /**
+   * Start the export job, and wait for all tasks to complete. If exportOptions.defer
+   * is set to true, then the task IDs will be returned instead of waiting for the job,
+   * and each will need to be checked separately with pollDeferredTask.
+   *
+   * Note that the `taskId` return will always be undefined, and the `taskIds` property
+   * will be set instead, with `taskIds{tables,queries,vdbs}.map(job => job.id)`
+   */
   async exportData(
     sourceOptions: ExportToSeafowlSourceOptions,
-    destOptions: ExportToSeafowlDestOptions
+    destOptions: ExportToSeafowlDestOptions,
+    exportOptions?: { defer: boolean }
   ) {
     const {
       response: startExportResponse,
@@ -77,6 +86,20 @@ export class SplitgraphExportToSeafowlPlugin
       tables: tableExportJobs,
       vdbs: vdbExportJobs,
     } = startExportResponse.exportToSeafowl;
+
+    // FIXME: These types are returned as any. Need some generic param passing
+    if (exportOptions?.defer) {
+      return {
+        taskIds: {
+          queries: queryExportJobs,
+          tables: tableExportJobs,
+          vdbs: vdbExportJobs,
+        },
+        response: startExportResponse,
+        error: startExportError,
+        info: startExportInfo,
+      };
+    }
 
     const passedJobs: {
       queries: {

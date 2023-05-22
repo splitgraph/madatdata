@@ -762,7 +762,7 @@ const SEAFOWL_DEST_DBNAME = import.meta.env
 describe.skipIf(shouldSkipExportFromSplitgraphToSeafowlIntegrationTests())(
   "export from splitgraph to seafowl",
   () => {
-    it("exports a query to seafowl", async () => {
+    it("defers an export to seafowl", async () => {
       const db = createRealDb();
 
       const { username: splitgraphUsername } = await fetchToken(db);
@@ -785,6 +785,84 @@ describe.skipIf(shouldSkipExportFromSplitgraphToSeafowlIntegrationTests())(
                 query: `SELECT a as int_val, string_agg(random()::text, '') as text_val
             FROM generate_series(1, 5) a, generate_series(1, 50) b
             GROUP BY a ORDER BY a;`,
+              },
+              destination: {
+                schema: "madatdata_testing",
+                table: destTable,
+              },
+            },
+          ],
+        },
+        {
+          seafowlInstance: {
+            selfHosted: {
+              url: SEAFOWL_DEST_URL,
+              dbname: SEAFOWL_DEST_DBNAME,
+              secret: SEAFOWL_DEST_SECRET,
+            },
+          },
+        },
+        { defer: true }
+      );
+
+      expect({
+        queries: res.taskIds.queries.map((_: string) => "some query id"),
+        tables: res.taskIds.tables,
+        vdbs: res.taskIds.vdbs,
+      }).toMatchInlineSnapshot(`
+        {
+          "queries": [
+            "some query id",
+          ],
+          "tables": [],
+          "vdbs": [],
+        }
+      `);
+
+      expect(res.taskIds.queries.length).toEqual(1);
+
+      const taskId = res.taskIds.queries[0].jobId;
+
+      const startedTask = await db.pollDeferredTask("export-to-seafowl", {
+        taskId: taskId as string,
+      });
+
+      expect(startedTask.completed).toBe(false);
+      expect(startedTask.error).toBeNull();
+      expect(startedTask.info).not.toBeNull();
+      expect(startedTask.info?.jobStatus).not.toBeNull();
+      expect(startedTask.info?.jobStatus?.status).toBe(200);
+      expect(startedTask.response?.status).toBe("STARTED");
+      expect(startedTask.response?.exportFormat).toBe("sync");
+      expect(typeof startedTask.response?.started).toBe("string");
+      expect(startedTask.response?.finished).toBeNull();
+    }, 20_000);
+
+    it("exports a query to seafowl", async () => {
+      const db = createRealDb();
+
+      const { username: splitgraphUsername } = await fetchToken(db);
+
+      expect(splitgraphUsername).toEqual(SEAFOWL_DEST_DBNAME);
+
+      // Should be _only the base URL_, like: https://demo.seafowl.cloud
+      expect(SEAFOWL_DEST_URL.endsWith("/")).toEqual(false);
+      expect(SEAFOWL_DEST_URL.endsWith("/q")).toEqual(false);
+
+      const destTableSuffix = randSuffix();
+      const destTable = `random_series_${destTableSuffix}`;
+
+      const queryToExport = `SELECT a as int_val, string_agg(random()::text, '') as text_val
+      FROM generate_series(1, 5) a, generate_series(1, 50) b
+      GROUP BY a ORDER BY a;`;
+
+      const res = await db.exportData(
+        "export-to-seafowl",
+        {
+          queries: [
+            {
+              source: {
+                query: queryToExport,
               },
               destination: {
                 schema: "madatdata_testing",
@@ -863,12 +941,52 @@ describe.skipIf(shouldSkipExportFromSplitgraphToSeafowlIntegrationTests())(
         {
           "destSchema": "madatdata_testing",
           "exportedQuery": "SELECT a as int_val, string_agg(random()::text, '') as text_val
-                    FROM generate_series(1, 5) a, generate_series(1, 50) b
-                    GROUP BY a ORDER BY a",
+              FROM generate_series(1, 5) a, generate_series(1, 50) b
+              GROUP BY a ORDER BY a",
         }
       `);
 
       expect(ingestedParquetURL.includes(".parquet")).toEqual(true);
+
+      // PIGGYBACK on this test to also test pollDeferredTask case of a completd task
+      const shouldBeCompletedTask = await db.pollDeferredTask(
+        "export-to-seafowl",
+        { taskId: res.response.passedJobs.queries[0].job.jobId as string }
+      );
+
+      expect(shouldBeCompletedTask.completed).toBe(true);
+      expect(shouldBeCompletedTask.error).toBeNull();
+      expect(shouldBeCompletedTask.info).not.toBeNull();
+      expect(shouldBeCompletedTask.info?.jobStatus?.status).toBe(200);
+      expect(shouldBeCompletedTask.response?.exportFormat).toBe("sync");
+      expect(shouldBeCompletedTask.response?.status).toBe("SUCCESS");
+      expect(typeof shouldBeCompletedTask.response?.started).toBe("string");
+      expect(typeof shouldBeCompletedTask.response?.finished).toBe("string");
+
+      const outputTable = (
+        shouldBeCompletedTask.response?.output! as { tables: string[][] }
+      )["tables"][0];
+
+      const [
+        inputQuery,
+        outputDbName,
+        outputSchema,
+        outputTableName,
+        intermediateParquetUrl,
+      ] = outputTable;
+
+      expect(inputQuery).toEqual(exportedQuery);
+      expect(inputQuery).toMatchInlineSnapshot(`
+        "SELECT a as int_val, string_agg(random()::text, '') as text_val
+              FROM generate_series(1, 5) a, generate_series(1, 50) b
+              GROUP BY a ORDER BY a"
+      `);
+      expect(outputDbName).toEqual(destDbname);
+      expect(outputSchema).toEqual(destSchema);
+      expect(outputTableName).toEqual(destTableName);
+      expect(typeof intermediateParquetUrl).toBe("string");
+      expect(intermediateParquetUrl.startsWith("https://")).toBe(true);
+      expect(intermediateParquetUrl.includes(".parquet")).toBe(true);
     }, 60_000);
   }
 );
