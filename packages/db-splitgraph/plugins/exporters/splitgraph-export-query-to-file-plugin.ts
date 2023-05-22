@@ -9,7 +9,10 @@ import type {
   StartExportJobMutation,
   StartExportJobMutationVariables,
 } from "./splitgraph-export-query-to-file-plugin.generated";
-import { SplitgraphExportPlugin } from "./splitgraph-base-export-plugin";
+import {
+  PollDeferredTaskResponse,
+  SplitgraphExportPlugin,
+} from "./splitgraph-base-export-plugin";
 import type { DeferredTaskPlugin } from "@madatdata/base-db/base-db";
 
 type ExportQuerySourceOptions = {
@@ -39,7 +42,7 @@ export class SplitgraphExportQueryToFilePlugin
   >
   implements
     ExportPlugin<"export-query-to-file">,
-    DeferredTaskPlugin<"export-query-to-file", Record<string, unknown>>,
+    DeferredTaskPlugin<"export-query-to-file", PollDeferredTaskResponse>,
     WithOptionsInterface<SplitgraphExportQueryToFilePlugin>
 {
   public readonly __name = "export-query-to-file";

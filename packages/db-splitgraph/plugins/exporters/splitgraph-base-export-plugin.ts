@@ -32,11 +32,12 @@ const retryOptions = {
   exponentialOption: { maxInterval: MAX_BACKOFF_INTERVAL, multiplier: 2 },
 };
 
-// TODO: Make this a "bag of types" that includes response and error?
-type ExportJobStatusResponse = Extract<
-  ExportJobStatusQuery["exportJobStatus"],
-  object
->;
+export type PollDeferredTaskResponse = {
+  completed: boolean;
+  response: Extract<ExportJobStatusQuery["exportJobStatus"], object> | null;
+  error: "no response" | "failed status" | null | any;
+  info: { jobStatus: { status: number; headers: any } | null } | null;
+};
 
 export abstract class SplitgraphExportPlugin<
   PluginName extends string,
@@ -57,7 +58,7 @@ export abstract class SplitgraphExportPlugin<
   >
 > implements
     ExportPlugin<PluginName>,
-    DeferredTaskPlugin<PluginName, ExportJobStatusResponse>,
+    DeferredTaskPlugin<PluginName, PollDeferredTaskResponse>,
     WithOptionsInterface<DerivedSplitgraphExportPlugin>
 {
   public abstract readonly __name: PluginName;
@@ -126,12 +127,11 @@ export abstract class SplitgraphExportPlugin<
     destOptions: ConcreteExportDestOptions
   ): Promise<StartedExportJob>;
 
-  public async pollDeferredTask({ taskId }: { taskId: string }): Promise<{
-    completed: boolean;
-    response: ExportJobStatusResponse | null;
-    error: any | null;
-    info: any | null;
-  }> {
+  public async pollDeferredTask({
+    taskId,
+  }: {
+    taskId: string;
+  }): Promise<PollDeferredTaskResponse> {
     const {
       response: jobStatusResponse,
       error: jobStatusError,
@@ -155,21 +155,21 @@ export abstract class SplitgraphExportPlugin<
     } else if (taskUnresolved(jobStatusResponse.status as ExportTaskStatus)) {
       return {
         completed: false,
-        response: jobStatusResponse as unknown as ExportJobStatusResponse,
+        response: jobStatusResponse,
         error: null,
         info: { jobStatus: jobStatusInfo },
       };
     } else if (taskFailed(jobStatusResponse.status as ExportTaskStatus)) {
       return {
         completed: true,
-        response: jobStatusResponse as unknown as ExportJobStatusResponse,
+        response: jobStatusResponse,
         error: "failed status",
         info: { jobStatus: jobStatusInfo },
       };
     }
     return {
       completed: true,
-      response: jobStatusResponse as unknown as ExportJobStatusResponse,
+      response: jobStatusResponse,
       error: jobStatusError,
       info: { jobStatus: jobStatusInfo },
     };

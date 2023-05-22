@@ -398,25 +398,46 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
   async pollDeferredTask<
     PluginName extends ExtractPlugin<
       SplitgraphPluginList,
-      DeferredTaskPlugin<string, Record<string, unknown>>
+      DeferredTaskPlugin<
+        string,
+        {
+          response: Record<string, unknown> | null;
+          error: Record<string, unknown> | null;
+          info: Record<string, unknown> | null;
+          completed: boolean;
+        }
+      >
     >["__name"],
-    DeferredResponse extends Extract<
-      Awaited<
-        ReturnType<
-          ExtractPlugin<
-            SplitgraphPluginList,
-            DeferredTaskPlugin<string, Record<string, unknown>>
-          >["pollDeferredTask"]
-        >
-      >["response"],
-      object
+    DeferredTaskResponse extends Awaited<
+      ReturnType<
+        ExtractPlugin<
+          SplitgraphPluginList,
+          DeferredTaskPlugin<
+            string,
+            {
+              response: Record<string, unknown> | null;
+              error: Record<string, unknown> | null;
+              info: Record<string, unknown> | null;
+              completed: boolean;
+            }
+          >
+        >["pollDeferredTask"]
+      >
     >
   >(
     pluginName: PluginName,
     ...rest: Parameters<
       ExtractPlugin<
         SplitgraphPluginList,
-        DeferredTaskPlugin<PluginName, Record<string, unknown>>
+        DeferredTaskPlugin<
+          PluginName,
+          {
+            response: Record<string, unknown> | null;
+            error: Record<string, unknown> | null;
+            info: Record<string, unknown> | null;
+            completed: boolean;
+          }
+        >
       >["pollDeferredTask"]
     >
   ) {
@@ -426,11 +447,11 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
           plugin
         ): plugin is ExtractPlugin<
           SplitgraphPluginList,
-          DeferredTaskPlugin<typeof pluginName, DeferredResponse> & {
+          DeferredTaskPlugin<typeof pluginName, DeferredTaskResponse> & {
             __name: typeof pluginName;
           } & Partial<
               WithOptionsInterface<
-                DeferredTaskPlugin<typeof pluginName, DeferredResponse>
+                DeferredTaskPlugin<typeof pluginName, DeferredTaskResponse>
               >
             >
         > =>

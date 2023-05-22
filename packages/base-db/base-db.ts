@@ -61,16 +61,18 @@ export interface DeferredTaskPlugin<
   // correct task plugin by serialized deferred task
 
   // TODO: Can we change this to = Record<string, unknown> ?
-  DeferredResponse extends object,
+  DeferredTaskResponse extends {
+    completed: boolean;
+    response: any | null;
+    error: any | null;
+    info: any | null;
+  },
   MemoizedDeferredTask extends object = any
 > extends Plugin {
   __name: PluginName;
-  pollDeferredTask: (memoizedDeferredTask: MemoizedDeferredTask) => Promise<{
-    completed: boolean;
-    response: DeferredResponse | null;
-    error: any | null;
-    info: any | null;
-  }>;
+  pollDeferredTask: (
+    memoizedDeferredTask: MemoizedDeferredTask
+  ) => Promise<DeferredTaskResponse>;
 }
 
 // interface ExportPluginWithOptions extends ExportPlugin {
@@ -137,11 +139,27 @@ export type DeferredTaskPluginFromList<
   ConcretePluginList extends PluginList,
   PluginName extends ExtractPlugin<
     ConcretePluginList,
-    DeferredTaskPlugin<string, Record<string, unknown>>
+    DeferredTaskPlugin<
+      string,
+      {
+        response: Record<string, unknown> | null;
+        error: Record<string, unknown> | null;
+        info: Record<string, unknown> | null;
+        completed: boolean;
+      }
+    >
   >["__name"] = string
 > = ExtractPlugin<
   ConcretePluginList,
-  DeferredTaskPlugin<PluginName, Record<string, unknown>>
+  DeferredTaskPlugin<
+    PluginName,
+    {
+      response: Record<string, unknown> | null;
+      error: Record<string, unknown> | null;
+      info: Record<string, unknown> | null;
+      completed: boolean;
+    }
+  >
 >;
 
 export interface DbOptions<ConcretePluginList extends PluginList> {
