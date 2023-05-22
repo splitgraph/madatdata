@@ -45,8 +45,32 @@ export interface ExportPlugin<
   __name: PluginName;
   exportData: (
     sourceOptions: ConcreteSourceOptions,
-    destOptions: ConcreteDestOptions
-  ) => Promise<{ response: any | null; error: any | null; info?: any | null }>;
+    destOptions: ConcreteDestOptions,
+    exportOptions?: { defer: boolean }
+  ) => Promise<{
+    taskId?: string | null;
+    response: any | null;
+    error: any | null;
+    info?: any | null;
+  }>;
+}
+
+export interface DeferredTaskPlugin<
+  PluginName extends string,
+  // TODO: maybe should extend { __name: PluginName }  to ensure finding
+  // correct task plugin by serialized deferred task
+
+  // TODO: Can we change this to = Record<string, unknown> ?
+  DeferredResponse extends object,
+  MemoizedDeferredTask extends object = any
+> extends Plugin {
+  __name: PluginName;
+  pollDeferredTask: (memoizedDeferredTask: MemoizedDeferredTask) => Promise<{
+    completed: boolean;
+    response: DeferredResponse | null;
+    error: any | null;
+    info: any | null;
+  }>;
 }
 
 // interface ExportPluginWithOptions extends ExportPlugin {
@@ -61,6 +85,13 @@ export interface DbPluggableInterface<ConcretePluginList extends PluginList>
   exportData: <MatchingPlugin extends ExportPluginFromList<ConcretePluginList>>(
     ...exportDataArgsForPlugin: Parameters<MatchingPlugin["exportData"]>
   ) => Promise<unknown>;
+  pollDeferredTask: <
+    MatchingPlugin extends DeferredTaskPluginFromList<ConcretePluginList>
+  >(
+    ...pollDeferredTaskArgsForPlugin: Parameters<
+      MatchingPlugin["pollDeferredTask"]
+    >
+  ) => Promise<unknown>;
 }
 
 export interface Db<ConcretePluginList extends PluginList> {
@@ -71,6 +102,12 @@ export interface Db<ConcretePluginList extends PluginList> {
   exportData: <MatchingPlugin extends ExportPluginFromList<ConcretePluginList>>(
     pluginName: MatchingPlugin["__name"],
     ...rest: Parameters<MatchingPlugin["exportData"]>
+  ) => Promise<unknown>;
+  pollDeferredTask: <
+    MatchingPlugin extends DeferredTaskPluginFromList<ConcretePluginList>
+  >(
+    pluginName: MatchingPlugin["__name"],
+    ...rest: Parameters<MatchingPlugin["pollDeferredTask"]>
   ) => Promise<unknown>;
   makeClient: <ImplementationSpecificClientOptions extends ClientOptions>(
     makeClientForProtocol: (
@@ -95,6 +132,17 @@ export type ExportPluginFromList<
     ExportPlugin<string>
   >["__name"] = string
 > = ExtractPlugin<ConcretePluginList, ExportPlugin<PluginName>>;
+
+export type DeferredTaskPluginFromList<
+  ConcretePluginList extends PluginList,
+  PluginName extends ExtractPlugin<
+    ConcretePluginList,
+    DeferredTaskPlugin<string, Record<string, unknown>>
+  >["__name"] = string
+> = ExtractPlugin<
+  ConcretePluginList,
+  DeferredTaskPlugin<PluginName, Record<string, unknown>>
+>;
 
 export interface DbOptions<ConcretePluginList extends PluginList> {
   plugins: ConcretePluginList;
@@ -181,6 +229,20 @@ export abstract class BaseDb<
   >(
     pluginName: PluginName,
     ...rest: Parameters<MatchingPlugin["exportData"]>
+  ): Promise<unknown>;
+
+  abstract pollDeferredTask<
+    PluginName extends DeferredTaskPluginFromList<
+      ConcretePluginList,
+      string
+    >["__name"],
+    MatchingPlugin extends DeferredTaskPluginFromList<
+      ConcretePluginList,
+      PluginName
+    >
+  >(
+    pluginName: PluginName,
+    ...rest: Parameters<MatchingPlugin["pollDeferredTask"]>
   ): Promise<unknown>;
 
   /**

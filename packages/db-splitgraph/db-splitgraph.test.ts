@@ -633,7 +633,45 @@ describe("importData for SplitgraphImportCSVPlugin", () => {
 });
 
 // TODO: Make a mocked version of this test
-describe.skipIf(shouldSkipIntegrationTests())("real export query", () => {
+describe.skipIf(shouldSkipIntegrationTests()).only("real export query", () => {
+  it.only("deferred exports basic postgres query to parquet returns a taskId", async () => {
+    const db = createRealDb();
+    const { taskId, response, error, info } = await db.exportData(
+      "export-query-to-file",
+      {
+        query: `SELECT a as int_val, string_agg(random()::text, '') as text_val
+FROM generate_series(1, 5) a, generate_series(1, 50) b
+GROUP BY a ORDER BY a;`,
+        vdbId: "ddn",
+      },
+      {
+        format: "parquet",
+        filename: "random-series",
+      },
+      { defer: true }
+    );
+
+    expect(typeof taskId).toBe("string");
+    expect(taskId?.length).toEqual(36);
+
+    expect(taskId).toBeDefined();
+
+    expect(response).toBeDefined();
+    expect(info).toBeDefined();
+
+    const startedTask = await db.pollDeferredTask("export-query-to-file", {
+      taskId: taskId as string,
+    });
+
+    // TODO: cleanup types
+    expect(startedTask.completed).toBe(false);
+    expect(startedTask.error).toBeNull();
+    expect(startedTask.response?.status).toBe("STARTED");
+    expect(
+      (startedTask.response as { exportFormat: string }).exportFormat
+    ).toBe("parquet");
+  });
+
   it("exports a basic postgres query to parquet", async () => {
     const db = createRealDb();
 

@@ -10,6 +10,7 @@ import type {
   StartExportJobMutationVariables,
 } from "./splitgraph-export-query-to-file-plugin.generated";
 import { SplitgraphExportPlugin } from "./splitgraph-base-export-plugin";
+import type { DeferredTaskPlugin } from "@madatdata/base-db/base-db";
 
 type ExportQuerySourceOptions = {
   /**
@@ -38,6 +39,7 @@ export class SplitgraphExportQueryToFilePlugin
   >
   implements
     ExportPlugin<"export-query-to-file">,
+    DeferredTaskPlugin<"export-query-to-file", Record<string, unknown>>,
     WithOptionsInterface<SplitgraphExportQueryToFilePlugin>
 {
   public readonly __name = "export-query-to-file";
@@ -45,13 +47,23 @@ export class SplitgraphExportQueryToFilePlugin
 
   async exportData(
     sourceOptions: ExportQuerySourceOptions,
-    destOptions: ExportQueryDestOptions
+    destOptions: ExportQueryDestOptions,
+    exportOptions?: { defer: boolean }
   ) {
     const {
       response: exportResponse,
       error: exportError,
       info: exportInfo,
     } = await this.startExport(sourceOptions, destOptions);
+
+    if (exportOptions?.defer) {
+      return {
+        taskId: exportResponse?.exportQuery.id ?? null,
+        response: exportResponse,
+        error: exportError,
+        info: exportInfo,
+      };
+    }
 
     if (exportError || !exportResponse || !exportResponse.exportQuery.id) {
       return {

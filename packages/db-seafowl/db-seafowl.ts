@@ -31,6 +31,7 @@ import {
 // FIXME: we _should_ only be depending on types from this pacakge - should
 // they be in a separate package from the actual http-client?
 import type { HTTPStrategies, HTTPClientOptions } from "@madatdata/client-http";
+import type { DeferredTaskPlugin } from "@madatdata/base-db/base-db";
 
 export type DefaultSeafowlPluginList<
   ConcretePluginList extends (ImportPlugin<string> | ExportPlugin<string>)[] = (
@@ -284,6 +285,28 @@ export class DbSeafowl<SeafowlPluginList extends PluginList>
         success: false,
       },
       info: null,
+    };
+  }
+
+  // TODO: atm, there are no deferred tasks for seafowl
+  async pollDeferredTask<
+    PluginName extends ExtractPlugin<
+      SeafowlPluginList,
+      DeferredTaskPlugin<string>
+    >["__name"]
+  >(
+    _pluginName: PluginName,
+    ..._rest: Parameters<
+      ExtractPlugin<
+        SeafowlPluginList,
+        DeferredTaskPlugin<PluginName>
+      >["pollDeferredTask"]
+    >
+  ): Promise<unknown> {
+    await Promise.resolve();
+    return {
+      completed: false,
+      result: null,
     };
   }
 

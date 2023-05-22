@@ -7,6 +7,7 @@ import type {
   ExportJobStatusQuery,
   ExportJobStatusQueryVariables,
 } from "./splitgraph-base-export-plugin.generated";
+import type { DeferredTaskPlugin } from "@madatdata/base-db/base-db";
 
 // from unified spec
 // type _ExportJobStatus = "status" | "finished" | "output" | "started";
@@ -30,6 +31,13 @@ const retryOptions = {
   backOffPolicy: BackOffPolicy.ExponentialBackOffPolicy,
   exponentialOption: { maxInterval: MAX_BACKOFF_INTERVAL, multiplier: 2 },
 };
+
+// TODO: Make this a "bag of types" that includes response and error?
+type ExportJobStatusResponse = Extract<
+  ExportJobStatusQuery["exportJobStatus"],
+  object
+>;
+
 export abstract class SplitgraphExportPlugin<
   PluginName extends string,
   /** Concrete type of the derived class, for annotating return value of builder methods like withOptions */
@@ -49,6 +57,7 @@ export abstract class SplitgraphExportPlugin<
   >
 > implements
     ExportPlugin<PluginName>,
+    DeferredTaskPlugin<PluginName, ExportJobStatusResponse>,
     WithOptionsInterface<DerivedSplitgraphExportPlugin>
 {
   public abstract readonly __name: PluginName;
@@ -104,12 +113,70 @@ export abstract class SplitgraphExportPlugin<
     destOptions: ConcreteExportDestOptions
   ): Promise<CompletedExportJob>;
 
+  public abstract exportData<Deferred extends boolean>(
+    sourceOptions: ConcreteExportSourceOptions,
+    destOptions: ConcreteExportDestOptions,
+    exportOptions: { defer: Deferred }
+  ): Deferred extends true
+    ? Promise<{ taskId: string | null } & StartedExportJob>
+    : Promise<CompletedExportJob>;
+
   protected abstract startExport(
     sourceOptions: ConcreteExportSourceOptions,
     destOptions: ConcreteExportDestOptions
   ): Promise<StartedExportJob>;
 
+  public async pollDeferredTask({ taskId }: { taskId: string }): Promise<{
+    completed: boolean;
+    response: ExportJobStatusResponse | null;
+    error: any | null;
+    info: any | null;
+  }> {
+    const {
+      response: jobStatusResponse,
+      error: jobStatusError,
+      info: jobStatusInfo,
+    } = await this.fetchExportJobStatus(taskId);
+
+    if (jobStatusError) {
+      return {
+        completed: true,
+        response: null,
+        error: jobStatusError,
+        info: { jobStatus: jobStatusInfo },
+      };
+    } else if (!jobStatusResponse) {
+      return {
+        completed: false,
+        response: null,
+        error: "no response",
+        info: { jobStatus: jobStatusInfo },
+      };
+    } else if (taskUnresolved(jobStatusResponse.status as ExportTaskStatus)) {
+      return {
+        completed: false,
+        response: jobStatusResponse as unknown as ExportJobStatusResponse,
+        error: null,
+        info: { jobStatus: jobStatusInfo },
+      };
+    } else if (taskFailed(jobStatusResponse.status as ExportTaskStatus)) {
+      return {
+        completed: true,
+        response: jobStatusResponse as unknown as ExportJobStatusResponse,
+        error: "failed status",
+        info: { jobStatus: jobStatusInfo },
+      };
+    }
+    return {
+      completed: true,
+      response: jobStatusResponse as unknown as ExportJobStatusResponse,
+      error: jobStatusError,
+      info: { jobStatus: jobStatusInfo },
+    };
+  }
+
   // TODO: DRY (with at least splitgraph-import-csv-plugin)
+  // TODO: use pollDeferredTask (is it equivalent?)
   @Retryable({
     ...retryOptions,
     doRetry: ({ type }) => type === "retry",
@@ -194,6 +261,18 @@ enum ExportTaskStatus {
   Rejected = "REJECTED",
   Ignored = "IGNORED",
 }
+
+const failedStatuses = [
+  ExportTaskStatus.Failure,
+  ExportTaskStatus.Revoked,
+  ExportTaskStatus.Lost,
+  ExportTaskStatus.TimedOut,
+  ExportTaskStatus.Retry,
+  ExportTaskStatus.Rejected,
+  ExportTaskStatus.Ignored,
+];
+
+const taskFailed = (ts: ExportTaskStatus) => failedStatuses.includes(ts);
 
 const standbyStatuses = [ExportTaskStatus.Pending, ExportTaskStatus.Started];
 
