@@ -398,29 +398,13 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
   async pollDeferredTask<
     PluginName extends ExtractPlugin<
       SplitgraphPluginList,
-      DeferredTaskPlugin<
-        string,
-        {
-          response: Record<string, unknown> | null;
-          error: Record<string, unknown> | null;
-          info: Record<string, unknown> | null;
-          completed: boolean;
-        }
-      >
+      DeferredTaskPlugin<string, any>
     >["__name"],
     DeferredTaskResponse extends Awaited<
       ReturnType<
         ExtractPlugin<
           SplitgraphPluginList,
-          DeferredTaskPlugin<
-            string,
-            {
-              response: Record<string, unknown> | null;
-              error: Record<string, unknown> | null;
-              info: Record<string, unknown> | null;
-              completed: boolean;
-            }
-          >
+          DeferredTaskPlugin<string, any>
         >["pollDeferredTask"]
       >
     >
@@ -429,15 +413,7 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
     ...rest: Parameters<
       ExtractPlugin<
         SplitgraphPluginList,
-        DeferredTaskPlugin<
-          PluginName,
-          {
-            response: Record<string, unknown> | null;
-            error: Record<string, unknown> | null;
-            info: Record<string, unknown> | null;
-            completed: boolean;
-          }
-        >
+        DeferredTaskPlugin<PluginName, any>
       >["pollDeferredTask"]
     >
   ) {

@@ -66,6 +66,11 @@ export interface DeferredTaskPlugin<
     response: any | null;
     error: any | null;
     info: any | null;
+  } = {
+    completed: boolean;
+    response: Record<string, unknown>;
+    error: any;
+    info: any;
   },
   MemoizedDeferredTask extends object = any
 > extends Plugin {
@@ -139,28 +144,9 @@ export type DeferredTaskPluginFromList<
   ConcretePluginList extends PluginList,
   PluginName extends ExtractPlugin<
     ConcretePluginList,
-    DeferredTaskPlugin<
-      string,
-      {
-        response: Record<string, unknown> | null;
-        error: Record<string, unknown> | null;
-        info: Record<string, unknown> | null;
-        completed: boolean;
-      }
-    >
+    DeferredTaskPlugin<string>
   >["__name"] = string
-> = ExtractPlugin<
-  ConcretePluginList,
-  DeferredTaskPlugin<
-    PluginName,
-    {
-      response: Record<string, unknown> | null;
-      error: Record<string, unknown> | null;
-      info: Record<string, unknown> | null;
-      completed: boolean;
-    }
-  >
->;
+> = ExtractPlugin<ConcretePluginList, DeferredTaskPlugin<PluginName>>;
 
 export interface DbOptions<ConcretePluginList extends PluginList> {
   plugins: ConcretePluginList;

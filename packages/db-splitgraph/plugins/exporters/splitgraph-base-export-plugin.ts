@@ -32,7 +32,7 @@ const retryOptions = {
   exponentialOption: { maxInterval: MAX_BACKOFF_INTERVAL, multiplier: 2 },
 };
 
-export type PollDeferredTaskResponse = {
+export type DeferredSplitgraphExportTask = {
   completed: boolean;
   response: Extract<ExportJobStatusQuery["exportJobStatus"], object> | null;
   error: "no response" | "failed status" | null | any;
@@ -58,7 +58,7 @@ export abstract class SplitgraphExportPlugin<
   >
 > implements
     ExportPlugin<PluginName>,
-    DeferredTaskPlugin<PluginName, PollDeferredTaskResponse>,
+    DeferredTaskPlugin<PluginName, DeferredSplitgraphExportTask>,
     WithOptionsInterface<DerivedSplitgraphExportPlugin>
 {
   public abstract readonly __name: PluginName;
@@ -131,7 +131,7 @@ export abstract class SplitgraphExportPlugin<
     taskId,
   }: {
     taskId: string;
-  }): Promise<PollDeferredTaskResponse> {
+  }): Promise<DeferredSplitgraphExportTask> {
     const {
       response: jobStatusResponse,
       error: jobStatusError,
