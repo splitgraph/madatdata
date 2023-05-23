@@ -533,7 +533,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@madatdata/core@npm:0.0.11":
+"@madatdata/core@npm:0.0.11, @madatdata/core@npm:latest":
   version: 0.0.11
   resolution: "@madatdata/core@npm:0.0.11"
   dependencies:
@@ -1893,6 +1893,21 @@ __metadata:
   checksum: 8531dee41b60181b582f5ee80858907b102f083ef8808ff9352d589dd39e6b3a96f7a11b3776a03eef3a28430cff768336fa2e3ff2c6f8fcd699fbc891749051
   languageName: node
   linkType: hard
+
+"nextjs-import-airbyte-github-export-seafowl-acabed@workspace:nextjs-import-airbyte-github-export-seafowl":
+  version: 0.0.0-use.local
+  resolution: "nextjs-import-airbyte-github-export-seafowl-acabed@workspace:nextjs-import-airbyte-github-export-seafowl"
+  dependencies:
+    "@madatdata/core": latest
+    "@madatdata/react": latest
+    "@types/node": ^18.0.0
+    "@types/react": ^18.0.14
+    next: latest
+    react: 18.2.0
+    react-dom: 18.2.0
+    typescript: ^4.7.4
+  languageName: unknown
+  linkType: soft
 
 "node-fetch@npm:2.6.7":
   version: 2.6.7
