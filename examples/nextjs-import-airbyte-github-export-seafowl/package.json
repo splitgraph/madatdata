@@ -2,6 +2,7 @@
   "private": true,
   "scripts": {
     "dev": "yarn next",
+    "dev-mitm": "MITMPROXY_ADDRESS=http://localhost:7979 yarn next",
     "build": "yarn next build",
     "start": "yarn next start"
   },
