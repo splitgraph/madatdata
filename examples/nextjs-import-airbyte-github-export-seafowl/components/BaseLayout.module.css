@@ -34,4 +34,5 @@
   /* add additional styles for your content area */
   color: var(--text);
   background-color: var(--background);
+  padding: 24px;
 }

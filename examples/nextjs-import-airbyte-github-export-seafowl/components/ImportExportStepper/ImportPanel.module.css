@@ -1,0 +1,10 @@
+.importPanel {
+  background: inherit;
+}
+
+.error {
+  background-color: var(--danger);
+  padding: 8px;
+  border: 1px solid var(--sidebar);
+  margin-bottom: 8px;
+}
