@@ -51,7 +51,6 @@ export const ImportLoadingBar: React.FC<ImportLoadingBarProps> = ({
           dispatch({ type: "import_error", error: data.error });
         }
       } catch (error) {
-        console.error("Error occurred during import task status check:", error);
         dispatch({
           type: "import_error",
           error: "An error occurred during the import process",

@@ -1,6 +1,19 @@
-/* ExportPanel.module.css */
-
 .exportPanel {
-  /* Style for export panel will go here */
+  /* Styles for the export panel container */
+  background: inherit;
+}
+
+.startExportButton {
+  /* Styles for the start export button */
+  background: inherit;
+}
+
+.querySeafowlButton {
+  /* Styles for the query Seafowl button */
+  background: inherit;
+}
+
+.viewReportButton {
+  /* Styles for the view report button */
   background: inherit;
 }

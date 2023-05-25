@@ -6,7 +6,13 @@ import styles from "./ImportPanel.module.css";
 
 export const ImportPanel = () => {
   const [
-    { stepperState, taskId, error, splitgraphNamespace, splitgraphRepository },
+    {
+      stepperState,
+      importTaskId,
+      importError,
+      splitgraphNamespace,
+      splitgraphRepository,
+    },
     dispatch,
   ] = useStepper();
   const [inputValue, setInputValue] = useState("");
@@ -76,7 +82,7 @@ export const ImportPanel = () => {
     <div className={styles.importPanel}>
       {stepperState === "unstarted" && (
         <>
-          {error && <p className={styles.error}>{error}</p>}
+          {importError && <p className={styles.error}>{importError}</p>}
           <form onSubmit={handleInputSubmit}>
             <input
               type="text"
@@ -90,7 +96,7 @@ export const ImportPanel = () => {
       )}
       {stepperState === "awaiting_import" && (
         <ImportLoadingBar
-          taskId={taskId}
+          taskId={importTaskId}
           splitgraphNamespace={splitgraphNamespace}
           splitgraphRepository={splitgraphRepository}
         />

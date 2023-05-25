@@ -1,0 +1,17 @@
+/* components/ImportExportStepper/ExportTableLoadingBar.module.css */
+
+.exportTableLoadingBar {
+  background-color: inherit;
+}
+
+.loadingBar {
+  background-color: inherit;
+}
+
+.completedBar {
+  background-color: inherit;
+}
+
+.tableName {
+  background-color: inherit;
+}
