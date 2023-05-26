@@ -3,8 +3,7 @@ import React, { useReducer, useContext, ReactNode } from "react";
 import {
   StepperState,
   StepperAction,
-  initialState,
-  stepperReducer,
+  useStepperReducer,
 } from "./stepper-states";
 
 // Define the context
@@ -15,7 +14,7 @@ const StepperContext = React.createContext<
 export const StepperContextProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [state, dispatch] = useReducer(stepperReducer, initialState);
+  const [state, dispatch] = useStepperReducer();
 
   return (
     <StepperContext.Provider value={[state, dispatch]}>

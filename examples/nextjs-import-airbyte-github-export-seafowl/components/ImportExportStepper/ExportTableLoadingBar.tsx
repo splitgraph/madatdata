@@ -47,7 +47,11 @@ export const ExportTableLoadingBar = ({
             completedTable: { tableName, taskId },
           });
         } else if (data.error) {
-          throw new Error(data.error);
+          if (!data.completed) {
+            console.log("WARN: Failed status, not completed:", data.error);
+          } else {
+            throw new Error(data.error);
+          }
         }
       } catch (error) {
         dispatch({
