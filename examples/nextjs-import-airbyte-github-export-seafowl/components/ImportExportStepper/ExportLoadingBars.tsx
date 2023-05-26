@@ -7,13 +7,17 @@ export const ExportLoadingBars = () => {
 
   return (
     <div className={styles.exportLoadingBars}>
-      {Array.from(exportedTablesLoading).map(({ tableName, taskId }) => (
-        <ExportTableLoadingBar
-          key={taskId}
-          tableName={tableName}
-          taskId={taskId}
-        />
-      ))}
+      {Array.from(exportedTablesLoading).map(
+        ({ destinationSchema, destinationTable, sourceQuery, taskId }) => (
+          <ExportTableLoadingBar
+            key={taskId}
+            destinationSchema={destinationSchema}
+            destinationTable={destinationTable}
+            sourceQuery={sourceQuery}
+            taskId={taskId}
+          />
+        )
+      )}
     </div>
   );
 };

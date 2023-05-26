@@ -3,7 +3,7 @@ import {
   makeAuthenticatedSplitgraphDb,
   claimsFromJWT,
 } from "../../lib/backend/splitgraph-db";
-import { relevantGitHubTableNames } from "../../lib/config/github-tables";
+import { relevantGitHubTableNamesForImport } from "../../lib/config/github-tables";
 
 const GITHUB_PAT_SECRET = process.env.GITHUB_PAT_SECRET;
 
@@ -101,7 +101,7 @@ const startImport = async ({
       namespace: splitgraphNamespace,
       repository: splitgraphDestinationRepository,
       tables: [
-        ...relevantGitHubTableNames.map((t) => ({
+        ...relevantGitHubTableNamesForImport.map((t) => ({
           name: t,
           options: {},
           schema: [],

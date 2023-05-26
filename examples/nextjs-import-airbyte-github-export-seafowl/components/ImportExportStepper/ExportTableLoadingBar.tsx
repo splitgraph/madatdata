@@ -3,22 +3,28 @@ import { useStepper } from "./StepperContext";
 import styles from "./ExportTableLoadingBar.module.css";
 
 interface ExportTableLoadingBarProps {
-  tableName: string;
+  destinationTable: string;
+  destinationSchema: string;
+  sourceQuery?: string;
   taskId: string;
 }
 
 export const ExportTableLoadingBar = ({
-  tableName,
+  destinationTable,
+  destinationSchema,
+  sourceQuery,
   taskId,
 }: React.PropsWithoutRef<ExportTableLoadingBarProps>) => {
   const [{ stepperState, exportedTablesLoading }, dispatch] = useStepper();
 
   useEffect(() => {
-    if (!taskId || !tableName) {
-      console.log("Don't check export until we have taskId and tableName");
+    if (!taskId || !destinationTable) {
+      console.log(
+        "Don't check export until we have taskId and destinationTable"
+      );
       console.table({
         taskId,
-        tableName,
+        destinationTable,
       });
       return;
     }
@@ -44,7 +50,12 @@ export const ExportTableLoadingBar = ({
         if (data.completed) {
           dispatch({
             type: "export_table_task_complete",
-            completedTable: { tableName, taskId },
+            completedTable: {
+              destinationTable,
+              taskId,
+              destinationSchema,
+              sourceQuery,
+            },
           });
         } else if (data.error) {
           if (!data.completed) {
@@ -56,14 +67,14 @@ export const ExportTableLoadingBar = ({
       } catch (error) {
         dispatch({
           type: "export_error",
-          error: `Error exporting ${tableName}: ${error.message}`,
+          error: `Error exporting ${destinationTable}: ${error.message}`,
         });
       }
     };
 
     const interval = setInterval(pollExportTask, 3000);
     return () => clearInterval(interval);
-  }, [stepperState, tableName, taskId, dispatch]);
+  }, [stepperState, destinationTable, taskId, dispatch]);
 
   const isLoading = !!Array.from(exportedTablesLoading).find(
     (t) => t.taskId === taskId
@@ -73,10 +84,10 @@ export const ExportTableLoadingBar = ({
     <div className={styles.exportTableLoadingBar}>
       <div className={styles.loadingBar}>
         {isLoading
-          ? `Loading ${tableName}...`
-          : `Successfully exported ${tableName}`}
+          ? `Loading ${destinationTable}...`
+          : `Successfully exported ${destinationTable}`}
       </div>
-      <div className={styles.tableName}>{tableName}</div>
+      <div className={styles.destinationTable}>{destinationTable}</div>
     </div>
   );
 };

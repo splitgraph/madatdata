@@ -7,7 +7,7 @@
  * Note that Airbyte will still import tables that depend on these tables due
  * to foreign keys, and will also import airbyte metaata tables.
  */
-export const relevantGitHubTableNames = `commits
+export const relevantGitHubTableNamesForImport = `commits
 comments
 pull_requests
 pull_request_stats
@@ -17,12 +17,12 @@ issue_reactions`
 
 /**
  * List of "downstream" GitHub table names that will be imported by default by
- * the `airbyte-github` connector, given the list of `relevantGitHubTableNames`,
+ * the `airbyte-github` connector, given the list of `relevantGitHubTableNamesForImport`,
  * because they're either an Airbyte meta table or a table that depends on
  * one of the "relevant" tables.
  *
  * This is manually curated and might not be totally accurate. It's up to date
- * given the following list of `relevantGitHubTableNames`:
+ * given the following list of `relevantGitHubTableNamesForImport`:
  *
  * ```
  * commits

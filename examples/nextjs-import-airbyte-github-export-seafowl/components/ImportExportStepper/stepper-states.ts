@@ -3,7 +3,12 @@ import { ParsedUrlQuery } from "querystring";
 import { useEffect, useReducer } from "react";
 export type GitHubRepository = { namespace: string; repository: string };
 
-type ExportTable = { tableName: string; taskId: string };
+type ExportTable = {
+  destinationSchema: string;
+  destinationTable: string;
+  taskId: string;
+  sourceQuery?: string;
+};
 
 export type StepperState = {
   stepperState:
@@ -210,8 +215,18 @@ const stepperReducer = (
       const exportedTablesLoading = new Set<ExportTable>();
       const exportedTablesCompleted = new Set<ExportTable>();
 
-      for (const { tableName, taskId } of tables) {
-        exportedTablesLoading.add({ tableName, taskId });
+      for (const {
+        destinationTable,
+        destinationSchema,
+        sourceQuery,
+        taskId,
+      } of tables) {
+        exportedTablesLoading.add({
+          destinationTable,
+          destinationSchema,
+          sourceQuery,
+          taskId,
+        });
       }
 
       return {
