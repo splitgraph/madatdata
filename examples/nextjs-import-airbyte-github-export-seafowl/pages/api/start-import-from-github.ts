@@ -3,7 +3,7 @@ import {
   makeAuthenticatedSplitgraphDb,
   claimsFromJWT,
 } from "../../lib/backend/splitgraph-db";
-import { relevantGitHubTableNames } from "../../lib/config";
+import { relevantGitHubTableNames } from "../../lib/config/github-tables";
 
 const GITHUB_PAT_SECRET = process.env.GITHUB_PAT_SECRET;
 

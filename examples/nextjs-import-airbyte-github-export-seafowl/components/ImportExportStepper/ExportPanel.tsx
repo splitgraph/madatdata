@@ -4,7 +4,7 @@ import { useStepper } from "./StepperContext";
 import styles from "./ExportPanel.module.css";
 import { ExportLoadingBars } from "./ExportLoadingBars";
 
-import { relevantGitHubTableNames } from "../../lib/config";
+import { relevantGitHubTableNames } from "../../lib/config/github-tables";
 
 export const ExportPanel = () => {
   const [
