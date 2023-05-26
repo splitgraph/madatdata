@@ -3,6 +3,7 @@ import {
   makeAuthenticatedSplitgraphDb,
   claimsFromJWT,
 } from "../../lib/backend/splitgraph-db";
+import { relevantGitHubTableNames } from "../../lib/config";
 
 const GITHUB_PAT_SECRET = process.env.GITHUB_PAT_SECRET;
 
@@ -100,14 +101,11 @@ const startImport = async ({
       namespace: splitgraphNamespace,
       repository: splitgraphDestinationRepository,
       tables: [
-        {
-          name: "stargazers",
-          options: {
-            airbyte_cursor_field: ["starred_at"],
-            airbyte_primary_key_field: [],
-          },
+        ...relevantGitHubTableNames.map((t) => ({
+          name: t,
+          options: {},
           schema: [],
-        },
+        })),
       ],
     },
     { defer: true }

@@ -4,12 +4,7 @@ import { useStepper } from "./StepperContext";
 import styles from "./ExportPanel.module.css";
 import { ExportLoadingBars } from "./ExportLoadingBars";
 
-// TODO: don't hardcode this? or at least hardcode all of them and make it official
-const importedTableNames = [
-  "stargazers",
-  // NOTE: If we only specify stargazers, then stargazers_user is still included since it's a dependent table
-  "stargazers_user",
-];
+import { relevantGitHubTableNames } from "../../lib/config";
 
 export const ExportPanel = () => {
   const [
@@ -22,7 +17,7 @@ export const ExportPanel = () => {
       const response = await fetch("/api/start-export-to-seafowl", {
         method: "POST",
         body: JSON.stringify({
-          tables: importedTableNames.map((tableName) => ({
+          tables: relevantGitHubTableNames.map((tableName) => ({
             namespace: splitgraphNamespace,
             repository: splitgraphRepository,
             table: tableName,
