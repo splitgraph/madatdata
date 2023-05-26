@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { makeAuthenticatedSplitgraphDb } from "../../lib-backend/splitgraph-db";
+import { makeAuthenticatedSplitgraphDb } from "../../lib/backend/splitgraph-db";
 import type { DeferredSplitgraphExportTask } from "@madatdata/db-splitgraph/plugins/exporters/splitgraph-base-export-plugin";
 
 type ResponseData =

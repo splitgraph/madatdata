@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import {
   makeAuthenticatedSplitgraphDb,
   claimsFromJWT,
-} from "../../lib-backend/splitgraph-db";
+} from "../../lib/backend/splitgraph-db";
 
 const GITHUB_PAT_SECRET = process.env.GITHUB_PAT_SECRET;
 

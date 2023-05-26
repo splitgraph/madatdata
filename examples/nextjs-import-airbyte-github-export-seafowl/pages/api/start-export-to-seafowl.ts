@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { makeAuthenticatedSplitgraphDb } from "../../lib-backend/splitgraph-db";
+import { makeAuthenticatedSplitgraphDb } from "../../lib/backend/splitgraph-db";
 
 type ResponseData =
   | {
