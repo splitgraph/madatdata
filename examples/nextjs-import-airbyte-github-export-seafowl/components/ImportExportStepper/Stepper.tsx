@@ -4,12 +4,22 @@ import { ImportPanel } from "./ImportPanel";
 import { ExportPanel } from "./ExportPanel";
 
 import styles from "./Stepper.module.css";
+import { useRouter } from "next/router";
 
 const StepperOrLoading = ({ children }: { children: React.ReactNode }) => {
-  const [{ stepperState }] = useStepper();
+  const [{ stepperState, debug }] = useStepper();
 
   return (
-    <>{stepperState === "uninitialized" ? <div>........</div> : children}</>
+    <>
+      {stepperState === "uninitialized" ? (
+        <div>........</div>
+      ) : (
+        <>
+          {debug && <DebugPanel />}
+          {children}
+        </>
+      )}
+    </>
   );
 };
 
@@ -18,7 +28,6 @@ export const Stepper = () => {
     <StepperContextProvider>
       <div className={styles.stepper}>
         <StepperOrLoading>
-          <DebugPanel />
           <ImportPanel />
           <ExportPanel />
         </StepperOrLoading>

@@ -26,6 +26,7 @@ export type StepperState = {
   exportedTablesLoading?: Set<ExportTable>;
   exportedTablesCompleted?: Set<ExportTable>;
   exportError?: string;
+  debug?: string | null;
 };
 
 export type StepperAction =
@@ -55,6 +56,7 @@ const initialState: StepperState = {
   exportedTablesCompleted: new Set<ExportTable>(),
   importError: null,
   exportError: null,
+  debug: null,
 };
 
 const getQueryParamAsString = <T extends string = string>(
@@ -91,6 +93,7 @@ const queryParamParsers: {
     getQueryParamAsString(query, "splitgraphNamespace"),
   splitgraphRepository: (query) =>
     getQueryParamAsString(query, "splitgraphRepository"),
+  debug: (query) => getQueryParamAsString(query, "debug"),
 };
 
 const requireKeys = <T extends Record<string, unknown>>(
@@ -151,6 +154,7 @@ const parseStateFromRouter = (router: NextRouter): StepperState => {
     exportError: queryParamParsers.exportError(query),
     splitgraphNamespace: queryParamParsers.splitgraphNamespace(query),
     splitgraphRepository: queryParamParsers.splitgraphRepository(query),
+    debug: queryParamParsers.debug(query),
   };
 
   void stepperStateValidators[stepperState](stepper);
@@ -169,6 +173,7 @@ const serializeStateToQueryParams = (stepper: StepperState) => {
       exportError: stepper.exportError ?? undefined,
       splitgraphNamespace: stepper.splitgraphNamespace ?? undefined,
       splitgraphRepository: stepper.splitgraphRepository ?? undefined,
+      debug: stepper.debug ?? undefined,
     })
   );
 };
@@ -339,6 +344,11 @@ const useMarkAsComplete = (
           throw new Error("Failed to mark import/export as complete");
         }
 
+        if (response.status === 204) {
+          console.log("Repository already exists in metadata table");
+          return;
+        }
+
         const data = await response.json();
 
         if (!data.status) {
@@ -397,10 +407,6 @@ export const useStepperReducer = () => {
       return;
     }
 
-    console.log("push", {
-      pathname: router.pathname,
-      query: serializeStateToQueryParams(state),
-    });
     router.push(
       {
         pathname: router.pathname,
