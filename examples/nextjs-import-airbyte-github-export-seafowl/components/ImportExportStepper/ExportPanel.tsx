@@ -45,6 +45,8 @@ export const ExportPanel = () => {
   );
 
   const handleStartExport = useCallback(async () => {
+    const abortController = new AbortController();
+
     try {
       const response = await fetch("/api/start-export-to-seafowl", {
         method: "POST",
@@ -55,6 +57,7 @@ export const ExportPanel = () => {
         headers: {
           "Content-Type": "application/json",
         },
+        signal: abortController.signal,
       });
       const data = (await response.json()) as StartExportToSeafowlResponseData;
 
@@ -87,8 +90,14 @@ export const ExportPanel = () => {
         ],
       });
     } catch (error) {
+      if (error.name === "AbortError") {
+        return;
+      }
+
       dispatch({ type: "export_error", error: error.message });
     }
+
+    return () => abortController.abort();
   }, [queriesToExport, tablesToExport, dispatch]);
 
   return (

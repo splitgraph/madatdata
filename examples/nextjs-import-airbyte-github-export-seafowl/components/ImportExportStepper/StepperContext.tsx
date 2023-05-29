@@ -1,5 +1,5 @@
 // StepperContext.tsx
-import React, { useReducer, useContext, ReactNode } from "react";
+import React, { useContext, ReactNode } from "react";
 import {
   StepperState,
   StepperAction,

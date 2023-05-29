@@ -37,5 +37,58 @@ namespace NodeJS {
      * This is useful for debugging and development.
      */
     MITMPROXY_ADDRESS?: string;
+
+    /**
+     * The namespace of the repository in Splitgraph where metadata is stored
+     * containing the state of imported GitHub repositories, which should contain
+     * the repository `SPLITGRAPH_GITHUB_ANALYTICS_META_REPOSITORY`.
+     *
+     * This should be defined in `.env.local`, since it's not checked into Git
+     * and can vary between users. It should match the username associated with
+     * the `SPLITGRAPH_API_KEY`
+     *
+     * Example:
+     *
+     * ```
+     * miles/splitgraph-github-analytics.completed_repositories
+     * ^^^^^
+     * SPLITGRAPH_GITHUB_ANALYTICS_META_NAMESPACE=miles
+     * ```
+     */
+    SPLITGRAPH_GITHUB_ANALYTICS_META_NAMESPACE: string;
+
+    /**
+     * The repository (no namespace) in Splitgraph where metadata is stored
+     * containing the state of imported GitHub repositories, which should be a
+     * repository contained inside `SPLITGRAPH_GITHUB_ANALYTICS_META_NAMESPACE`.
+     *
+     * This is defined by default in `.env` which is checked into Git.
+     *
+     * * Example:
+     *
+     * ```
+     * miles/splitgraph-github-analytics.completed_repositories
+     *       ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     *       SPLITGRAPH_GITHUB_ANALYTICS_META_REPOSITORY=splitgraph-github-analytics
+     * ```
+     */
+    SPLITGRAPH_GITHUB_ANALYTICS_META_REPOSITORY: string;
+
+    /**
+     * The name of the table containing completed repositories, which are inserted
+     * when the import/export is complete, and which can be queried to render the
+     * sidebar containing previously imported github repositories.
+     *
+     * This is defined by default in `.env` which is checked into Git.
+     *
+     * Example:
+     *
+     * ```
+     * miles/splitgraph-github-analytics.completed_repositories
+     *                                   ^^^^^^^^^^^^^^^^^^^^^^
+     *       SPLITGRAPH_GITHUB_ANALYTICS_META_COMPLETED_TABLE=completed_repositories
+     * ```
+     */
+    SPLITGRAPH_GITHUB_ANALYTICS_META_COMPLETED_TABLE: string;
   }
 }

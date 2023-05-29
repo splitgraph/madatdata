@@ -1,4 +1,4 @@
-import { makeSplitgraphDb } from "@madatdata/core";
+import { makeSplitgraphDb, makeSplitgraphHTTPContext } from "@madatdata/core";
 
 // TODO: fix plugin exports
 import { makeDefaultPluginList } from "@madatdata/db-splitgraph";
@@ -26,6 +26,15 @@ const authenticatedCredential: Parameters<
 
 export const makeAuthenticatedSplitgraphDb = () =>
   makeSplitgraphDb({
+    authenticatedCredential,
+    plugins: makeDefaultPluginList({
+      graphqlEndpoint: defaultSplitgraphHost.baseUrls.gql,
+      authenticatedCredential,
+    }),
+  });
+
+export const makeAuthenticatedSplitgraphHTTPContext = () =>
+  makeSplitgraphHTTPContext({
     authenticatedCredential,
     plugins: makeDefaultPluginList({
       graphqlEndpoint: defaultSplitgraphHost.baseUrls.gql,

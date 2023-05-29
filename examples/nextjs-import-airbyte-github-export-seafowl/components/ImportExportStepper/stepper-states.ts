@@ -45,11 +45,6 @@ export type StepperAction =
   | { type: "reset" }
   | { type: "initialize_from_url"; parsedFromUrl: StepperState };
 
-type ExtractStepperAction<T extends StepperAction["type"]> = Extract<
-  StepperAction,
-  { type: T }
->;
-
 const initialState: StepperState = {
   stepperState: "unstarted",
   repository: null,
@@ -61,19 +56,6 @@ const initialState: StepperState = {
   importError: null,
   exportError: null,
 };
-
-// FOR DEBUGGING: uncomment for hardcoded state initialization
-// export const initialState: StepperState = {
-//   ...normalInitialState,
-//   stepperState: "import_complete",
-//   splitgraphNamespace: "miles",
-//   splitgraphRepository: "import-via-nextjs",
-// };
-
-type ActionParams<T extends StepperAction["type"]> = Omit<
-  ExtractStepperAction<T>,
-  "type"
->;
 
 const getQueryParamAsString = <T extends string = string>(
   query: ParsedUrlQuery,
@@ -310,12 +292,94 @@ const urlNeedsChange = (state: StepperState, router: NextRouter) => {
   );
 };
 
+/**
+ * When the export has completed, send a request to /api/mark-import-export-complete
+ * which will insert the repository into the metadata table, which we query to
+ * render the sidebar
+ */
+const useMarkAsComplete = (
+  state: StepperState,
+  dispatch: React.Dispatch<StepperAction>
+) => {
+  useEffect(() => {
+    if (state.stepperState !== "export_complete") {
+      return;
+    }
+
+    const {
+      repository: {
+        namespace: githubSourceNamespace,
+        repository: githubSourceRepository,
+      },
+      splitgraphRepository: splitgraphDestinationRepository,
+    } = state;
+
+    // NOTE: Make sure to abort request so that in React 18 development mode,
+    // when effect runs twice, the second request is aborted and we don't have
+    // a race condition with two requests inserting into the table (where we have no transactional
+    // integrity and manually do a SELECT before the INSERT to check if the row already exists)
+    const abortController = new AbortController();
+
+    const markImportExportComplete = async () => {
+      try {
+        const response = await fetch("/api/mark-import-export-complete", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            githubSourceNamespace,
+            githubSourceRepository,
+            splitgraphDestinationRepository,
+          }),
+          signal: abortController.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to mark import/export as complete");
+        }
+
+        const data = await response.json();
+
+        if (!data.status) {
+          throw new Error(
+            "Got unexpected resposne shape when marking import/export complete"
+          );
+        }
+
+        if (data.error) {
+          throw new Error(
+            `Failed to mark import/export complete: ${data.error}`
+          );
+        }
+
+        console.log("Marked import/export as complete");
+      } catch (error) {
+        if (error.name === "AbortError") {
+          return;
+        }
+
+        dispatch({
+          type: "export_error",
+          error: error.message ?? error.toString(),
+        });
+      }
+    };
+
+    markImportExportComplete();
+
+    return () => abortController.abort();
+  }, [state, dispatch]);
+};
+
 export const useStepperReducer = () => {
   const router = useRouter();
   const [state, dispatch] = useReducer(stepperReducer, {
     ...initialState,
     stepperState: "uninitialized",
   });
+
+  useMarkAsComplete(state, dispatch);
 
   useEffect(() => {
     dispatch({
