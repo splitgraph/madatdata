@@ -41,7 +41,7 @@ namespace NodeJS {
     /**
      * The namespace of the repository in Splitgraph where metadata is stored
      * containing the state of imported GitHub repositories, which should contain
-     * the repository `SPLITGRAPH_GITHUB_ANALYTICS_META_REPOSITORY`.
+     * the repository `NEXT_PUBLIC_SPLITGRAPH_GITHUB_ANALYTICS_META_REPOSITORY`.
      *
      * This should be defined in `.env.local`, since it's not checked into Git
      * and can vary between users. It should match the username associated with
@@ -52,15 +52,15 @@ namespace NodeJS {
      * ```
      * miles/splitgraph-github-analytics.completed_repositories
      * ^^^^^
-     * SPLITGRAPH_GITHUB_ANALYTICS_META_NAMESPACE=miles
+     * NEXT_PUBLIC_SPLITGRAPH_GITHUB_ANALYTICS_META_NAMESPACE=miles
      * ```
      */
-    SPLITGRAPH_GITHUB_ANALYTICS_META_NAMESPACE: string;
+    NEXT_PUBLIC_SPLITGRAPH_GITHUB_ANALYTICS_META_NAMESPACE: string;
 
     /**
      * The repository (no namespace) in Splitgraph where metadata is stored
      * containing the state of imported GitHub repositories, which should be a
-     * repository contained inside `SPLITGRAPH_GITHUB_ANALYTICS_META_NAMESPACE`.
+     * repository contained inside `NEXT_PUBLIC_SPLITGRAPH_GITHUB_ANALYTICS_META_NAMESPACE`.
      *
      * This is defined by default in `.env` which is checked into Git.
      *
@@ -69,10 +69,10 @@ namespace NodeJS {
      * ```
      * miles/splitgraph-github-analytics.completed_repositories
      *       ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     *       SPLITGRAPH_GITHUB_ANALYTICS_META_REPOSITORY=splitgraph-github-analytics
+     *       NEXT_PUBLIC_SPLITGRAPH_GITHUB_ANALYTICS_META_REPOSITORY=splitgraph-github-analytics
      * ```
      */
-    SPLITGRAPH_GITHUB_ANALYTICS_META_REPOSITORY: string;
+    NEXT_PUBLIC_SPLITGRAPH_GITHUB_ANALYTICS_META_REPOSITORY: string;
 
     /**
      * The name of the table containing completed repositories, which are inserted
@@ -86,9 +86,9 @@ namespace NodeJS {
      * ```
      * miles/splitgraph-github-analytics.completed_repositories
      *                                   ^^^^^^^^^^^^^^^^^^^^^^
-     *       SPLITGRAPH_GITHUB_ANALYTICS_META_COMPLETED_TABLE=completed_repositories
+     *       NEXT_PUBLIC_SPLITGRAPH_GITHUB_ANALYTICS_META_COMPLETED_TABLE=completed_repositories
      * ```
      */
-    SPLITGRAPH_GITHUB_ANALYTICS_META_COMPLETED_TABLE: string;
+    NEXT_PUBLIC_SPLITGRAPH_GITHUB_ANALYTICS_META_COMPLETED_TABLE: string;
   }
 }

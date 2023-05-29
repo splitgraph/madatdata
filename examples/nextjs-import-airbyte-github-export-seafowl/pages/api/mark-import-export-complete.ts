@@ -18,9 +18,12 @@ export type MarkImportExportCompleteResponseData =
   | MarkImportExportCompleteSuccessResponse
   | { error: string };
 
-const META_NAMESPACE = process.env.SPLITGRAPH_GITHUB_ANALYTICS_META_NAMESPACE;
-const META_REPOSITORY = process.env.SPLITGRAPH_GITHUB_ANALYTICS_META_REPOSITORY;
-const META_TABLE = process.env.SPLITGRAPH_GITHUB_ANALYTICS_META_COMPLETED_TABLE;
+const META_NAMESPACE =
+  process.env.NEXT_PUBLIC_SPLITGRAPH_GITHUB_ANALYTICS_META_NAMESPACE;
+const META_REPOSITORY =
+  process.env.NEXT_PUBLIC_SPLITGRAPH_GITHUB_ANALYTICS_META_REPOSITORY;
+const META_TABLE =
+  process.env.NEXT_PUBLIC_SPLITGRAPH_GITHUB_ANALYTICS_META_COMPLETED_TABLE;
 
 /**
  * To manually send a request, example:
@@ -42,7 +45,7 @@ export default async function handler(
   if (!META_NAMESPACE) {
     res.status(400).json({
       error:
-        "Missing env var: SPLITGRAPH_GITHUB_ANALYTICS_META_NAMESPACE " +
+        "Missing env var: NEXT_PUBLIC_SPLITGRAPH_GITHUB_ANALYTICS_META_NAMESPACE " +
         "Is it in .env.local or Vercel secrets?",
     });
     return;
@@ -51,7 +54,7 @@ export default async function handler(
   if (!META_REPOSITORY) {
     res.status(400).json({
       error:
-        "Missing env var: SPLITGRAPH_GITHUB_ANALYTICS_META_REPOSITORY " +
+        "Missing env var: NEXT_PUBLIC_SPLITGRAPH_GITHUB_ANALYTICS_META_REPOSITORY " +
         "Is it in .env or Vercel environment variables?",
     });
     return;
@@ -125,7 +128,7 @@ const markImportExportAsComplete = async ({
   // NOTE: We also assume that META_NAMESPACE is the same as destination namespace
   if (!username || username !== META_NAMESPACE) {
     throw new Error(
-      "Authenticated user does not match SPLITGRAPH_GITHUB_ANALYTICS_META_NAMESPACE"
+      "Authenticated user does not match NEXT_PUBLIC_SPLITGRAPH_GITHUB_ANALYTICS_META_NAMESPACE"
     );
   }
 
