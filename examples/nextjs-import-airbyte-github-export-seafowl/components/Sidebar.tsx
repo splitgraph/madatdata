@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import Link from "next/link";
 import styles from "./Sidebar.module.css";
+import { SqlProvider, makeSplitgraphHTTPContext } from "@madatdata/react";
 import { useSql } from "@madatdata/react";
 
 import type { ImportedRepository } from "../types";
@@ -46,7 +47,6 @@ const useImportedRepositories = (): ImportedRepository[] => {
     }
 
     if (!response) {
-      console.warn("No response received");
       return [];
     }
 
@@ -56,8 +56,29 @@ const useImportedRepositories = (): ImportedRepository[] => {
   return repositories;
 };
 
-export const Sidebar = () => {
+const RepositoriesList = () => {
   const repositories = useImportedRepositories();
+
+  return (
+    <ul className={styles.repoList}>
+      {repositories.map((repo, index) => (
+        <li key={index}>
+          <Link
+            href={`/${repo.githubNamespace}/${repo.githubRepository}?splitgraphNamespace=${repo.splitgraphNamespace}&splitgraphRepository=${repo.splitgraphRepository}`}
+          >
+            {repo.githubNamespace}/{repo.githubRepository}
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+};
+
+export const Sidebar = () => {
+  const splitgraphDataContext = useMemo(
+    () => makeSplitgraphHTTPContext({ credential: null }),
+    []
+  );
 
   return (
     <aside className={styles.sidebar}>
@@ -66,17 +87,9 @@ export const Sidebar = () => {
           Import Your Repository
         </Link>
       </div>
-      <ul className={styles.repoList}>
-        {repositories.map((repo, index) => (
-          <li key={index}>
-            <Link
-              href={`/${repo.githubNamespace}/${repo.githubRepository}?splitgraphNamespace=${repo.splitgraphNamespace}&splitgraphRepository=${repo.splitgraphRepository}`}
-            >
-              {repo.githubNamespace}/{repo.githubRepository}
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <SqlProvider dataContext={splitgraphDataContext}>
+        <RepositoriesList />
+      </SqlProvider>
     </aside>
   );
 };

@@ -6,32 +6,49 @@ import { useRouter } from "next/router";
 
 import type { ImportedRepository } from "../../types";
 
+import { ImportedRepoMetadata } from "../../components/RepositoryAnalytics/ImportedRepoMetadata";
+import { useMemo } from "react";
+
 const useImportedRepoFromURL = () => {
   const { query } = useRouter();
 
-  return (
-    [
-      ["github_namespace", "githubNamespace"],
-      ["github_repository", "githubRepository"],
-      ["splitgraphNamespace", "splitgraphNamespace"],
-      ["splitgraphRepository", "splitgraphRepository"],
-    ] as [string, keyof ImportedRepository][]
-  ).reduce((acc, [queryParam, repoKey]) => {
-    if (!query[queryParam] || Array.isArray(query[queryParam])) {
-      throw new Error(`Invalid query params: unexpected type of ${queryParam}`);
-    }
+  console.log("query:", query);
 
-    return {
-      ...acc,
-      [repoKey]: query[queryParam] as string,
-    };
-  }, {} as ImportedRepository);
+  const queryParams = useMemo(
+    () =>
+      (
+        [
+          ["github_namespace", "githubNamespace"],
+          ["github_repository", "githubRepository"],
+          ["splitgraphNamespace", "splitgraphNamespace"],
+          ["splitgraphRepository", "splitgraphRepository"],
+        ] as [string, keyof ImportedRepository][]
+      ).reduce((acc, [queryParam, repoKey]) => {
+        if (!query[queryParam] || Array.isArray(query[queryParam])) {
+          // throw new Error(
+          //   `Invalid query params: unexpected type of ${queryParam}: ${query[queryParam]}}`
+          // );
+          return acc;
+        }
+
+        return {
+          ...acc,
+          [repoKey]: query[queryParam] as string,
+        };
+      }, {} as ImportedRepository),
+    [query]
+  );
+
+  return queryParams;
 };
 
 const RepositoryAnalyticsPage = () => {
+  const importedRepository = useImportedRepoFromURL();
+
   return (
     <BaseLayout sidebar={<Sidebar />}>
-      <Charts importedRepository={useImportedRepoFromURL()} />
+      <ImportedRepoMetadata importedRepository={importedRepository} />
+      <Charts importedRepository={importedRepository} />
     </BaseLayout>
   );
 };
