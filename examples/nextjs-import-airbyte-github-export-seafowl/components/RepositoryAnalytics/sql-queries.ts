@@ -1,13 +1,8 @@
-import type { ImportedRepository } from "../../types";
+import type { ImportedRepository, TargetSplitgraphRepo } from "../../types";
 
 // Assume meta namespace contains both the meta tables, and all imported repositories and tables
 const META_NAMESPACE =
   process.env.NEXT_PUBLIC_SPLITGRAPH_GITHUB_ANALYTICS_META_NAMESPACE;
-
-type TargetSplitgraphRepo = {
-  splitgraphNamespace?: string;
-  splitgraphRepository: string;
-};
 
 /**
  * Raw query to select all columns in the stargazers table, which can be
@@ -31,24 +26,4 @@ export const makeStargazersTableQuery = ({
 FROM
   "${splitgraphNamespace}/${splitgraphRepository}"."stargazers"
 LIMIT 100;`;
-};
-
-/** Shape of row returned by {@link stargazersLineChartQuery} */
-export type StargazersLineChartRow = {
-  username: string;
-  cumulative_stars: number;
-  starred_at: string;
-};
-
-/** Time series of GitHub stargazers for the given repository */
-export const stargazersLineChartQuery = ({
-  splitgraphNamespace = META_NAMESPACE,
-  splitgraphRepository,
-}: TargetSplitgraphRepo) => {
-  return `SELECT
-  COUNT(*) OVER (ORDER BY starred_at) AS cumulative_stars,
-  starred_at
-FROM
-  "${splitgraphNamespace}/${splitgraphRepository}"."stargazers"
-ORDER BY starred_at;`;
 };
