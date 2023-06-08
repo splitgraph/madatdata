@@ -12,8 +12,6 @@ import { useMemo } from "react";
 const useImportedRepoFromURL = () => {
   const { query } = useRouter();
 
-  console.log("query:", query);
-
   const queryParams = useMemo(
     () =>
       (
@@ -23,16 +21,16 @@ const useImportedRepoFromURL = () => {
           ["splitgraphNamespace", "splitgraphNamespace"],
           ["splitgraphRepository", "splitgraphRepository"],
         ] as [string, keyof ImportedRepository][]
-      ).reduce((acc, [queryParam, repoKey]) => {
+      ).reduce((parsedQueryParams, [queryParam, repoKey]) => {
         if (!query[queryParam] || Array.isArray(query[queryParam])) {
           // throw new Error(
           //   `Invalid query params: unexpected type of ${queryParam}: ${query[queryParam]}}`
           // );
-          return acc;
+          return parsedQueryParams;
         }
 
         return {
-          ...acc,
+          ...parsedQueryParams,
           [repoKey]: query[queryParam] as string,
         };
       }, {} as ImportedRepository),
