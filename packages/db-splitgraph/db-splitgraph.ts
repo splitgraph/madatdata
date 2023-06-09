@@ -32,6 +32,10 @@ import {
 import type { GraphQLClientOptions } from "./plugins";
 import type { DeferredTaskPlugin } from "@madatdata/base-db/base-db";
 
+// TODO: dont hardcode this, fix initialization interface for plugins
+import { SplitgraphAirbyteGithubImportPlugin } from "./plugins/importers/generated/airbyte-github/plugin";
+import { SplitgraphExportToSeafowlPlugin } from "./plugins/exporters/splitgraph-export-to-seafowl-plugin";
+
 interface DbSplitgraphPluginHostContext extends GraphQLClientOptions {}
 
 interface DbSplitgraphOptions<ConcretePluginList extends PluginList>
@@ -73,8 +77,9 @@ export const makeDefaultPluginList = (
 
   return [
     new SplitgraphImportCSVPlugin({ ...graphqlOptions }),
-    // new AirbyteGithubImportPlugin({ ...graphqlOptions }),
+    new SplitgraphAirbyteGithubImportPlugin({ ...graphqlOptions }),
     new SplitgraphExportQueryToFilePlugin({ ...graphqlOptions }),
+    new SplitgraphExportToSeafowlPlugin({ ...graphqlOptions }),
   ];
 };
 
