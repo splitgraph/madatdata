@@ -69,9 +69,11 @@ export class SplitgraphExportToSeafowlPlugin
       startExportError ||
       !startExportResponse ||
       !startExportResponse.exportToSeafowl.queries ||
-      !startExportResponse.exportToSeafowl.tables ||
+      // NOTE: .tables can be null, whereas all the others are always lists (even if empty)
+      typeof startExportResponse.exportToSeafowl.tables === "undefined" ||
       !startExportResponse.exportToSeafowl.vdbs
     ) {
+      debugger;
       return {
         response: startExportResponse ?? null,
         error: startExportError ?? null,
@@ -83,16 +85,22 @@ export class SplitgraphExportToSeafowlPlugin
 
     const {
       queries: queryExportJobs,
-      tables: tableExportJobs,
+      tables: tableExportMultiJob,
       vdbs: vdbExportJobs,
     } = startExportResponse.exportToSeafowl;
+
+    // NOTE: As an efficiency measure, Splitgraph combines table exports into a single job,
+    // so the returned shape is slightly different from queries and vdbs (which each have a job for each)
+    const { jobId: tableExportJobId, tables: tableExportTablesDetails } =
+      tableExportMultiJob ?? { jobId: undefined, tables: [] };
 
     // FIXME: These types are returned as any. Need some generic param passing
     if (exportOptions?.defer) {
       return {
         taskIds: {
           queries: queryExportJobs,
-          tables: tableExportJobs,
+          // There can be maximum one table job, but put it in a list for consistency with vdbs and queries
+          tables: tableExportJobId ? [tableExportJobId] : [],
           vdbs: vdbExportJobs,
         },
         response: startExportResponse,
@@ -107,7 +115,9 @@ export class SplitgraphExportToSeafowlPlugin
         result: JobResult;
       }[];
       tables: {
-        job: (typeof tableExportJobs)[number];
+        job: {
+          tables: typeof tableExportTablesDetails;
+        };
         result: JobResult;
       }[];
       vdbs: {
@@ -134,14 +144,25 @@ export class SplitgraphExportToSeafowlPlugin
         ).queries.push({ job, result })
       )
     );
-    const tableExportPromises = tableExportJobs.map((job) =>
-      this.waitForTask(job.jobId).then((result) =>
-        (result.response?.status === "SUCCESS"
-          ? passedJobs
-          : failedJobs
-        ).tables.push({ job, result })
-      )
-    );
+
+    // Keep it as a list for consistency with queries and vdbs (even though max one item)
+    const tableExportPromises = [{ tableExportJobId, tableExportTablesDetails }]
+      .filter((v) => !!v.tableExportJobId)
+      // Note the variable names in the local scope are re-using the names from the outer scope
+      .map(({ tableExportJobId, tableExportTablesDetails }) =>
+        this.waitForTask(tableExportJobId!).then((result) =>
+          (result.response?.status === "SUCCESS"
+            ? passedJobs
+            : failedJobs
+          ).tables.push({
+            job: {
+              tables: tableExportTablesDetails,
+            },
+            result,
+          })
+        )
+      );
+
     const vdbExportPromises = vdbExportJobs.map((job) =>
       this.waitForTask(job.jobId).then((result) =>
         (result.response?.status === "SUCCESS"
@@ -168,7 +189,7 @@ export class SplitgraphExportToSeafowlPlugin
       failedJobs.tables.length +
       failedJobs.vdbs.length;
 
-    return {
+    const rval = {
       response: {
         success: true, // FIXME: seems unnecessary, just here for consistency with other (export) plugins
         passedJobs,
@@ -191,6 +212,8 @@ export class SplitgraphExportToSeafowlPlugin
         startExportInfo,
       },
     };
+
+    return rval;
   }
 
   protected async startExport(
@@ -216,10 +239,12 @@ export class SplitgraphExportToSeafowlPlugin
           ) {
             tables {
               jobId
-              sourceVdbId
-              sourceNamespace
-              sourceRepository
-              sourceTable
+              tables {
+                sourceVdbId
+                sourceNamespace
+                sourceRepository
+                sourceTable
+              }
             }
             queries {
               jobId
