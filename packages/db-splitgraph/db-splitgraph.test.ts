@@ -644,9 +644,12 @@ describe.skipIf(shouldSkipIntegrationTests())("real export query", () => {
       info,
     } = await db.exportData(
       "export-query-to-file",
+      // NOTE: Use a fairly big query (10,000 rows) so that it takes long enough to complete
+      // that when we check it's status for the first time, we can expect it to still be pending
+      // (with a low number of rows, this test sometimes failed since the task was complete when checking it)
       {
         query: `SELECT a as int_val, string_agg(random()::text, '') as text_val
-FROM generate_series(1, 5) a, generate_series(1, 50) b
+FROM generate_series(1, 10000) a, generate_series(1, 50) b
 GROUP BY a ORDER BY a;`,
         vdbId: "ddn",
       },
