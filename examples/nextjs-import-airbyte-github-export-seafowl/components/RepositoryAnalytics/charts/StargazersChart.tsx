@@ -51,7 +51,6 @@ export const stargazersLineChartQuery = ({
   return `SELECT
   COUNT(*) OVER (ORDER BY starred_at) AS cumulative_stars,
   starred_at
-FROM
-  "${splitgraphNamespace}/${splitgraphRepository}"."stargazers"
+FROM "${splitgraphNamespace}/${splitgraphRepository}"."stargazers"
 ORDER BY starred_at;`;
 };

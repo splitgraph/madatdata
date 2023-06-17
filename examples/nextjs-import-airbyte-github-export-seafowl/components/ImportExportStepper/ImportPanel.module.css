@@ -8,3 +8,31 @@
   border: 1px solid var(--sidebar);
   margin-bottom: 8px;
 }
+
+.repoNameInput {
+  margin-right: 0.25rem;
+  width: 50ch;
+}
+
+.repoNameForm {
+  display: flex;
+}
+
+.startImportButton {
+  color: var(--background);
+  background-color: var(--secondary);
+  padding: 8px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: bold;
+  border-style: none;
+}
+
+.startImportButton:hover {
+  text-shadow: 0 0 5px rgba(43, 0, 255, 0.5);
+  cursor: pointer;
+}
+
+.importCompleteInfo p {
+  margin-bottom: 1rem;
+}

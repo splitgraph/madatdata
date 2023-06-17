@@ -1,3 +1,4 @@
+import { ComponentProps } from "react";
 import type { ImportedRepository } from "../../types";
 import style from "./ImportedRepoMetadata.module.css";
 
@@ -10,6 +11,11 @@ const META_NAMESPACE =
 interface ImportedRepoMetadataProps {
   importedRepository: ImportedRepository;
 }
+
+type SplitgraphRepository = Pick<
+  ImportedRepository,
+  "splitgraphNamespace" | "splitgraphRepository"
+>;
 
 export const ImportedRepoMetadata = ({
   importedRepository,
@@ -40,14 +46,22 @@ export const ImportedRepoMetadata = ({
           />
         </li>
       </ul>
+      <SeafowlEmbeddedQuery
+        importedRepository={importedRepository}
+        tableName={"stargazers"}
+        makeQuery={makeStargazersTableQuery}
+      />
     </div>
   );
 };
 
-const SplitgraphRepoLink = ({
+export const SplitgraphRepoLink = ({
   splitgraphNamespace,
   splitgraphRepository,
-}: ImportedRepository) => {
+}: Pick<
+  ImportedRepository,
+  "splitgraphNamespace" | "splitgraphRepository"
+>) => {
   return (
     <a
       target="_blank"
@@ -58,10 +72,10 @@ const SplitgraphRepoLink = ({
   );
 };
 
-const GitHubRepoLink = ({
+export const GitHubRepoLink = ({
   githubNamespace,
   githubRepository,
-}: ImportedRepository) => {
+}: Pick<ImportedRepository, "githubNamespace" | "githubRepository">) => {
   return (
     <a
       target="_blank"
@@ -70,13 +84,13 @@ const GitHubRepoLink = ({
   );
 };
 
-const SplitgraphQueryLink = ({
+export const SplitgraphQueryLink = ({
   importedRepository,
   makeQuery,
   tableName,
 }: {
-  importedRepository: ImportedRepository;
-  makeQuery: (repo: ImportedRepository) => string;
+  importedRepository: SplitgraphRepository;
+  makeQuery: (repo: SplitgraphRepository) => string;
   tableName: string;
 }) => {
   return (
@@ -84,8 +98,32 @@ const SplitgraphQueryLink = ({
       href={makeSplitgraphQueryHref(makeQuery(importedRepository))}
       target="_blank"
     >
-      Query {tableName} in the Splitgraph Console
+      Query the {tableName} table in the Splitgraph Console
     </a>
+  );
+};
+
+export const SplitgraphStargazersQueryLink = ({
+  ...importedRepository
+}: SplitgraphRepository) => {
+  return (
+    <SplitgraphQueryLink
+      importedRepository={importedRepository}
+      tableName={"stargazers"}
+      makeQuery={makeStargazersTableQuery}
+    />
+  );
+};
+
+export const SeafowlStargazersQueryLink = ({
+  ...importedRepository
+}: SplitgraphRepository) => {
+  return (
+    <SeafowlQueryLink
+      importedRepository={importedRepository}
+      tableName={"stargazers"}
+      makeQuery={makeStargazersTableQuery}
+    />
   );
 };
 
@@ -94,8 +132,8 @@ const SeafowlQueryLink = ({
   makeQuery,
   tableName,
 }: {
-  importedRepository: ImportedRepository;
-  makeQuery: (repo: ImportedRepository) => string;
+  importedRepository: SplitgraphRepository;
+  makeQuery: (repo: SplitgraphRepository) => string;
   tableName: string;
 }) => {
   return (
@@ -125,5 +163,60 @@ const makeSeafowlQueryHref = (sqlQuery: string) => {
     flavor: "seafowl",
     // Splitgraph exports to Seafowl dbname matching the username of the exporting user
     "database-name": META_NAMESPACE,
+  })}`;
+};
+
+export const SplitgraphEmbeddedQuery = ({
+  importedRepository,
+  makeQuery,
+}: {
+  importedRepository: SplitgraphRepository;
+  makeQuery: (repo: SplitgraphRepository) => string;
+  tableName: string;
+}) => {
+  return (
+    <iframe
+      src={makeSplitgraphEmbeddableQueryHref(makeQuery(importedRepository))}
+      allowFullScreen={false}
+      style={{ border: "none" }}
+      height={"400px"}
+      width={"80%"}
+    />
+  );
+};
+
+export const SeafowlEmbeddedQuery = ({
+  importedRepository,
+  makeQuery,
+}: {
+  importedRepository: SplitgraphRepository;
+  makeQuery: (repo: SplitgraphRepository) => string;
+  tableName: string;
+}) => {
+  return (
+    <iframe
+      src={makeSeafowlEmbeddableQueryHref(makeQuery(importedRepository))}
+      style={{ border: "none" }}
+      height={"400px"}
+      width={"80%"}
+    />
+  );
+};
+
+/** Return the URL to Splitgraph Console pointing to Seafowl db where we export tables */
+const makeSeafowlEmbeddableQueryHref = (sqlQuery: string) => {
+  return `https://www.splitgraph.com/embeddable-seafowl-console/query-editor?${new URLSearchParams(
+    {
+      "sql-query": sqlQuery,
+      // Splitgraph exports to Seafowl dbname matching the username of the exporting user
+      database: META_NAMESPACE,
+    }
+  )}`;
+};
+
+const makeSplitgraphEmbeddableQueryHref = (sqlQuery: string) => {
+  return `https://www.splitgraph.com/embed/workspace/ddn?${new URLSearchParams({
+    layout: "hsplit",
+    query: sqlQuery,
   })}`;
 };

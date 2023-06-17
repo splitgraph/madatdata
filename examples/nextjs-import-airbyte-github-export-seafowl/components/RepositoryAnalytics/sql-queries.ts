@@ -1,4 +1,4 @@
-import type { ImportedRepository, TargetSplitgraphRepo } from "../../types";
+import type { TargetSplitgraphRepo } from "../../types";
 
 // Assume meta namespace contains both the meta tables, and all imported repositories and tables
 const META_NAMESPACE =

@@ -1,11 +1,7 @@
 .exportPanel {
   /* Styles for the export panel container */
   background: inherit;
-}
-
-.startExportButton {
-  /* Styles for the start export button */
-  background: inherit;
+  margin-top: 2rem;
 }
 
 .querySeafowlButton {
@@ -16,4 +12,27 @@
 .viewReportButton {
   /* Styles for the view report button */
   background: inherit;
+}
+
+.startExportButton {
+  color: var(--background);
+  background-color: var(--secondary);
+  padding: 8px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: bold;
+  border-style: none;
+}
+
+.startExportButton:hover {
+  text-shadow: 0 0 5px rgba(43, 0, 255, 0.5);
+  cursor: pointer;
+}
+
+.exportCompleteInfo p {
+  margin-bottom: 1rem;
+}
+
+.exportInfo p {
+  margin-bottom: 1rem;
 }

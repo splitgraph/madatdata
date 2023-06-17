@@ -1,0 +1,12 @@
+.stepDescriptionContainer {
+  margin-bottom: 1rem;
+}
+
+.stepDescriptionContainer a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.stepDescriptionContainer a:hover {
+  text-decoration: underline;
+}

@@ -16,7 +16,7 @@
 }
 
 .importButton {
-  color: var(--background);
+  color: var(--background) !important;
   background-color: var(--secondary);
   padding: 16px;
   border-radius: 16px;

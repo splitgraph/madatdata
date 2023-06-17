@@ -1,8 +1,16 @@
 import { useState } from "react";
 import { useStepper } from "./StepperContext";
 import { ImportLoadingBar } from "./ImportLoadingBar";
+import { StepTitle } from "./StepTitle";
 
 import styles from "./ImportPanel.module.css";
+import { StepDescription } from "./StepDescription";
+import {
+  GitHubRepoLink,
+  SplitgraphStargazersQueryLink,
+  SplitgraphEmbeddedQuery,
+} from "../RepositoryAnalytics/ImportedRepoMetadata";
+import { makeStargazersTableQuery } from "../RepositoryAnalytics/sql-queries";
 
 export const ImportPanel = () => {
   const [
@@ -12,6 +20,7 @@ export const ImportPanel = () => {
       importError,
       splitgraphNamespace,
       splitgraphRepository,
+      repository: githubRepositoryFromStepper,
     },
     dispatch,
   ] = useStepper();
@@ -78,19 +87,100 @@ export const ImportPanel = () => {
     return /^[\w-.]+\/[\w-.]+$/.test(repoName);
   };
 
+  const stepStatus: React.ComponentProps<typeof StepTitle>["status"] = (() => {
+    switch (stepperState) {
+      case "import_complete":
+      case "awaiting_export":
+      case "export_complete":
+        return "completed";
+      case "awaiting_import":
+        return "loading";
+      default:
+        return "active";
+    }
+  })();
+
   return (
     <div className={styles.importPanel}>
+      <StepTitle
+        stepTitle="Import GitHub repository data to Splitgraph"
+        stepNumber={1}
+        status={stepStatus}
+      />
+      <StepDescription status={stepStatus}>
+        {stepStatus === "completed" ? (
+          <div className={styles.importCompleteInfo}>
+            <p>
+              &#10003; Import complete! We successfully imported data from{" "}
+              <GitHubRepoLink
+                githubNamespace={githubRepositoryFromStepper.namespace}
+                githubRepository={githubRepositoryFromStepper.repository}
+              />{" "}
+              into Splitgraph.
+            </p>
+            <p>
+              <strong>Browse Data:</strong>{" "}
+              <a
+                href={`https://www.splitgraph.com/${splitgraphNamespace}/${splitgraphRepository}`}
+                target="_blank"
+              >
+                splitgraph.com/
+                {`${splitgraphNamespace}/${splitgraphRepository}`}
+              </a>
+            </p>
+            <p>
+              <strong>Query Data:</strong>
+              {"  "}&nbsp;
+              <SplitgraphStargazersQueryLink
+                splitgraphNamespace={splitgraphNamespace}
+                splitgraphRepository={splitgraphRepository}
+              />
+            </p>
+            <SplitgraphEmbeddedQuery
+              importedRepository={{ splitgraphNamespace, splitgraphRepository }}
+              tableName={"stargazers"}
+              makeQuery={makeStargazersTableQuery}
+            />
+          </div>
+        ) : (
+          <>
+            We'll use the{" "}
+            <a
+              href="https://www.splitgraph.com/connect/data/github"
+              target="_blank"
+            >
+              airbyte-github
+            </a>{" "}
+            plugin to import data about this GitHub repository to the Splitgraph
+            Data Delivery Network (DDN). Then you'll be able to browse the data
+            in the Splitgraph catalog, or query it with{" "}
+            <a href="https://www.splitgraph.com/connect/query" target="_blank">
+              your favorite Postgres Client
+            </a>{" "}
+            or with the{" "}
+            <a href="https://www.splitgraph.com/query" target="_blank">
+              Splitgraph Query Console
+            </a>
+            .
+          </>
+        )}
+      </StepDescription>
       {stepperState === "unstarted" && (
         <>
           {importError && <p className={styles.error}>{importError}</p>}
-          <form onSubmit={handleInputSubmit}>
+          <form onSubmit={handleInputSubmit} className={styles.repoNameForm}>
             <input
               type="text"
-              placeholder="Enter repository name"
+              placeholder="GitHub repository name, e.g. splitgraph/seafowl"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
+              className={styles.repoNameInput}
+              tabIndex={1}
+              autoFocus={true}
             />
-            <button type="submit">Start Import</button>
+            <button type="submit" className={styles.startImportButton}>
+              Start Import
+            </button>
           </form>
         </>
       )}
@@ -99,12 +189,13 @@ export const ImportPanel = () => {
           taskId={importTaskId}
           splitgraphNamespace={splitgraphNamespace}
           splitgraphRepository={splitgraphRepository}
+          githubNamespace={
+            githubRepositoryFromStepper.namespace ?? inputValue.split("/")[0]
+          }
+          githubRepository={
+            githubRepositoryFromStepper.repository ?? inputValue.split("/")[1]
+          }
         />
-      )}
-      {stepperState === "import_complete" && (
-        <div>
-          <p>Import Complete</p>
-        </div>
       )}
     </div>
   );

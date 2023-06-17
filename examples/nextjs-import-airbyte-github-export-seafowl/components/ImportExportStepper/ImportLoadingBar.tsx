@@ -1,16 +1,21 @@
 import { useEffect } from "react";
 import { useStepper } from "./StepperContext";
+import { LoadingBar } from "../LoadingBar";
 
 type ImportLoadingBarProps = {
   taskId: string;
   splitgraphNamespace: string;
   splitgraphRepository: string;
+  githubNamespace: string;
+  githubRepository: string;
 };
 
 export const ImportLoadingBar: React.FC<ImportLoadingBarProps> = ({
   taskId,
   splitgraphNamespace,
   splitgraphRepository,
+  githubNamespace,
+  githubRepository,
 }) => {
   const [{ stepperState }, dispatch] = useStepper();
 
@@ -69,5 +74,39 @@ export const ImportLoadingBar: React.FC<ImportLoadingBarProps> = ({
     dispatch,
   ]);
 
-  return <div>Loading...</div>;
+  return (
+    <div>
+      <LoadingBar
+        title={
+          <div style={{ textAlign: "center" }}>
+            <p>
+              Importing tables from{" "}
+              <a
+                href={`https://github.com/${githubNamespace}/${githubRepository}`}
+                target="_blank"
+              >
+                github.com/{`${githubNamespace}/${githubRepository}`}
+              </a>
+            </p>
+
+            <p>
+              into:{" "}
+              <a
+                href={`https://www.splitgraph.com/${splitgraphNamespace}/${splitgraphRepository}`}
+                target="_blank"
+              >
+                splitgraph.com/
+                {`${splitgraphNamespace}/${splitgraphRepository}`}
+              </a>
+            </p>
+          </div>
+        }
+      >
+        <p>
+          This might take 5-10 minutes depending on the size of the GitHub
+          repository.
+        </p>
+      </LoadingBar>
+    </div>
+  );
 };

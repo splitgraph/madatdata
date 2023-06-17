@@ -1,0 +1,20 @@
+div.stepTitleContainer {
+  display: flex;
+  align-items: baseline;
+  border-bottom: 1px solid var(--muted);
+  margin-bottom: 1rem;
+}
+
+h2.stepNumber {
+  color: var(--sidebar);
+  opacity: 50%;
+  margin-right: 1rem;
+}
+
+h2.stepTitle {
+  color: var(--subtext);
+}
+
+.step-status-active .stepTitle {
+  color: var(--text);
+}

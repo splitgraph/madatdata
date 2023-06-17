@@ -154,13 +154,23 @@ const startExport = async ({
     throw new Error(JSON.stringify(response.error));
   }
 
-  const loadingTables = response.taskIds.tables.map(
-    (t: { jobId: string; sourceTable: string; sourceRepository: string }) => ({
-      taskId: t.jobId,
-      destinationTable: t.sourceTable,
-      destinationSchema: t.sourceRepository,
-    })
-  );
+  const loadingTableTaskId =
+    response.taskIds.tables.length === 1
+      ? response.taskIds.tables[0].jobId
+      : null;
+
+  // NOTE: We return a list of tables, and duplicate the taskId in each of them,
+  // even though there is only one taskId for all tables. It's up to the frontend
+  // how many requests it wants to send when polling for status updates.
+  const loadingTables = loadingTableTaskId
+    ? response.taskIds.tables[0].tables.map(
+        (t: { sourceTable: string; sourceRepository: string }) => ({
+          taskId: loadingTableTaskId,
+          destinationTable: t.sourceTable,
+          destinationSchema: t.sourceRepository,
+        })
+      )
+    : [];
 
   const loadingQueries = response.taskIds.queries.map(
     (

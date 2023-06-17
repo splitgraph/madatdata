@@ -55,7 +55,15 @@ export const useSqlPlot = <
 }) => {
   const containerRef = useRef<HTMLDivElement>();
 
-  const { response, error } = useSql<RowShape>(buildQuery(sqlParams));
+  const sqlQueryIfReady = () => {
+    if (isRenderable && !isRenderable(sqlParams)) {
+      return null;
+    }
+
+    return buildQuery(sqlParams);
+  };
+
+  const { response, error } = useSql<RowShape>(sqlQueryIfReady());
 
   const mappedRows = useMemo(() => {
     return !response || error

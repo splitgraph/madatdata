@@ -4,7 +4,7 @@ import { ImportPanel } from "./ImportPanel";
 import { ExportPanel } from "./ExportPanel";
 
 import styles from "./Stepper.module.css";
-import { useRouter } from "next/router";
+import { ChartsPanel } from "./ChartsPanel";
 
 const StepperOrLoading = ({ children }: { children: React.ReactNode }) => {
   const [{ stepperState, debug }] = useStepper();
@@ -30,6 +30,7 @@ export const Stepper = () => {
         <StepperOrLoading>
           <ImportPanel />
           <ExportPanel />
+          <ChartsPanel />
         </StepperOrLoading>
       </div>
     </StepperContextProvider>
