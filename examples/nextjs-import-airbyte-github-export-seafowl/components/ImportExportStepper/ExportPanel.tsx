@@ -1,6 +1,6 @@
 // components/ImportExportStepper/ExportPanel.tsx
 
-import { ComponentProps, Fragment } from "react";
+import { ComponentProps, Fragment, useState } from "react";
 
 import { useStepper } from "./StepperContext";
 import styles from "./ExportPanel.module.css";
@@ -330,14 +330,51 @@ const ExportEmbedPreviewTableOrQuery = <
       ? exportInput.table
       : `${exportInput.destinationSchema}.${exportInput.destinationTable}`;
 
+  const [selectedTab, setSelectedTab] = useState<"splitgraph" | "seafowl">(
+    "splitgraph"
+  );
+
   return (
     <>
       <h4>
         <code>{heading}</code>
       </h4>
+      <div style={{ display: "flex", flexDirection: "row" }}>
+        <button
+          onClick={() => setSelectedTab("splitgraph")}
+          disabled={selectedTab === "splitgraph"}
+          style={{ marginRight: "1rem" }}
+        >
+          Splitgraph Query
+        </button>
+        <button
+          onClick={() => setSelectedTab("seafowl")}
+          disabled={selectedTab === "seafowl" || !completed}
+        >
+          Seafowl Query
+        </button>
+      </div>
       <pre>{JSON.stringify({ completed, loading }, null, 2)}</pre>
-      {(unstarted || loading) && <SplitgraphEmbeddedQuery {...embedProps} />}
-      {completed && <SeafowlEmbeddedQuery {...embedProps} />}
+      {
+        <div
+          style={{
+            visibility: selectedTab === "splitgraph" ? "visible" : "hidden",
+            display: selectedTab === "seafowl" ? "none" : "block",
+          }}
+        >
+          <SplitgraphEmbeddedQuery {...embedProps} />
+        </div>
+      }
+      {completed && (
+        <div
+          style={{
+            visibility: selectedTab === "seafowl" ? "visible" : "hidden",
+            display: selectedTab === "splitgraph" ? "none" : "block",
+          }}
+        >
+          <SeafowlEmbeddedQuery {...embedProps} />
+        </div>
+      )}
     </>
   );
 };
