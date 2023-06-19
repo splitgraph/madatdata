@@ -216,7 +216,7 @@ const makeSeafowlEmbeddableQueryHref = (sqlQuery: string) => {
 
 const makeSplitgraphEmbeddableQueryHref = (sqlQuery: string) => {
   return `https://www.splitgraph.com/embed/workspace/ddn?${new URLSearchParams({
-    layout: "hsplit",
+    layout: "query",
     query: sqlQuery,
   })}`;
 };
