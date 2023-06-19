@@ -18,6 +18,7 @@ import { useMemo, useCallback } from "react";
 import { StepTitle } from "./StepTitle";
 import { StepDescription } from "./StepDescription";
 import {
+  type EmbeddedQueryProps,
   SeafowlEmbeddedQuery,
   SeafowlStargazersQueryLink,
 } from "../RepositoryAnalytics/ImportedRepoMetadata";
@@ -27,6 +28,9 @@ import {
   SplitgraphEmbeddedQuery,
 } from "../RepositoryAnalytics/ImportedRepoMetadata";
 import { makeStargazersTableQuery } from "../RepositoryAnalytics/sql-queries";
+import type { ExportTable } from "./stepper-states";
+
+import type { TargetSplitgraphRepo } from "../../types";
 
 export const ExportPanel = () => {
   const [
@@ -182,7 +186,9 @@ export const ExportPanel = () => {
         )}
       </StepDescription>
       {exportError && <p className={styles.error}>{exportError}</p>}
-      {stepperState === "import_complete" && (
+      {["import_complete", "awaiting_export", "export_complete"].includes(
+        stepperState
+      ) && (
         <ExportPreview
           handleStartExport={handleStartExport}
           tablesToExport={tablesToExport}
@@ -214,27 +220,23 @@ const ExportPreview = ({
       <button className={styles.startExportButton} onClick={handleStartExport}>
         Start Export of Tables and Queries from Splitgraph to Seafowl
       </button>
-      {/*
-          <h3>Debugging</h3>
-
-          <SplitgraphEmbeddedQuery
-            importedRepository={{
-              splitgraphNamespace,
-              splitgraphRepository,
-            }}
-            tableName={"Debugging"}
-            makeQuery={() => "select 1;"}
-          /> */}
-
       <h3>Tables to Export</h3>
       {tablesToExport
         .filter((_) => true)
         .map((exportTable) => (
-          <ExportTablePreview
+          <ExportEmbedPreviewTableOrQuery
             key={`export-table-preview-${exportTable.table}`}
-            splitgraphNamespace={splitgraphNamespace}
-            splitgraphRepository={splitgraphRepository}
-            {...exportTable}
+            exportInput={exportTable}
+            importedRepository={{ splitgraphNamespace, splitgraphRepository }}
+            makeQuery={({ splitgraphNamespace, splitgraphRepository, table }) =>
+              `SELECT * FROM "${splitgraphNamespace}/${splitgraphRepository}"."${table}";`
+            }
+            makeMatchInputToExported={(exportTableInput) => (exportTable) => {
+              return (
+                exportTable.destinationSchema === exportTableInput.repository &&
+                exportTable.destinationTable === exportTableInput.table
+              );
+            }}
           />
         ))}
 
@@ -242,69 +244,100 @@ const ExportPreview = ({
       {queriesToExport
         .filter((_) => true)
         .map((exportQuery) => (
-          <ExportQueryPreview
+          <ExportEmbedPreviewTableOrQuery
             key={`export-query-preview-${exportQuery.destinationTable}-${exportQuery.destinationSchema}`}
-            splitgraphNamespace={splitgraphNamespace}
-            splitgraphRepository={splitgraphRepository}
-            {...exportQuery}
+            exportInput={exportQuery}
+            importedRepository={{ splitgraphNamespace, splitgraphRepository }}
+            makeQuery={({ sourceQuery }) => sourceQuery}
+            makeMatchInputToExported={(exportQueryInput) =>
+              (exportTable: ExportTable) => {
+                return (
+                  exportTable.destinationSchema ===
+                    exportQueryInput.destinationSchema &&
+                  exportTable.destinationTable ===
+                    exportQueryInput.destinationTable
+                );
+              }}
           />
         ))}
     </>
   );
 };
 
-const ExportQueryPreview = ({
-  splitgraphNamespace,
-  splitgraphRepository,
-  destinationSchema,
-  destinationTable,
-  sourceQuery,
-}: ExportQueryInput & {
-  splitgraphNamespace: string;
-  splitgraphRepository: string;
-}) => {
-  return (
-    <>
-      <h4>
-        <code>
-          {destinationSchema}.{destinationTable}
-        </code>
-      </h4>
-      <SplitgraphEmbeddedQuery
-        importedRepository={{
-          splitgraphNamespace,
-          splitgraphRepository,
-        }}
-        tableName={destinationTable}
-        makeQuery={() => sourceQuery}
-      />
-    </>
+const useFindMatchingExportTable = (
+  isMatch: (candidateTable: ExportTable) => boolean
+) => {
+  const [{ exportedTablesLoading, exportedTablesCompleted }] = useStepper();
+
+  const matchingCompletedTable = useMemo(
+    () => Array.from(exportedTablesCompleted).find(isMatch),
+    [exportedTablesCompleted, isMatch]
   );
+  const matchingLoadingTable = useMemo(
+    () => Array.from(exportedTablesLoading).find(isMatch),
+    [exportedTablesLoading, isMatch]
+  );
+
+  const completed = matchingCompletedTable ?? false;
+  const loading = matchingLoadingTable ?? false;
+  const unstarted = !completed && !loading;
+
+  return {
+    completed,
+    loading,
+    unstarted,
+  };
 };
 
-const ExportTablePreview = ({
-  splitgraphNamespace,
-  splitgraphRepository,
-  table,
+const ExportEmbedPreviewTableOrQuery = <
+  ExportInputShape extends ExportQueryInput | ExportTableInput
+>({
+  importedRepository,
+  exportInput,
+  makeQuery,
+  makeMatchInputToExported,
 }: {
-  splitgraphNamespace: string;
-  splitgraphRepository: string;
-} & ExportTableInput) => {
+  exportInput: ExportInputShape;
+  makeQuery: (
+    tableOrQueryInput: ExportInputShape & {
+      splitgraphNamespace: string;
+      splitgraphRepository: string;
+    }
+  ) => string;
+  makeMatchInputToExported: (
+    tableOrQueryInput: ExportInputShape
+  ) => (exported: ExportTable) => boolean;
+  importedRepository: {
+    splitgraphNamespace: string;
+    splitgraphRepository: string;
+  };
+}) => {
+  const embedProps = {
+    importedRepository,
+    tableName:
+      "destinationTable" in exportInput
+        ? exportInput.destinationTable
+        : exportInput.table,
+    makeQuery: () => makeQuery({ ...exportInput, ...importedRepository }),
+  };
+
+  const { unstarted, loading, completed } = useFindMatchingExportTable(
+    makeMatchInputToExported(exportInput)
+  );
+
+  const heading =
+    "table" in exportInput
+      ? exportInput.table
+      : `${exportInput.destinationSchema}.${exportInput.destinationTable}`;
+
   return (
     <>
       <h4>
-        <code>{table}</code>
+        <code>{heading}</code>
       </h4>
-      <SplitgraphEmbeddedQuery
-        importedRepository={{
-          splitgraphNamespace,
-          splitgraphRepository,
-        }}
-        tableName={table}
-        makeQuery={({ splitgraphNamespace, splitgraphRepository }) =>
-          `SELECT * FROM "${splitgraphNamespace}/${splitgraphRepository}"."${table}";`
-        }
-      />
+      <pre>{JSON.stringify({ completed, loading }, null, 2)}</pre>
+      {(unstarted || loading) && <SplitgraphEmbeddedQuery {...embedProps} />}
+      {completed && <SeafowlEmbeddedQuery {...embedProps} />}
     </>
   );
 };

@@ -3,7 +3,7 @@ import { ParsedUrlQuery } from "querystring";
 import { useEffect, useReducer } from "react";
 export type GitHubRepository = { namespace: string; repository: string };
 
-type ExportTable = {
+export type ExportTable = {
   destinationSchema: string;
   destinationTable: string;
   taskId: string;

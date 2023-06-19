@@ -166,14 +166,16 @@ const makeSeafowlQueryHref = (sqlQuery: string) => {
   })}`;
 };
 
-export const SplitgraphEmbeddedQuery = ({
-  importedRepository,
-  makeQuery,
-}: {
+export interface EmbeddedQueryProps {
   importedRepository: SplitgraphRepository;
   makeQuery: (repo: SplitgraphRepository) => string;
   tableName: string;
-}) => {
+}
+
+export const SplitgraphEmbeddedQuery = ({
+  importedRepository,
+  makeQuery,
+}: EmbeddedQueryProps) => {
   return (
     <iframe
       src={makeSplitgraphEmbeddableQueryHref(makeQuery(importedRepository))}
@@ -188,11 +190,7 @@ export const SplitgraphEmbeddedQuery = ({
 export const SeafowlEmbeddedQuery = ({
   importedRepository,
   makeQuery,
-}: {
-  importedRepository: SplitgraphRepository;
-  makeQuery: (repo: SplitgraphRepository) => string;
-  tableName: string;
-}) => {
+}: EmbeddedQueryProps) => {
   return (
     <iframe
       src={makeSeafowlEmbeddableQueryHref(makeQuery(importedRepository))}
