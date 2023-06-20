@@ -80,6 +80,10 @@ export const ExportTableLoadingBar = ({
     (t) => t.taskId === taskId
   );
 
+  console.log("----- exportedTablesLoading ----");
+  console.log(exportedTablesLoading);
+  console.log("-----  ----");
+
   return (
     <div className={styles.exportTableLoadingBar}>
       <div className={styles.loadingBar}>

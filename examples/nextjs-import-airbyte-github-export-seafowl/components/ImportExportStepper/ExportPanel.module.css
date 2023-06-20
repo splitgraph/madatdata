@@ -22,6 +22,13 @@
   text-decoration: none;
   font-weight: bold;
   border-style: none;
+  margin-bottom: 1rem;
+}
+
+.startExportButtonLoading {
+  /* color: var(--muted); */
+  /* background-color: transparent; */
+  opacity: 0.5;
 }
 
 .startExportButton:hover {
@@ -35,4 +42,18 @@
 
 .exportInfo p {
   margin-bottom: 1rem;
+}
+
+.exportPreviewHeading {
+  margin-bottom: 0;
+}
+
+.exportPreviewDescription {
+  margin-bottom: 1rem;
+}
+
+.exportNote {
+  font-size: small;
+  /* color: red !important; */
+  display: block;
 }

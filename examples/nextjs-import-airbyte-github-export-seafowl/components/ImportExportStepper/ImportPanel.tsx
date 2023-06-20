@@ -8,9 +8,7 @@ import { StepDescription } from "./StepDescription";
 import {
   GitHubRepoLink,
   SplitgraphStargazersQueryLink,
-  SplitgraphEmbeddedQuery,
 } from "../RepositoryAnalytics/ImportedRepoMetadata";
-import { makeStargazersTableQuery } from "../RepositoryAnalytics/sql-queries";
 
 export const ImportPanel = () => {
   const [
@@ -136,11 +134,6 @@ export const ImportPanel = () => {
                 splitgraphRepository={splitgraphRepository}
               />
             </p>
-            <SplitgraphEmbeddedQuery
-              importedRepository={{ splitgraphNamespace, splitgraphRepository }}
-              tableName={"stargazers"}
-              makeQuery={makeStargazersTableQuery}
-            />
           </div>
         ) : (
           <>
@@ -151,9 +144,9 @@ export const ImportPanel = () => {
             >
               airbyte-github
             </a>{" "}
-            plugin to import data about this GitHub repository to the Splitgraph
-            Data Delivery Network (DDN). Then you'll be able to browse the data
-            in the Splitgraph catalog, or query it with{" "}
+            plugin to import data about this GitHub repository into the
+            Splitgraph Data Delivery Network (DDN). Then you'll be able to
+            browse the data in the Splitgraph catalog, or query it with{" "}
             <a href="https://www.splitgraph.com/connect/query" target="_blank">
               your favorite Postgres Client
             </a>{" "}

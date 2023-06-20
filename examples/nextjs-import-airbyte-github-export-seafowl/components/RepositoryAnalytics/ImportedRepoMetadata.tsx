@@ -147,7 +147,7 @@ const SeafowlQueryLink = ({
 };
 
 /** Return the URL to Splitgraph Console pointing to Splitgraph DDN */
-const makeSplitgraphQueryHref = (sqlQuery: string) => {
+export const makeSplitgraphQueryHref = (sqlQuery: string) => {
   const url = `https://www.splitgraph.com/query?${new URLSearchParams({
     sqlQuery: sqlQuery,
     flavor: "splitgraph",
@@ -157,7 +157,7 @@ const makeSplitgraphQueryHref = (sqlQuery: string) => {
 };
 
 /** Return the URL to Splitgraph Console pointing to Seafowl db where we export tables */
-const makeSeafowlQueryHref = (sqlQuery: string) => {
+export const makeSeafowlQueryHref = (sqlQuery: string) => {
   return `https://www.splitgraph.com/query?${new URLSearchParams({
     sqlQuery: sqlQuery,
     flavor: "seafowl",
@@ -182,7 +182,6 @@ export const SplitgraphEmbeddedQuery = ({
       allowFullScreen={false}
       style={{ border: "none" }}
       height={"400px"}
-      width={"80%"}
     />
   );
 };
@@ -196,7 +195,6 @@ export const SeafowlEmbeddedQuery = ({
       src={makeSeafowlEmbeddableQueryHref(makeQuery(importedRepository))}
       style={{ border: "none" }}
       height={"400px"}
-      width={"80%"}
     />
   );
 };

@@ -1,0 +1,22 @@
+.tab-button {
+  border-width: 3px;
+  border-radius: 10px;
+  border-style: solid;
+  background: transparent;
+  color: var(--text);
+}
+
+.tab-button-active {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.tab-button-inactive:not(.tab-button-disabled):hover {
+  border-color: var(--text);
+  cursor: pointer;
+}
+
+.tab-button-disabled {
+  color: var(--muted);
+  border-color: var(--muted);
+}

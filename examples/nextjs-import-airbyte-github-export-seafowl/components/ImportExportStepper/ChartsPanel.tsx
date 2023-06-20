@@ -40,14 +40,16 @@ export const ChartsPanel = () => {
         </a>
         .
       </StepDescription>
-      <Charts
-        importedRepository={{
-          githubNamespace,
-          githubRepository,
-          splitgraphNamespace,
-          splitgraphRepository,
-        }}
-      />
+      {stepStatus === "active" && (
+        <Charts
+          importedRepository={{
+            githubNamespace,
+            githubRepository,
+            splitgraphNamespace,
+            splitgraphRepository,
+          }}
+        />
+      )}
     </div>
   );
 };

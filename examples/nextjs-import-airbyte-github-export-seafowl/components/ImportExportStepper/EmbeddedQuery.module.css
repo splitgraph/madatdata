@@ -1,0 +1,45 @@
+.embeddedQuery {
+  border-left: 4px solid var(--muted);
+  padding-left: 10px;
+  margin-bottom: 2rem;
+}
+
+.topBar {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.consoleFlavorButtonsAndLoadingBar {
+  display: inline-flex;
+  flex-direction: row;
+}
+
+.embeddedQuery iframe {
+  width: 100%;
+}
+
+.heading {
+  font-size: 1.5rem;
+  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.embedControls {
+  background: inherit;
+}
+
+.openInConsoleLink {
+  display: inline-flex;
+  align-items: center;
+  font-size: small;
+}
+
+.openInConsoleLink svg {
+  margin-right: 4px;
+}
