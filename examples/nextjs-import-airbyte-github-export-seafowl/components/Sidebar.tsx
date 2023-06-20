@@ -83,9 +83,10 @@ export const Sidebar = () => {
   return (
     <aside className={styles.sidebar}>
       <div className={styles.importButtonContainer}>
-        <Link href="/" className={styles.importButton}>
+        {/* NOTE: Use <a> (not <Link />) to force SSR to clear state if an import was already in progress */}
+        <a href="/" className={styles.importButton}>
           Import Your Repository
-        </Link>
+        </a>
       </div>
       <SqlProvider dataContext={splitgraphDataContext}>
         <RepositoriesList />
