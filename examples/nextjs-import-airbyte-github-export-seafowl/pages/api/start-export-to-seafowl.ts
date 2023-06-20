@@ -1,40 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { makeAuthenticatedSplitgraphDb } from "../../lib/backend/splitgraph-db";
 
-export type StartExportToSeafowlRequestShape =
-  | {
-      tables: ExportTableInput[];
-    }
-  | { queries: ExportQueryInput[] }
-  | { tables: ExportTableInput[]; queries: ExportQueryInput[] };
-
-export type StartExportToSeafowlResponseData =
-  | {
-      tables: {
-        destinationTable: string;
-        destinationSchema: string;
-        taskId: string;
-      }[];
-      queries: {
-        sourceQuery: string;
-        destinationSchema: string;
-        destinationTable: string;
-        taskId: string;
-      }[];
-    }
-  | { error: string };
-
-export type ExportTableInput = {
-  namespace: string;
-  repository: string;
-  table: string;
-};
-
-export type ExportQueryInput = {
-  sourceQuery: string;
-  destinationSchema: string;
-  destinationTable: string;
-};
+import type {
+  ExportTableInput,
+  ExportQueryInput,
+  StartExportToSeafowlRequestShape,
+  StartExportToSeafowlResponseData,
+} from "../../types";
 
 /**
  * To manually send a request, example:
