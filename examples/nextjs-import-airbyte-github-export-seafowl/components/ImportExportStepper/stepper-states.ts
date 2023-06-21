@@ -10,6 +10,12 @@ export type ExportTable = {
   sourceQuery?: string;
 };
 
+// NOTE: Multiple tables can have the same taskId, so we track them separately
+// in order to not need to redundantly poll the API for each table individually
+export type ExportTask = {
+  taskId: string;
+};
+
 export type StepperState = {
   stepperState:
     | "uninitialized"
@@ -27,6 +33,8 @@ export type StepperState = {
   exportedTablesCompleted?: Set<ExportTable>;
   exportError?: string;
   debug?: string | null;
+  loadingExportTasks?: Set<ExportTask>;
+  completedExportTasks?: Set<ExportTask>;
 };
 
 export type StepperAction =
@@ -40,6 +48,7 @@ export type StepperAction =
   | { type: "import_complete" }
   | { type: "start_export"; tables: ExportTable[] }
   | { type: "export_table_task_complete"; completedTable: ExportTable }
+  | { type: "export_task_complete"; completedTask: ExportTask }
   | { type: "export_complete" }
   | { type: "export_error"; error: string }
   | { type: "import_error"; error: string }
@@ -54,6 +63,8 @@ const initialState: StepperState = {
   importTaskId: null,
   exportedTablesLoading: new Set<ExportTable>(),
   exportedTablesCompleted: new Set<ExportTable>(),
+  loadingExportTasks: new Set<ExportTask>(),
+  completedExportTasks: new Set<ExportTask>(),
   importError: null,
   exportError: null,
   debug: null,
@@ -216,33 +227,61 @@ const stepperReducer = (
         });
       }
 
+      // The API returns a list of tables where multiple can have the same taskId
+      // We want a unique set of taskIds so that we only poll for each taskId once
+      // (but note that we're storing a set of {taskId} objects but need to compare uniqueness on taskId)
+      const loadingExportTasks = new Set<ExportTask>(
+        Array.from(
+          new Set<ExportTask["taskId"]>(
+            Array.from(tables).map(({ taskId }) => taskId)
+          )
+        ).map((taskId) => ({ taskId }))
+      );
+      const completedExportTasks = new Set<ExportTask>();
+
       return {
         ...state,
         exportedTablesLoading,
         exportedTablesCompleted,
+        loadingExportTasks,
+        completedExportTasks,
         stepperState: "awaiting_export",
       };
 
-    case "export_table_task_complete":
-      const { completedTable } = action;
+    case "export_task_complete":
+      const {
+        completedTask: { taskId: completedTaskId },
+      } = action;
 
-      // We're storing a set of completedTable objects, so we need to find the matching one to remove it
-      const loadingTablesAfterRemoval = new Set(state.exportedTablesLoading);
-      const loadingTabletoRemove = Array.from(loadingTablesAfterRemoval).find(
-        ({ taskId }) => taskId === completedTable.taskId
+      // One taskId could match multiple tables, so find reference to each of them
+      // and then use that reference to delete them from loading set and add them to completed set
+      const completedTables = Array.from(state.exportedTablesLoading).filter(
+        ({ taskId }) => taskId === completedTaskId
       );
-      loadingTablesAfterRemoval.delete(loadingTabletoRemove);
-
-      // Then we can add the matching one to the completed table
+      const loadingTablesAfterRemoval = new Set(state.exportedTablesLoading);
       const completedTablesAfterAdded = new Set(state.exportedTablesCompleted);
-      completedTablesAfterAdded.add(completedTable);
+      for (const completedTable of completedTables) {
+        loadingTablesAfterRemoval.delete(completedTable);
+        completedTablesAfterAdded.add(completedTable);
+      }
+
+      // There should only be one matching task, so find it and create new updated sets
+      const completedTask = Array.from(state.loadingExportTasks).find(
+        ({ taskId }) => taskId === completedTaskId
+      );
+      const loadingTasksAfterRemoval = new Set(state.loadingExportTasks);
+      const completedTasksAfterAdded = new Set(state.completedExportTasks);
+      loadingTasksAfterRemoval.delete(completedTask);
+      completedTasksAfterAdded.add(completedTask);
 
       return {
         ...state,
         exportedTablesLoading: loadingTablesAfterRemoval,
         exportedTablesCompleted: completedTablesAfterAdded,
+        loadingExportTasks: loadingTasksAfterRemoval,
+        completedExportTasks: completedTasksAfterAdded,
         stepperState:
-          loadingTablesAfterRemoval.size === 0
+          loadingTasksAfterRemoval.size === 0
             ? "export_complete"
             : "awaiting_export",
       };
@@ -264,6 +303,8 @@ const stepperReducer = (
     case "export_error":
       return {
         ...state,
+        loadingExportTasks: new Set<ExportTask>(),
+        completedExportTasks: new Set<ExportTask>(),
         exportedTablesLoading: new Set<ExportTable>(),
         exportedTablesCompleted: new Set<ExportTable>(),
         stepperState: "import_complete",

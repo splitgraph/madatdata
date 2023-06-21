@@ -9,10 +9,8 @@ import {
   SplitgraphEmbeddedQuery,
   SeafowlEmbeddedQuery,
 } from "../RepositoryAnalytics/ImportedRepoMetadata";
-import {
-  useStepperDebug,
-  useFindMatchingExportTable,
-} from "../ImportExportStepper/StepperContext";
+import { useStepperDebug } from "../ImportExportStepper/StepperContext";
+import { useFindMatchingExportTable } from "../ImportExportStepper/export-hooks";
 
 import type { ExportTable } from "../ImportExportStepper/stepper-states";
 

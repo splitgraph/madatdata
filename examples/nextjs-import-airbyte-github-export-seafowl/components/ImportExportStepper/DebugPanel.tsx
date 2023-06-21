@@ -6,7 +6,11 @@ export const DebugPanel = () => {
   return (
     <div>
       <pre style={{ minWidth: "80%", minHeight: "300px" }}>
-        {JSON.stringify(state, null, 2)}
+        {JSON.stringify(
+          state,
+          (_key, value) => (value instanceof Set ? Array.from(value) : value),
+          2
+        )}
       </pre>
     </div>
   );

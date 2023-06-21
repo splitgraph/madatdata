@@ -1,6 +1,5 @@
 import { useStepper } from "./StepperContext";
 import styles from "./ExportPanel.module.css";
-import { ExportLoadingBars } from "./ExportLoadingBars";
 
 import { splitgraphTablesToExportToSeafowl } from "../../lib/config/github-tables";
 import {
@@ -16,28 +15,19 @@ import type {
 import { useMemo, useCallback } from "react";
 import { StepTitle } from "./StepTitle";
 import { StepDescription } from "./StepDescription";
-import {
-  SeafowlEmbeddedQuery,
-  SplitgraphEmbeddedQuery,
-  makeSplitgraphQueryHref,
-  makeSeafowlQueryHref,
-} from "../RepositoryAnalytics/ImportedRepoMetadata";
+import { makeSplitgraphQueryHref } from "../RepositoryAnalytics/ImportedRepoMetadata";
 import type { ExportTable } from "./stepper-states";
 
 import { ExportEmbedPreviewTableOrQuery } from "../EmbeddedQuery/EmbeddedQuery";
+import { usePollExportTasks } from "./export-hooks";
 
 export const ExportPanel = () => {
   const [
-    {
-      stepperState,
-      exportError,
-      splitgraphRepository,
-      splitgraphNamespace,
-      exportedTablesCompleted,
-      repository: githubRepositoryFromStepper,
-    },
+    { stepperState, exportError, splitgraphRepository, splitgraphNamespace },
     dispatch,
   ] = useStepper();
+
+  usePollExportTasks();
 
   const queriesToExport = useMemo<ExportQueryInput[]>(
     () =>
@@ -239,7 +229,6 @@ ${genericDemoQuery}
           splitgraphNamespace={splitgraphNamespace}
         />
       )}
-      {stepperState === "awaiting_export" && <ExportLoadingBars />}
     </div>
   );
 };
