@@ -7,6 +7,7 @@ import { defaultSplitgraphHost } from "@madatdata/core";
 const SPLITGRAPH_API_KEY = process.env.SPLITGRAPH_API_KEY;
 const SPLITGRAPH_API_SECRET = process.env.SPLITGRAPH_API_SECRET;
 
+// Throw top level error on missing keys because these are  _always_ required app to run
 if (!SPLITGRAPH_API_KEY || !SPLITGRAPH_API_SECRET) {
   throw new Error(
     "Environment variable SPLITGRAPH_API_KEY or SPLITGRAPH_API_SECRET is not set." +

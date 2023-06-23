@@ -87,6 +87,11 @@ export const ExportPanel = () => {
               destinationTable,
               destinationSchema,
               sourceQuery,
+              fallbackCreateTableQuery: queriesToExport.find(
+                (q) =>
+                  q.destinationSchema === destinationSchema &&
+                  q.destinationTable === destinationTable
+              )?.fallbackCreateTableQuery,
             })
           ),
           ...data["tables"].map(

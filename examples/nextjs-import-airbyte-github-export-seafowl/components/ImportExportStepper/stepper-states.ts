@@ -8,12 +8,14 @@ export type ExportTable = {
   destinationTable: string;
   taskId: string;
   sourceQuery?: string;
+  fallbackCreateTableQuery?: string;
 };
 
 // NOTE: Multiple tables can have the same taskId, so we track them separately
 // in order to not need to redundantly poll the API for each table individually
 export type ExportTask = {
   taskId: string;
+  error?: { message: string; retryable: boolean };
 };
 
 export type StepperState = {
@@ -35,6 +37,7 @@ export type StepperState = {
   debug?: string | null;
   loadingExportTasks?: Set<ExportTask>;
   completedExportTasks?: Set<ExportTask>;
+  tasksWithError?: Map<string, string[]>; // taskId -> errors
 };
 
 export type StepperAction =
@@ -65,6 +68,7 @@ const initialState: StepperState = {
   exportedTablesCompleted: new Set<ExportTable>(),
   loadingExportTasks: new Set<ExportTask>(),
   completedExportTasks: new Set<ExportTask>(),
+  tasksWithError: new Map<string, string[]>(),
   importError: null,
   exportError: null,
   debug: null,
@@ -217,12 +221,14 @@ const stepperReducer = (
         destinationTable,
         destinationSchema,
         sourceQuery,
+        fallbackCreateTableQuery,
         taskId,
       } of tables) {
         exportedTablesLoading.add({
           destinationTable,
           destinationSchema,
           sourceQuery,
+          fallbackCreateTableQuery,
           taskId,
         });
       }
@@ -248,10 +254,46 @@ const stepperReducer = (
         stepperState: "awaiting_export",
       };
 
+    /**
+     * NOTE: A task is "completed" even if it received an error, in which case
+     * we will retry it up to maxRetryCount if `error.retryable` is `true`
+     *
+     * That is, _all tasks_ will eventually "complete," whether successfully or not.
+     */
     case "export_task_complete":
       const {
-        completedTask: { taskId: completedTaskId },
+        completedTask: { taskId: completedTaskId, error: maybeError },
       } = action;
+
+      const maxRetryCount = 3;
+
+      const updatedTasksWithError = new Map(state.tasksWithError);
+      const previousErrors = updatedTasksWithError.get(completedTaskId) ?? [];
+      const hadPreviousError = previousErrors.length > 0;
+
+      if (!maybeError && hadPreviousError) {
+        updatedTasksWithError.delete(completedTaskId);
+      } else if (maybeError) {
+        updatedTasksWithError.set(completedTaskId, [
+          ...previousErrors,
+          maybeError.message,
+        ]);
+        const numAttempts = updatedTasksWithError.get(completedTaskId).length;
+
+        if (maybeError.retryable && numAttempts < maxRetryCount) {
+          console.log("RETRY: ", completedTaskId, `(${numAttempts} so far)`);
+          return {
+            ...state,
+            tasksWithError: updatedTasksWithError,
+          };
+        } else {
+          console.log(
+            "FAIL: ",
+            completedTaskId,
+            `(${numAttempts} reached max ${maxRetryCount})`
+          );
+        }
+      }
 
       // One taskId could match multiple tables, so find reference to each of them
       // and then use that reference to delete them from loading set and add them to completed set
@@ -394,7 +436,7 @@ const useMarkAsComplete = (
 
         if (!data.status) {
           throw new Error(
-            "Got unexpected resposne shape when marking import/export complete"
+            "Got unexpected response shape when marking import/export complete"
           );
         }
 

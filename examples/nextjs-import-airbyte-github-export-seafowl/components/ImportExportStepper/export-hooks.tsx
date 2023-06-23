@@ -46,7 +46,10 @@ export const useFindMatchingExportTable = (
 };
 
 export const usePollExportTasks = () => {
-  const [{ stepperState, loadingExportTasks }, dispatch] = useStepper();
+  const [
+    { stepperState, loadingExportTasks, exportedTablesLoading },
+    dispatch,
+  ] = useStepper();
 
   useEffect(() => {
     if (stepperState !== "awaiting_export") {
@@ -71,11 +74,50 @@ export const usePollExportTasks = () => {
                 type: "export_task_complete",
                 completedTask: { taskId },
               }),
-            onError: ({ taskId, error }) =>
+            onError: async ({ taskId, error }) => {
+              // If the task failed but we're not going to retry, then check if
+              // there is a fallback query to create the table, and if so,
+              // create it before marking the task as complete.
+              if (!error.retryable) {
+                // NOTE: There is an implicit assumption that `exportedTablesLoading`
+                // and `loadingExportTasks` are updated at the same time, which they
+                // are, by the reducer that handles the `export_task_start` and
+                // `export_task_complete` actions.
+                const maybeExportedQueryWithCreateTableFallback = Array.from(
+                  exportedTablesLoading
+                ).find(
+                  (t) => t.taskId === taskId && t.fallbackCreateTableQuery
+                );
+
+                if (maybeExportedQueryWithCreateTableFallback) {
+                  await createFallbackTableAfterFailedExport({
+                    destinationSchema:
+                      maybeExportedQueryWithCreateTableFallback.destinationSchema,
+                    destinationTable:
+                      maybeExportedQueryWithCreateTableFallback.destinationTable,
+                    fallbackCreateTableQuery:
+                      maybeExportedQueryWithCreateTableFallback.fallbackCreateTableQuery,
+
+                    // On error or success, we mutate the error variable which
+                    // will be passed by `dispatch` outside of this conditional.
+                    onError: (errorCreatingFallbackTable) => {
+                      error.message = `${error.message} (and also error creating fallback: ${errorCreatingFallbackTable.message})`;
+                    },
+                    onSuccess: () => {
+                      error = undefined; // No error because we consider the task complete after creating the fallback table.
+                    },
+                  });
+                }
+              }
+
               dispatch({
-                type: "export_error",
-                error: `Error exporting ${taskId}: ${error.message}`,
-              }),
+                type: "export_task_complete",
+                completedTask: {
+                  taskId,
+                  error,
+                },
+              });
+            },
             abortSignal: abortController.signal,
           })
         )
@@ -86,7 +128,7 @@ export const usePollExportTasks = () => {
       clearInterval(interval);
       abortController.abort();
     };
-  }, [loadingExportTasks, stepperState, dispatch]);
+  }, [loadingExportTasks, exportedTablesLoading, stepperState, dispatch]);
 };
 
 const pollExportTaskOnce = async ({
@@ -97,7 +139,13 @@ const pollExportTaskOnce = async ({
 }: {
   taskId: string;
   onSuccess: ({ taskId }: { taskId: string }) => void;
-  onError: ({ taskId, error }: { taskId: string; error: any }) => void;
+  onError: ({
+    taskId,
+    error,
+  }: {
+    taskId: string;
+    error: { message: string; retryable: boolean };
+  }) => void;
   abortSignal: AbortSignal;
 }) => {
   try {
@@ -118,6 +166,7 @@ const pollExportTaskOnce = async ({
     } else if (data.error) {
       if (!data.completed) {
         console.log("WARN: Failed status, not completed:", data.error);
+        onError({ taskId, error: { message: data.error, retryable: false } });
       } else {
         throw new Error(data.error);
       }
@@ -127,6 +176,71 @@ const pollExportTaskOnce = async ({
       return;
     }
 
-    onError({ taskId, error });
+    onError({
+      taskId,
+      error: {
+        message: `Error exporting ${taskId}: ${
+          error.message ?? error.name ?? "unknown"
+        }`,
+        retryable: true,
+      },
+    });
+  }
+};
+
+/**
+ * Call the API route to create a fallback table after a failed export.
+ *
+ * Note that both `destinationTable` and `destinationSchema` should already
+ * be included in the `fallbackCreateTableQuery`, but we need them so that
+ * the endpoint can separately `CREATE SCHEMA` and `DROP TABLE` in case the
+ * schema does not yet exist, or the table already exists (we overwrite it to
+ * be consistent with behavior of Splitgraph export API).
+ */
+const createFallbackTableAfterFailedExport = async ({
+  destinationSchema,
+  destinationTable,
+  fallbackCreateTableQuery,
+  onSuccess,
+  onError,
+}: Required<
+  Pick<
+    ExportTable,
+    "destinationSchema" | "destinationTable" | "fallbackCreateTableQuery"
+  >
+> & {
+  onSuccess: () => void;
+  onError: (error: { message: string }) => void;
+}) => {
+  try {
+    const response = await fetch(
+      "/api/create-fallback-table-after-failed-export",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          destinationSchema,
+          destinationTable,
+          fallbackCreateTableQuery,
+        }),
+      }
+    );
+    const data = await response.json();
+    if (data.error || !data.success) {
+      console.log(
+        `FAIL: error from endpoint creating fallback table: ${data.error}`
+      );
+      onError({ message: data.error ?? "unknown" });
+    } else {
+      console.log("SUCCESS: created fallback table");
+      onSuccess();
+    }
+  } catch (error) {
+    console.log(`FAIL: caught error while creating fallback table: ${error}`);
+    onError({
+      message: `${error.message ?? error.name ?? "unknown"}`,
+    });
   }
 };

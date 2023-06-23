@@ -39,6 +39,30 @@ namespace NodeJS {
     MITMPROXY_ADDRESS?: string;
 
     /**
+     * Optionally provide the SEAFOWL_INSTANCE_URL to use for creating fallback tables
+     * when an export fails.
+     *
+     * Note that at the moment, this must only be set to https://demo.seafowl.cloud
+     * because that's where Splitgraph exports to by default, and we are not currently
+     * passing any instance URL to the Splitgraph export API.
+     */
+    SEAFOWL_INSTANCE_URL?: "https://demo.seafowl.cloud";
+
+    /**
+     * Optionally provide the SEAFOWL_INSTANCE_SECRET to use for creating fallback tables
+     * when an export fails.
+     */
+    SEAFOWL_INSTANCE_SECRET?: string;
+
+    /**
+     * Optionally provide the dbname to use for creating fallback tables
+     * when an export fails.
+     *
+     * Note this MUST match the NEXT_PUBLIC_SPLITGRAPH_GITHUB_ANALYTICS_META_NAMESPACE
+     */
+    SEAFOWL_INSTANCE_DATABASE?: string;
+
+    /**
      * The namespace of the repository in Splitgraph where metadata is stored
      * containing the state of imported GitHub repositories, which should contain
      * the repository `NEXT_PUBLIC_SPLITGRAPH_GITHUB_ANALYTICS_META_REPOSITORY`.
