@@ -24,10 +24,17 @@ export const ExportEmbedPreviewTableOrQuery = <
   importedRepository,
   exportInput,
   makeQuery,
+  makeSeafowlQuery,
   makeMatchInputToExported,
 }: {
   exportInput: ExportInputShape;
   makeQuery: (
+    tableOrQueryInput: ExportInputShape & {
+      splitgraphNamespace: string;
+      splitgraphRepository: string;
+    }
+  ) => string;
+  makeSeafowlQuery?: (
     tableOrQueryInput: ExportInputShape & {
       splitgraphNamespace: string;
       splitgraphRepository: string;
@@ -79,7 +86,10 @@ export const ExportEmbedPreviewTableOrQuery = <
         return {
           anchor: "Open in Console",
           href: makeSeafowlQueryHref(
-            makeQuery({ ...exportInput, ...importedRepository })
+            (makeSeafowlQuery ?? makeQuery)({
+              ...exportInput,
+              ...importedRepository,
+            })
           ),
         };
     }
@@ -158,7 +168,15 @@ export const ExportEmbedPreviewTableOrQuery = <
             display: selectedTab === "splitgraph" ? "none" : "block",
           }}
         >
-          <SeafowlEmbeddedQuery {...embedProps} />
+          <SeafowlEmbeddedQuery
+            {...embedProps}
+            makeQuery={
+              makeSeafowlQuery
+                ? () =>
+                    makeSeafowlQuery({ ...exportInput, ...importedRepository })
+                : embedProps.makeQuery
+            }
+          />
         </div>
       )}
     </div>

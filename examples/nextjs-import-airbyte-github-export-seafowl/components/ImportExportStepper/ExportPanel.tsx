@@ -323,7 +323,13 @@ const ExportPreview = ({
             key={`export-query-preview-${exportQuery.destinationTable}-${exportQuery.destinationSchema}`}
             exportInput={exportQuery}
             importedRepository={{ splitgraphNamespace, splitgraphRepository }}
+            // This is the query we run on Splitgraph that we exported to Seafowl
             makeQuery={({ sourceQuery }) => sourceQuery}
+            // But once it's exported, we can just select from its table in Seafowl (and
+            // besides, the sourceQuery might not be compatible with Seafowl anyway)
+            makeSeafowlQuery={({ destinationSchema, destinationTable }) =>
+              `SELECT * FROM "${destinationSchema}"."${destinationTable}";`
+            }
             makeMatchInputToExported={(exportQueryInput) =>
               (exportTable: ExportTable) => {
                 return (
