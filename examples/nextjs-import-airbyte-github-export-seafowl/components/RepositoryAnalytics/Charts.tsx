@@ -6,6 +6,7 @@ import { SqlProvider, makeSeafowlHTTPContext } from "@madatdata/react";
 import { useMemo } from "react";
 
 import { StargazersChart } from "./charts/StargazersChart";
+import { MonthlyIssueStatsTable } from "./charts/MonthlyIssueStats";
 
 export interface ChartsProps {
   importedRepository: ImportedRepository;
@@ -29,7 +30,9 @@ export const Charts = ({ importedRepository }: ChartsProps) => {
       <SqlProvider dataContext={seafowlDataContext}>
         <h3>Stargazers</h3>
         <StargazersChart {...importedRepository} />
+        <MonthlyIssueStatsTable {...importedRepository} />
       </SqlProvider>
+      MonthlyIssueStatsTable
     </div>
   );
 };
