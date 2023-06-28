@@ -1,15 +1,9 @@
 import { useRouter, type NextRouter } from "next/router";
 import { ParsedUrlQuery } from "querystring";
 import { useEffect, useReducer } from "react";
+import type { ExportTable } from "../../types";
 export type GitHubRepository = { namespace: string; repository: string };
-
-export type ExportTable = {
-  destinationSchema: string;
-  destinationTable: string;
-  taskId: string;
-  sourceQuery?: string;
-  fallbackCreateTableQuery?: string;
-};
+import { getQueryParamAsString, requireKeys } from "../../lib/util";
 
 // NOTE: Multiple tables can have the same taskId, so we track them separately
 // in order to not need to redundantly poll the API for each table individually
@@ -74,21 +68,6 @@ const initialState: StepperState = {
   debug: null,
 };
 
-const getQueryParamAsString = <T extends string = string>(
-  query: ParsedUrlQuery,
-  key: string
-): T | null => {
-  if (Array.isArray(query[key]) && query[key].length > 0) {
-    throw new Error(`expected only one query param but got multiple: ${key}`);
-  }
-
-  if (!(key in query)) {
-    return null;
-  }
-
-  return query[key] as T;
-};
-
 const queryParamParsers: {
   [K in keyof StepperState]: (query: ParsedUrlQuery) => StepperState[K];
 } = {
@@ -109,19 +88,6 @@ const queryParamParsers: {
   splitgraphRepository: (query) =>
     getQueryParamAsString(query, "splitgraphRepository"),
   debug: (query) => getQueryParamAsString(query, "debug"),
-};
-
-const requireKeys = <T extends Record<string, unknown>>(
-  obj: T,
-  requiredKeys: (keyof T)[]
-) => {
-  const missingKeys = requiredKeys.filter(
-    (requiredKey) => !(requiredKey in obj)
-  );
-
-  if (missingKeys.length > 0) {
-    throw new Error("missing required keys: " + missingKeys.join(", "));
-  }
 };
 
 const stepperStateValidators: {

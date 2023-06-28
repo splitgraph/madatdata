@@ -1,25 +1,29 @@
 import { useStepper } from "./StepperContext";
 import styles from "./ExportPanel.module.css";
 
-import { splitgraphTablesToExportToSeafowl } from "../../lib/config/github-tables";
+import { useTablesToExport } from "../../lib/config/github-tables";
 import {
   genericDemoQuery,
-  makeQueriesToExport,
+  useQueriesToExport,
 } from "../../lib/config/queries-to-export";
 import type {
-  ExportQueryInput,
-  ExportTableInput,
   StartExportToSeafowlRequestShape,
   StartExportToSeafowlResponseData,
 } from "../../types";
-import { useMemo, useCallback } from "react";
+import { useCallback } from "react";
 import { StepTitle } from "./StepTitle";
 import { StepDescription } from "./StepDescription";
 import { makeSplitgraphQueryHref } from "../RepositoryAnalytics/ImportedRepoMetadata";
-import type { ExportTable } from "./stepper-states";
 
-import { ExportEmbedPreviewTableOrQuery } from "../EmbeddedQuery/EmbeddedQuery";
 import { usePollExportTasks } from "./export-hooks";
+
+import {
+  EmbeddedTablePreviews,
+  EmbeddedQueryPreviews,
+  EmbeddedTablePreviewHeadingAndDescription,
+  EmbeddedQueryPreviewHeadingAndDescription,
+} from "../EmbeddedQuery/EmbeddedPreviews";
+import { useFindMatchingExportTable } from "./export-hooks";
 
 export const ExportPanel = () => {
   const [
@@ -29,29 +33,15 @@ export const ExportPanel = () => {
 
   usePollExportTasks();
 
-  const queriesToExport = useMemo<ExportQueryInput[]>(
-    () =>
-      makeQueriesToExport({
-        splitgraphSourceRepository: splitgraphRepository,
-        splitgraphSourceNamespace: splitgraphNamespace,
-        seafowlDestinationSchema: `${splitgraphNamespace}/${splitgraphRepository}`,
-      }),
-    [splitgraphRepository, splitgraphNamespace]
-  );
+  const queriesToExport = useQueriesToExport({
+    splitgraphNamespace,
+    splitgraphRepository,
+  });
 
-  const tablesToExport = useMemo<ExportTableInput[]>(
-    () =>
-      splitgraphTablesToExportToSeafowl.map((tableName) => ({
-        namespace: splitgraphNamespace,
-        repository: splitgraphRepository,
-        table: tableName,
-      })),
-    [
-      splitgraphNamespace,
-      splitgraphRepository,
-      splitgraphTablesToExportToSeafowl,
-    ]
-  );
+  const tablesToExport = useTablesToExport({
+    splitgraphNamespace,
+    splitgraphRepository,
+  });
 
   const handleStartExport = useCallback(async () => {
     const abortController = new AbortController();
@@ -221,126 +211,27 @@ ${genericDemoQuery}
       {["import_complete", "awaiting_export", "export_complete"].includes(
         stepperState
       ) && (
-        <ExportPreview
-          stepperState={
-            stepperState as
-              | "import_complete"
-              | "awaiting_export"
-              | "export_complete"
-          }
-          tablesToExport={tablesToExport}
-          queriesToExport={queriesToExport}
-          splitgraphRepository={splitgraphRepository}
-          splitgraphNamespace={splitgraphNamespace}
-        />
+        <>
+          <EmbeddedTablePreviewHeadingAndDescription
+            exportComplete={stepperState === "export_complete"}
+          />
+          <EmbeddedTablePreviews
+            useLoadingOrCompleted={useFindMatchingExportTable}
+            tablesToExport={tablesToExport}
+            splitgraphRepository={splitgraphRepository}
+            splitgraphNamespace={splitgraphNamespace}
+          />
+          <EmbeddedQueryPreviewHeadingAndDescription
+            exportComplete={stepperState === "export_complete"}
+          />
+          <EmbeddedQueryPreviews
+            useLoadingOrCompleted={useFindMatchingExportTable}
+            queriesToExport={queriesToExport}
+            splitgraphRepository={splitgraphRepository}
+            splitgraphNamespace={splitgraphNamespace}
+          />
+        </>
       )}
     </div>
-  );
-};
-
-const ExportPreview = ({
-  stepperState,
-  tablesToExport,
-  queriesToExport,
-  splitgraphRepository,
-  splitgraphNamespace,
-}: {
-  stepperState: "import_complete" | "awaiting_export" | "export_complete";
-  tablesToExport: ExportTableInput[];
-  queriesToExport: ExportQueryInput[];
-  splitgraphRepository: string;
-  splitgraphNamespace: string;
-}) => {
-  return (
-    <>
-      {stepperState !== "export_complete" ? (
-        <>
-          <h2 className={styles.exportPreviewHeading}>Tables to Export</h2>
-          <p className={styles.exportPreviewDescription}>
-            These are the tables that we'll export from Splitgraph to Seafowl.
-            You can query them in Splitgraph now, and then when the export is
-            complete, you'll be able to query them in Seafowl too.
-          </p>
-        </>
-      ) : (
-        <>
-          <h2 className={styles.exportPreviewHeading}>Exported Tables</h2>
-          <p className={styles.exportPreviewDescription}>
-            We successfully exported the tables to Seafowl, so now you can query
-            them in Seafowl too.
-          </p>
-        </>
-      )}
-
-      {tablesToExport
-        .filter((_) => true)
-        .map((exportTable) => (
-          <ExportEmbedPreviewTableOrQuery
-            key={`export-table-preview-${exportTable.table}`}
-            exportInput={exportTable}
-            importedRepository={{ splitgraphNamespace, splitgraphRepository }}
-            makeQuery={({ splitgraphNamespace, splitgraphRepository, table }) =>
-              `SELECT * FROM "${splitgraphNamespace}/${splitgraphRepository}"."${table}";`
-            }
-            makeMatchInputToExported={(exportTableInput) => (exportTable) => {
-              return (
-                exportTable.destinationSchema === exportTableInput.repository &&
-                exportTable.destinationTable === exportTableInput.table
-              );
-            }}
-          />
-        ))}
-
-      {stepperState !== "export_complete" ? (
-        <>
-          <h2 className={styles.exportPreviewHeading}>Queries to Export</h2>
-          <p className={styles.exportPreviewDescription}>
-            We've prepared a few queries to export from Splitgraph to Seafowl,
-            so that we can use them to render the charts that we want.
-            Splitgraph will execute the query and insert its result into
-            Seafowl. You can query them in Splitgraph now, and then when the
-            export is complete, you'll be able to query them in Seafowl too.
-          </p>
-        </>
-      ) : (
-        <>
-          <h2 className={styles.exportPreviewHeading}>Exported Queries</h2>
-          <p className={styles.exportPreviewDescription}>
-            We successfully exported these queries from Splitgraph to Seafowl,
-            so now you can query them in Seafowl too.{" "}
-            <em className={styles.exportNote}>
-              Note: If some queries failed to export, it's probably because they
-              had empty result sets (e.g. the table of issue reactions)
-            </em>
-          </p>
-        </>
-      )}
-
-      {queriesToExport
-        .filter((_) => true)
-        .map((exportQuery) => (
-          <ExportEmbedPreviewTableOrQuery
-            key={`export-query-preview-${exportQuery.destinationTable}-${exportQuery.destinationSchema}`}
-            exportInput={exportQuery}
-            importedRepository={{ splitgraphNamespace, splitgraphRepository }}
-            // This is the query we run on Splitgraph that we exported to Seafowl
-            makeQuery={({ sourceQuery }) => sourceQuery}
-            // But once it's exported, we can just select from its table in Seafowl (and
-            // besides, the sourceQuery might not be compatible with Seafowl anyway)
-            makeSeafowlQuery={({ destinationSchema, destinationTable }) =>
-              `SELECT * FROM "${destinationSchema}"."${destinationTable}";`
-            }
-            makeMatchInputToExported={(exportQueryInput) =>
-              (exportTable: ExportTable) => {
-                return (
-                  exportTable.destinationSchema ===
-                    exportQueryInput.destinationSchema &&
-                  exportTable.destinationTable ===
-                    exportQueryInput.destinationTable
-                );
-              }}
-          />
-        ))}
-    </>
   );
 };

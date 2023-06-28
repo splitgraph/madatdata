@@ -1,5 +1,9 @@
 import EmbeddedQueryStyles from "./EmbeddedQuery.module.css";
-import type { ExportQueryInput, ExportTableInput } from "../../types";
+import type {
+  ExportTable,
+  ExportQueryInput,
+  ExportTableInput,
+} from "../../types";
 import { useState, useMemo } from "react";
 import {
   makeSplitgraphQueryHref,
@@ -9,16 +13,13 @@ import {
   SplitgraphEmbeddedQuery,
   SeafowlEmbeddedQuery,
 } from "../RepositoryAnalytics/ImportedRepoMetadata";
-import { useStepperDebug } from "../ImportExportStepper/StepperContext";
-import { useFindMatchingExportTable } from "../ImportExportStepper/export-hooks";
-
-import type { ExportTable } from "../ImportExportStepper/stepper-states";
 
 import { LoadingBar } from "../LoadingBar";
 
 import { TabButton } from "./TabButton";
+import { useDebug } from "../../lib/util";
 
-export const ExportEmbedPreviewTableOrQuery = <
+export const EmbedPreviewTableOrQuery = <
   ExportInputShape extends ExportQueryInput | ExportTableInput
 >({
   importedRepository,
@@ -26,7 +27,11 @@ export const ExportEmbedPreviewTableOrQuery = <
   makeQuery,
   makeSeafowlQuery,
   makeMatchInputToExported,
+  useLoadingOrCompleted,
 }: {
+  useLoadingOrCompleted?: (
+    isMatch?: (candidateTable: ExportTable) => boolean
+  ) => { loading: boolean; completed: boolean };
   exportInput: ExportInputShape;
   makeQuery: (
     tableOrQueryInput: ExportInputShape & {
@@ -48,7 +53,7 @@ export const ExportEmbedPreviewTableOrQuery = <
     splitgraphRepository: string;
   };
 }) => {
-  const debug = useStepperDebug();
+  const debug = useDebug();
 
   const embedProps = {
     importedRepository,
@@ -59,7 +64,7 @@ export const ExportEmbedPreviewTableOrQuery = <
     makeQuery: () => makeQuery({ ...exportInput, ...importedRepository }),
   };
 
-  const { loading, completed } = useFindMatchingExportTable(
+  const { loading, completed } = useLoadingOrCompleted(
     makeMatchInputToExported(exportInput)
   );
 

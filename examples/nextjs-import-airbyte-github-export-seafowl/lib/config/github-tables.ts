@@ -1,3 +1,6 @@
+import { useMemo } from "react";
+import type { ExportTableInput } from "../../types";
+
 /**
  * List of GitHub table names that we want to import with the Airbyte connector
  * into Splitgraph. By default, there are 163 tables available. But we only want
@@ -7,13 +10,41 @@
  * Note that Airbyte will still import tables that depend on these tables due
  * to foreign keys, and will also import airbyte metaata tables.
  */
-export const relevantGitHubTableNamesForImport = `commits
+export const relevantGitHubTableNamesForImport = `stargazers
+commits
 comments
 pull_requests
 pull_request_stats
 issue_reactions`
   .split("\n")
   .filter((t) => !!t);
+
+export const splitgraphTablesToExportToSeafowl = [
+  "stargazers",
+  "stargazers_user",
+];
+
+export const useTablesToExport = ({
+  splitgraphNamespace,
+  splitgraphRepository,
+}: {
+  splitgraphNamespace: string;
+  splitgraphRepository: string;
+}) => {
+  return useMemo<ExportTableInput[]>(
+    () =>
+      splitgraphTablesToExportToSeafowl.map((tableName) => ({
+        namespace: splitgraphNamespace,
+        repository: splitgraphRepository,
+        table: tableName,
+      })),
+    [
+      splitgraphNamespace,
+      splitgraphRepository,
+      splitgraphTablesToExportToSeafowl,
+    ]
+  );
+};
 
 /**
  * List of "downstream" GitHub table names that will be imported by default by

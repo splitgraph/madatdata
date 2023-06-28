@@ -1,3 +1,6 @@
+import { useMemo } from "react";
+import type { ExportQueryInput } from "../../types";
+
 /**
  * Return a a list of queries to export from Splitgraph to Seafowl, given the
  * source repository (where the GitHub data was imported into), and the destination
@@ -160,6 +163,24 @@ CREATE TABLE "${seafowlDestinationSchema}".monthly_issue_stats (
 `,
   },
 ];
+
+export const useQueriesToExport = ({
+  splitgraphNamespace,
+  splitgraphRepository,
+}: {
+  splitgraphNamespace: string;
+  splitgraphRepository: string;
+}) => {
+  return useMemo<ExportQueryInput[]>(
+    () =>
+      makeQueriesToExport({
+        splitgraphSourceRepository: splitgraphRepository,
+        splitgraphSourceNamespace: splitgraphNamespace,
+        seafowlDestinationSchema: `${splitgraphNamespace}/${splitgraphRepository}`,
+      }),
+    [splitgraphRepository, splitgraphNamespace]
+  );
+};
 
 /** A generic demo query that can be used to show off Splitgraph */
 export const genericDemoQuery = `WITH t (

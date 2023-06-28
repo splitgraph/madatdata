@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import type { ExportTable } from "./stepper-states";
+import type { ExportTable } from "../../types";
 import { useStepper } from "./StepperContext";
 
 /**
@@ -34,8 +34,8 @@ export const useFindMatchingExportTable = (
   // and thus we don't have the sets of exportedTablesCompleted, but we know they exist
   const exportFullyCompleted = stepperState === "export_complete";
 
-  const completed = matchingCompletedTable ?? (exportFullyCompleted || false);
-  const loading = matchingLoadingTable ?? false;
+  const completed = !!matchingCompletedTable ?? (exportFullyCompleted || false);
+  const loading = !!matchingLoadingTable ?? false;
   const unstarted = !completed && !loading;
 
   return {

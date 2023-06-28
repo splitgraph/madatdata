@@ -1,0 +1,13 @@
+.embeddedPreviewHeading {
+  margin-bottom: 0;
+}
+
+.embeddedPreviewDescription {
+  margin-bottom: 1rem;
+}
+
+.note {
+  font-size: small;
+  /* color: red !important; */
+  display: block;
+}

@@ -10,6 +10,14 @@ export interface TargetSplitgraphRepo {
   splitgraphRepository: string;
 }
 
+export type ExportTable = {
+  destinationSchema: string;
+  destinationTable: string;
+  taskId: string;
+  sourceQuery?: string;
+  fallbackCreateTableQuery?: string;
+};
+
 export type ExportTableInput = {
   namespace: string;
   repository: string;
