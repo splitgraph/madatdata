@@ -15,10 +15,12 @@ import { useMemo } from "react";
 export const useSqlPlot = <
   RowShape extends UnknownObjectShape,
   SqlParams extends object,
-  MappedRow extends UnknownObjectShape
+  MappedRow extends UnknownObjectShape,
+  ReducedRow extends UnknownObjectShape
 >({
   sqlParams,
   mapRows,
+  reduceRows,
   buildQuery,
   makePlotOptions,
   isRenderable,
@@ -34,6 +36,11 @@ export const useSqlPlot = <
    * to a `Date` object.
    */
   mapRows?: (row: RowShape) => MappedRow;
+
+  /**
+   * An optional function to transform the mapped rows into a different aggregation
+   */
+  reduceRows?: (rows: MappedRow[]) => ReducedRow[];
   /**
    * A builder function that returns a SQL query given a set of parameters, which
    * will be the parameters passed as the `sqlParams` parameter.
@@ -43,7 +50,7 @@ export const useSqlPlot = <
    * A function to call after receiving the result of the SQL query (and mapping
    * its rows if applicable), to create the options given to Observable {@link Plot.plot}
    */
-  makePlotOptions: (rows: MappedRow[]) => Plot.PlotOptions;
+  makePlotOptions: (rows: ReducedRow[]) => Plot.PlotOptions;
   /**
    * A function to call to determine if the chart is renderable. This is helpful
    * during server side rendering, when Observable Plot doesn't typically work well,
@@ -73,10 +80,27 @@ export const useSqlPlot = <
         );
   }, [response, error]);
 
-  const plotOptions = useMemo(() => makePlotOptions(mappedRows), [mappedRows]);
+  const reducedRows = useMemo(() => {
+    if (mappedRows.length === 0) {
+      return [];
+    }
+
+    if (!reduceRows) {
+      return mappedRows as unknown as ReducedRow[];
+    }
+
+    return reduceRows(mappedRows);
+  }, [mappedRows]);
+
+  console.log(JSON.stringify(reducedRows));
+
+  const plotOptions = useMemo(
+    () => makePlotOptions(reducedRows),
+    [reducedRows]
+  );
 
   useEffect(() => {
-    if (mappedRows === undefined) {
+    if (reducedRows === undefined) {
       return;
     }
 
@@ -90,7 +114,7 @@ export const useSqlPlot = <
     }
 
     return () => plot.remove();
-  }, [mappedRows]);
+  }, [reducedRows]);
 
   const renderPlot = useCallback(
     () => <div ref={containerRef} />,
