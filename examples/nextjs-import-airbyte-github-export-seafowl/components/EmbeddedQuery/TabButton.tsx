@@ -1,10 +1,11 @@
-import type { ButtonHTMLAttributes } from "react";
+import type { ButtonHTMLAttributes, CSSProperties } from "react";
 
 import TabButtonStyle from "./TabButton.module.css";
 
 interface TabButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   active: boolean;
   onClick: () => void;
+  size?: CSSProperties["fontSize"];
 }
 
 export const TabButton = ({
@@ -12,6 +13,7 @@ export const TabButton = ({
   onClick,
   disabled: alwaysDisabled,
   children,
+  size,
   ...rest
 }: React.PropsWithChildren<TabButtonProps>) => {
   const className = [
@@ -29,7 +31,11 @@ export const TabButton = ({
       className={className}
       {...rest}
     >
-      {children}
+      {typeof size !== "undefined" ? (
+        <span style={{ fontSize: size }}>{children}</span>
+      ) : (
+        children
+      )}
     </button>
   );
 };

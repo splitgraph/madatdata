@@ -46,11 +46,6 @@ export const ImportedRepoMetadata = ({
           />
         </li>
       </ul>
-      <SeafowlEmbeddedQuery
-        importedRepository={importedRepository}
-        tableName={"stargazers"}
-        makeQuery={makeStargazersTableQuery}
-      />
     </div>
   );
 };
