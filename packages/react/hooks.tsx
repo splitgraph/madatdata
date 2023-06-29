@@ -45,9 +45,32 @@ export const SqlProvider = ({
 
 const useSqlContext = () => useContext(SqlContext);
 
+export interface UseSqlBaseOptions {
+  /**
+   * Either a boolean, or a function that returns a boolean given a query,
+   * which indicates whether or not the query should be executed. This can
+   * be helpful for dynamically built queries that may not be ready to execute
+   * immediately when the hook is rendered.
+   *
+   * For more precise control, you can also pass a function to the `query` parameter,
+   * and return `null` from it to indicate that it's not ready to execute yet.
+   */
+  isReady?: boolean | ((query: string) => boolean);
+
+  /**
+   * An optional AbortSignal to use to abort the query. If not provided, the
+   * hook will create its own AbortSignal to call on unmount, which is probably
+   * desirable to avoid sending a query multiple times during development. To opt
+   * out of this behavior, set it to `null`.
+   */
+  abortSignal?: AbortSignal | null;
+}
+
+export type UseSqlOptions<Overloads> = UseSqlBaseOptions & Overloads;
+
 export function useSql<RowShape extends UnknownArrayShape>(
-  query: string,
-  executeOptions: { rowMode: "array" }
+  query: string | null | (() => string | null),
+  executeOptions: UseSqlOptions<{ rowMode: "array" }>
 ): {
   loading: boolean;
   response: ExecutionResultWithArrayShapedRows<RowShape> | null;
@@ -55,8 +78,8 @@ export function useSql<RowShape extends UnknownArrayShape>(
 };
 
 export function useSql<RowShape extends UnknownObjectShape>(
-  query: string,
-  executeOptions?: { rowMode: "object" }
+  query: string | null | (() => string | null),
+  executeOptions?: UseSqlOptions<{ rowMode: "object" }>
 ): {
   loading: boolean;
   response: ExecutionResultWithObjectShapedRows<RowShape> | null;
@@ -64,8 +87,14 @@ export function useSql<RowShape extends UnknownObjectShape>(
 };
 
 export function useSql<RowShape extends UnknownRowShape>(
-  query: string,
-  execOptions?: { rowMode?: "object" | "array" }
+  /**
+   * The query to execute, or a function that returns the query to execute. The
+   * query should be of type `string`, or `null` to indicate that the query is
+   * not ready to execute yet. This can be helpful for dynamically built queries,
+   * and for avoiding the need to use the `isReady` parameter.
+   */
+  query: string | null | (() => string | null),
+  execOptions?: UseSqlOptions<{ rowMode?: "object" | "array" }>
 ) {
   const [state, setState] = useState<{
     loading: boolean;
@@ -94,10 +123,31 @@ export function useSql<RowShape extends UnknownRowShape>(
       return;
     }
 
+    const queryString = typeof query === "function" ? query() : query;
+
+    if (!queryString) {
+      return;
+    }
+
+    if (typeof execOptions?.isReady === "boolean" && !execOptions?.isReady) {
+      return;
+    }
+
+    if (
+      execOptions?.isReady &&
+      typeof execOptions?.isReady === "function" &&
+      !execOptions?.isReady(queryString)
+    ) {
+      return;
+    }
+
+    const defaultAbortController =
+      execOptions?.abortSignal === null ? null : new AbortController();
+
     client
-      .execute<RowShape>(query, {
+      .execute<RowShape>(queryString, {
         rowMode: execOptions?.rowMode ?? "object",
-        ...execOptions,
+        abortSignal: execOptions?.abortSignal ?? defaultAbortController?.signal,
       })
       .then((result) =>
         setState({
@@ -106,7 +156,26 @@ export function useSql<RowShape extends UnknownRowShape>(
           error: result.error,
         })
       );
-  }, [query, execOptions?.rowMode]);
+
+    return () => {
+      if (execOptions?.abortSignal === null) {
+        // User opted out of sending an abort signal
+        return;
+      } else if (execOptions?.abortSignal) {
+        // User provided an abort signal, so don't abort it here
+        return;
+      } else if (defaultAbortController) {
+        return defaultAbortController.abort();
+      } else {
+        console.log("Unexpected state: no abort controller available to abort");
+      }
+    };
+  }, [
+    query,
+    execOptions?.rowMode,
+    execOptions?.abortSignal,
+    execOptions?.isReady,
+  ]);
 
   return state;
 }

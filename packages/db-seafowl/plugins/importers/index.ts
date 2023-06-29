@@ -9,7 +9,7 @@ type DefaultPluginMap = {
     | {
         [k in DEFAULT_IMPORT_PLUGINS]: k extends "csv" | "parquet"
           ? SeafowlImportFilePlugin
-          : ImportPlugin;
+          : ImportPlugin<string>;
       };
   exporters: {};
 };

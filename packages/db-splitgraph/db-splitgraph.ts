@@ -12,7 +12,7 @@ import {
 
 // TODO: These could be injected in the constructor as the actual plugin map
 import { SplitgraphImportCSVPlugin } from "./plugins/importers/splitgraph-import-csv-plugin";
-import { ExportQueryPlugin } from "./plugins/exporters/export-query-plugin";
+import { SplitgraphExportQueryToFilePlugin } from "./plugins/exporters/splitgraph-export-query-to-file-plugin";
 
 // TODO: It's not ideal for db-splitgraph to depend on base-client
 import {
@@ -30,6 +30,11 @@ import {
   skipTransformFetchOptions,
 } from "@madatdata/client-http";
 import type { GraphQLClientOptions } from "./plugins";
+import type { DeferredTaskPlugin } from "@madatdata/base-db/base-db";
+
+// TODO: dont hardcode this, fix initialization interface for plugins
+import { SplitgraphAirbyteGithubImportPlugin } from "./plugins/importers/generated/airbyte-github/plugin";
+import { SplitgraphExportToSeafowlPlugin } from "./plugins/exporters/splitgraph-export-to-seafowl-plugin";
 
 interface DbSplitgraphPluginHostContext extends GraphQLClientOptions {}
 
@@ -50,7 +55,7 @@ const makeTransformRequestHeadersForAuthenticatedRequest =
 
 export type DefaultSplitgraphPluginList = (
   | SplitgraphImportCSVPlugin
-  | ExportQueryPlugin
+  | SplitgraphExportQueryToFilePlugin
 )[];
 
 export const makeDefaultPluginList = (
@@ -72,7 +77,9 @@ export const makeDefaultPluginList = (
 
   return [
     new SplitgraphImportCSVPlugin({ ...graphqlOptions }),
-    new ExportQueryPlugin({ ...graphqlOptions }),
+    new SplitgraphAirbyteGithubImportPlugin({ ...graphqlOptions }),
+    new SplitgraphExportQueryToFilePlugin({ ...graphqlOptions }),
+    new SplitgraphExportToSeafowlPlugin({ ...graphqlOptions }),
   ];
 };
 
@@ -284,13 +291,21 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
     };
   }
 
-  async exportData(
-    pluginName: ExtractPlugin<SplitgraphPluginList, ExportPlugin>["__name"],
+  async exportData<
+    PluginName extends ExtractPlugin<
+      SplitgraphPluginList,
+      ExportPlugin<string>
+    >["__name"]
+  >(
+    pluginName: PluginName,
     ...rest: Parameters<
-      ExtractPlugin<SplitgraphPluginList, ExportPlugin>["exportData"]
+      ExtractPlugin<
+        SplitgraphPluginList,
+        ExportPlugin<PluginName>
+      >["exportData"]
     >
   ) {
-    const [sourceOpts, destOpts] = rest;
+    const [sourceOpts, destOpts, exportOpts] = rest;
 
     const plugin = this.plugins
       .selectMatchingPlugins(
@@ -298,10 +313,12 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
           plugin
         ): plugin is ExtractPlugin<
           SplitgraphPluginList,
-          ExportPlugin & { __name: typeof pluginName } & Partial<
-              WithOptionsInterface<ExportPlugin>
-            >
-        > => "exportData" in Object.getPrototypeOf(plugin)
+          ExportPlugin<typeof pluginName> & {
+            __name: typeof pluginName;
+          } & Partial<WithOptionsInterface<ExportPlugin<typeof pluginName>>>
+        > =>
+          "exportData" in Object.getPrototypeOf(plugin) &&
+          plugin.__name === pluginName
       )
       .pop();
 
@@ -313,29 +330,39 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
       throw new Error("plugin does not implement withOptions");
     }
 
-    return await plugin
-      .withOptions({
-        ...this.pluginConfig,
-        ...plugin,
-        transformRequestHeaders: (headers: HeadersInit) =>
-          (
-            (plugin as PluginWithTransformRequestHeadersOption<typeof plugin>)
-              .transformRequestHeaders ?? IdentityFunc
-          )(this.pluginConfig.transformRequestHeaders(headers)),
-      })
-      .exportData(sourceOpts, destOpts);
+    const instantiatedPlugin = plugin.withOptions({
+      ...this.pluginConfig,
+      ...plugin,
+      transformRequestHeaders: (headers: HeadersInit) =>
+        (
+          (plugin as PluginWithTransformRequestHeadersOption<typeof plugin>)
+            .transformRequestHeaders ?? IdentityFunc
+        )(this.pluginConfig.transformRequestHeaders(headers)),
+    });
+
+    return exportOpts
+      ? await instantiatedPlugin.exportData(sourceOpts, destOpts, exportOpts)
+      : await instantiatedPlugin.exportData(sourceOpts, destOpts);
   }
 
-  async importData(
-    pluginName: ExtractPlugin<SplitgraphPluginList, ImportPlugin>["__name"],
+  async importData<
+    PluginName extends ExtractPlugin<
+      SplitgraphPluginList,
+      ImportPlugin<string>
+    >["__name"]
+  >(
+    pluginName: PluginName,
     ...rest: Parameters<
-      ExtractPlugin<SplitgraphPluginList, ImportPlugin>["importData"]
+      ExtractPlugin<
+        SplitgraphPluginList,
+        ImportPlugin<PluginName>
+      >["importData"]
     >
   ) {
     // TODO: type error in ...rest
     // this.plugins.callFunction(pluginName, "importData", ...rest);
 
-    const [sourceOpts, destOpts] = rest;
+    const [sourceOpts, destOpts, importOpts] = rest;
 
     const plugin = this.plugins
       .selectMatchingPlugins(
@@ -343,10 +370,12 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
           plugin
         ): plugin is ExtractPlugin<
           SplitgraphPluginList,
-          ImportPlugin & {
+          ImportPlugin<typeof pluginName> & {
             __name: typeof pluginName;
-          } & Partial<WithOptionsInterface<ImportPlugin>>
-        > => "importData" in Object.getPrototypeOf(plugin)
+          } & Partial<WithOptionsInterface<ImportPlugin<typeof pluginName>>>
+        > =>
+          "importData" in Object.getPrototypeOf(plugin) &&
+          plugin.__name === pluginName
       )
       .pop();
 
@@ -358,7 +387,73 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
       throw new Error("plugin does not implement withOptions");
     }
 
-    return await plugin
+    const instantiatedPlugin = plugin.withOptions({
+      ...this.pluginConfig,
+      ...plugin,
+      transformRequestHeaders: (headers: HeadersInit) =>
+        (
+          (plugin as PluginWithTransformRequestHeadersOption<typeof plugin>)
+            .transformRequestHeaders ?? IdentityFunc
+        )(this.pluginConfig.transformRequestHeaders(headers)),
+    });
+
+    return importOpts
+      ? await instantiatedPlugin.importData(sourceOpts, destOpts, importOpts)
+      : await instantiatedPlugin.importData(sourceOpts, destOpts);
+  }
+
+  async pollDeferredTask<
+    PluginName extends ExtractPlugin<
+      SplitgraphPluginList,
+      DeferredTaskPlugin<string, any>
+    >["__name"],
+    MatchingPlugin extends ExtractPlugin<
+      SplitgraphPluginList,
+      // discriminate on __name to avoid including return type of every plugin with pollDeferredTask
+      { __name: PluginName } & DeferredTaskPlugin<string, any>
+    >,
+    DeferredTaskResponse extends Awaited<
+      ReturnType<MatchingPlugin["pollDeferredTask"]>
+    >
+  >(
+    pluginName: PluginName,
+    ...rest: Parameters<
+      ExtractPlugin<
+        SplitgraphPluginList,
+        DeferredTaskPlugin<PluginName, any>
+      >["pollDeferredTask"]
+    >
+  ) {
+    const plugin = this.plugins
+      .selectMatchingPlugins(
+        (
+          plugin
+        ): plugin is ExtractPlugin<
+          SplitgraphPluginList,
+          DeferredTaskPlugin<typeof pluginName, DeferredTaskResponse> & {
+            __name: typeof pluginName;
+          } & Partial<
+              WithOptionsInterface<
+                DeferredTaskPlugin<typeof pluginName, DeferredTaskResponse>
+              >
+            >
+        > =>
+          "pollDeferredTask" in Object.getPrototypeOf(plugin) &&
+          plugin.__name === pluginName
+      )
+      .pop();
+
+    if (!plugin) {
+      throw new Error(`Plugin not found: ${pluginName}`);
+    }
+
+    if (!plugin.withOptions) {
+      throw new Error("plugin does not implement withOptions");
+    }
+
+    const [memoizedDeferredTask] = rest;
+
+    const deferredTask = await plugin
       .withOptions({
         ...this.pluginConfig,
         ...plugin,
@@ -368,7 +463,9 @@ export class DbSplitgraph<SplitgraphPluginList extends PluginList>
               .transformRequestHeaders ?? IdentityFunc
           )(this.pluginConfig.transformRequestHeaders(headers)),
       })
-      .importData(sourceOpts, destOpts);
+      .pollDeferredTask(memoizedDeferredTask);
+
+    return deferredTask;
   }
 }
 

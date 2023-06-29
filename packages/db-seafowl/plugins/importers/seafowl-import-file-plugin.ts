@@ -24,7 +24,7 @@ type ImportFileOptions = ImportFileFromURLOptions;
 type DbInjectedOptions = Partial<ImportFilePluginOptions>;
 
 export class SeafowlImportFilePlugin
-  implements ImportPlugin, WithOptionsInterface<SeafowlImportFilePlugin>
+  implements ImportPlugin<"csv">, WithOptionsInterface<SeafowlImportFilePlugin>
 {
   public readonly opts: Partial<ImportFilePluginOptions>;
   private readonly seafowlClient?: Client;

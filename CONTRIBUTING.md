@@ -42,6 +42,11 @@ VITE_TEST_INTEGRATION=1
 VITE_TEST_DDN_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 VITE_TEST_DDN_API_SECRET=yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
 VITE_TEST_SEAFOWL_SECRET=zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+VITE_TEST_GITHUB_PAT=uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu
+VITE_TEST_SEAFOWL_EXPORT_DEST_URL=https://demo.seafowl.cloud
+# should match the username associated with the API_KEY for Splitgraph
+VITE_TEST_SEAFOWL_EXPORT_DEST_DBNAME=miles
+VITE_TEST_SEAFOWL_EXPORT_DEST_SECRET=tttttttttttttttttttttttttttttttt
 ```
 
 Then simply append `--mode integration` flag to any variant of `yarn test` that
@@ -66,6 +71,24 @@ where a separate process like `mitmproxy` can intercept outbound requests:
 
 ```bash
 yarn test-mitm --mode integration
+```
+
+### Run tests in VSCode "JavaScript Debug Terminal"
+
+If using VSCode, the easiest debugging method is to open a "JavaScript Debug
+Terminal" (which you can do via the command palette
+"`Debug: JavaScript Debug Terminal`"). Put a `debugger;` statement where you
+want to break, and then run vitest in single-threaded mode:
+
+```bash
+yarn test --single-thread
+```
+
+Or, if you also want to use mitmproxy (assumed to be listening on port `7979`),
+then:
+
+```bash
+yarn test-mitm --single-thread
 ```
 
 ### Typecheck
@@ -159,6 +182,9 @@ Running `yarn version-all` or `yarn publish-all` will run the corresponding
 defined, in topological order. Therefore, to indicate a workspace is
 publishable, make sure the `package.json` includes `scripts.version` and
 `scripts.publish`.
+
+If you want to publish a prerelease ("tag"), then add `--tag` to the
+`publish-all` command, e.g. `yarn publish-all --tag canary --otp <your otp>`
 
 Create deferred patch (0.0.x) changes (if necessary) in topological order
 

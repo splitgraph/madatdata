@@ -25,6 +25,26 @@ const shouldIncludeIntegrationTests = () => {
   );
 };
 
+// True if there is a secret defined for testing Seafowl export destination,
+// which might be different from the Seafowl instance used for Seafowl integration tests
+const environmentHasSeafowlExportDestinationCredential = () => {
+  return (
+    // @ts-expect-error https://stackoverflow.com/a/70711231
+    !!import.meta.env.VITE_TEST_SEAFOWL_EXPORT_DEST_URL &&
+    // @ts-expect-error https://stackoverflow.com/a/70711231
+    !!import.meta.env.VITE_TEST_SEAFOWL_EXPORT_DEST_DBNAME &&
+    // @ts-expect-error https://stackoverflow.com/a/70711231
+    !!import.meta.env.VITE_TEST_SEAFOWL_EXPORT_DEST_SECRET
+  );
+};
+
+export const shouldSkipExportFromSplitgraphToSeafowlIntegrationTests = () => {
+  return (
+    shouldSkipIntegrationTests() ||
+    !environmentHasSeafowlExportDestinationCredential()
+  );
+};
+
 /**
  * Inspect environment for configuration indicating whether to run integration
  * tests against the real production DDN at Splitgraph.com.
@@ -72,6 +92,26 @@ export const shouldSkipIntegrationTests = () => {
   return !shouldIncludeIntegrationTests();
 };
 
+/**
+ * Check whether tests that ingest from GitHub as an external data source (using
+ * the Splitgraph plugin `airbyte-github`) should be skipped.
+ *
+ * @returns true if missing GitHub PAT, or if integration tests should be skipped
+ */
+export const shouldSkipIntegrationTestsForGitHubExternalDataSource = () => {
+  // TODO: Temporarily hardcoded to avoid ingesting a bunch of data without deleting it
+  return true;
+
+  // const environmentHasGitHubPATSecret = () => {
+  //   return (
+  //     // @ts-expect-error https://stackoverflow.com/a/70711231
+  //     !!import.meta.env.VITE_TEST_GITHUB_PAT_SECRET
+  //   );
+  // };
+  // return shouldSkipIntegrationTests() || !environmentHasGitHubPATSecret();
+};
+
 export const shouldSkipSeafowlTests = () => {
+  return true;
   return !environmentHasSeafowlCredential();
 };

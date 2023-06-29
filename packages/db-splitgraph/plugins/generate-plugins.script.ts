@@ -1,4 +1,5 @@
 import { compile } from "json-schema-to-typescript";
+import { generateName } from "json-schema-to-typescript/dist/src/utils";
 import path from "path";
 import { writeFile, mkdir } from "fs/promises";
 import { request, gql } from "graphql-request";
@@ -13,6 +14,14 @@ const targetDir = path.join(thisSourceFileDir, "importers", "generated");
 const generateTypes = async () => {
   const allPlugins = await fetchSchemas();
 
+  // Store set of used interface names to ensure global uniqueness so that we
+  // can export * from generated files. However, note this may not work because
+  // the intermediate types are also exported, and those will have collisions
+  const usedInterfaceNames = new Set<string>();
+
+  // Set of plugin class names (same comment as above applies, i.e. uniqueness is expected anyway)
+  const usedPluginClassNames = new Set<string>();
+
   for (let plugin of allPlugins.externalPlugins) {
     log("generateTypes:", plugin.pluginName);
     let pluginTargetDir = path.join(targetDir, plugin.pluginName);
@@ -20,24 +29,71 @@ const generateTypes = async () => {
     log("mkdir:", fdir(pluginTargetDir));
     await mkdir(pluginTargetDir, { recursive: true });
 
-    let schemas = [
+    let schemas: [schema: any, schemaName: string, interfaceName: string][] = [
       [plugin.credentialsSchema, "CredentialsSchema"],
       [plugin.paramsSchema, "ParamsSchema"],
       [plugin.tableParamsSchema, "TableParamsSchema"],
-    ];
+    ].map(([schema, schemaName]) => [
+      schema,
+      schemaName,
+      (() => {
+        // Generate a name that's safe for interface type name and hasn't been used yet
+        // We don't expect collisions, since pluginName is unique, but just in case
+        const interfaceName = generateName(
+          plugin.pluginName + schemaName,
+          usedInterfaceNames
+        );
+        usedInterfaceNames.add(interfaceName);
 
-    for (let [schema, schemaName] of schemas) {
+        return interfaceName;
+      })(),
+    ]);
+
+    for (let [schema, schemaName, interfaceName] of schemas) {
       let schemaOutFile = path.join(pluginTargetDir, `${schemaName}.ts`);
+      log("interfaceName:", interfaceName);
 
-      let generatedTypescript = await compile(
-        // @ts-ignore-error Some jsonschema issues, apparently with array items
-        schema,
-        plugin.pluginName
-      );
+      let generatedTypescript = await compile(schema, interfaceName, {
+        strictIndexSignatures: true,
+      });
 
       log("write schema:", fdir(schemaOutFile));
       await writeFile(schemaOutFile, generatedTypescript);
     }
+
+    const [
+      [_cs, _csn, credentialsSchemaInterfaceName],
+      [_ps, _psn, paramsSchemaInterfaceName],
+      [_tps, _tpsn, tableParamsSchemaInterfaceName],
+    ] = schemas;
+
+    // NOTE: Concatenate "Splitgraph" outside of generated name to ensure PascalCasing
+    // (otherwise we get "SplitgraphairbyteGitHubImportPlugin" instead of "SplitgraphAirbyteGitHubImportPlugin")
+    let pluginClassName =
+      "Splitgraph" +
+      generateName(plugin.pluginName + "ImportPlugin", usedPluginClassNames);
+    let pluginOutFile = path.join(pluginTargetDir, "plugin.ts");
+
+    log("create plugin: ", pluginClassName, "in", pluginOutFile);
+
+    await writeFile(
+      pluginOutFile,
+      `/** Auto-generated plugin **/
+
+import type { ${paramsSchemaInterfaceName} } from "./ParamsSchema";
+import type { ${tableParamsSchemaInterfaceName} } from "./TableParamsSchema";
+import type { ${credentialsSchemaInterfaceName} } from "./CredentialsSchema";
+import { makeGeneratedImportPlugin } from "../../splitgraph-generated-import-plugin";
+
+export const ${pluginClassName} = makeGeneratedImportPlugin<
+  "${plugin.pluginName}",
+  ${paramsSchemaInterfaceName},
+  ${tableParamsSchemaInterfaceName},
+  ${credentialsSchemaInterfaceName}
+>("${plugin.pluginName}");
+
+`
+    );
   }
 };
 

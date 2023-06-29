@@ -31,11 +31,12 @@ import {
 // FIXME: we _should_ only be depending on types from this pacakge - should
 // they be in a separate package from the actual http-client?
 import type { HTTPStrategies, HTTPClientOptions } from "@madatdata/client-http";
+import type { DeferredTaskPlugin } from "@madatdata/base-db/base-db";
 
 export type DefaultSeafowlPluginList<
-  ConcretePluginList extends (ImportPlugin | ExportPlugin)[] = (
-    | ImportPlugin
-    | ExportPlugin
+  ConcretePluginList extends (ImportPlugin<string> | ExportPlugin<string>)[] = (
+    | ImportPlugin<string>
+    | ExportPlugin<string>
   )[]
 > = ConcretePluginList[number][];
 
@@ -265,10 +266,16 @@ export class DbSeafowl<SeafowlPluginList extends PluginList>
     );
   }
 
-  async exportData(
-    _pluginName: ExtractPlugin<SeafowlPluginList, ExportPlugin>["__name"],
+  // TODO: atm, there are no Seafowl export plugins
+  async exportData<
+    PluginName extends ExtractPlugin<
+      SeafowlPluginList,
+      ExportPlugin<string>
+    >["__name"]
+  >(
+    _pluginName: PluginName,
     ..._rest: Parameters<
-      ExtractPlugin<SeafowlPluginList, ExportPlugin>["exportData"]
+      ExtractPlugin<SeafowlPluginList, ExportPlugin<PluginName>>["exportData"]
     >
   ): Promise<unknown> {
     await Promise.resolve();
@@ -281,10 +288,37 @@ export class DbSeafowl<SeafowlPluginList extends PluginList>
     };
   }
 
-  async importData(
-    pluginName: ExtractPlugin<SeafowlPluginList, ImportPlugin>["__name"],
+  // TODO: atm, there are no deferred tasks for seafowl
+  async pollDeferredTask<
+    PluginName extends ExtractPlugin<
+      SeafowlPluginList,
+      DeferredTaskPlugin<string>
+    >["__name"]
+  >(
+    _pluginName: PluginName,
+    ..._rest: Parameters<
+      ExtractPlugin<
+        SeafowlPluginList,
+        DeferredTaskPlugin<PluginName>
+      >["pollDeferredTask"]
+    >
+  ): Promise<unknown> {
+    await Promise.resolve();
+    return {
+      completed: false,
+      result: null,
+    };
+  }
+
+  async importData<
+    PluginName extends ExtractPlugin<
+      SeafowlPluginList,
+      ImportPlugin<string>
+    >["__name"]
+  >(
+    pluginName: PluginName,
     ...rest: Parameters<
-      ExtractPlugin<SeafowlPluginList, ImportPlugin>["importData"]
+      ExtractPlugin<SeafowlPluginList, ImportPlugin<PluginName>>["importData"]
     >
   ) {
     const [sourceOpts, destOpts] = rest;
@@ -295,10 +329,11 @@ export class DbSeafowl<SeafowlPluginList extends PluginList>
           plugin
         ): plugin is ExtractPlugin<
           SeafowlPluginList,
-          ImportPlugin & { __name: typeof pluginName } & Partial<
-              WithOptionsInterface<ImportPlugin>
-            >
-        > => "importData" in Object.getPrototypeOf(plugin)
+          ImportPlugin<PluginName> &
+            Partial<WithOptionsInterface<ImportPlugin<PluginName>>>
+        > =>
+          "importData" in Object.getPrototypeOf(plugin) &&
+          plugin.__name === pluginName
       )
       .pop();
 

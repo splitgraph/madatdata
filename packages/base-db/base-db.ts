@@ -21,22 +21,69 @@ import {
 
 import type { HTTPStrategies } from "@madatdata/client-http";
 
-export interface ImportPlugin extends Plugin {
+export interface ImportPlugin<
+  PluginName extends string,
+  ConcreteSourceOptions extends object = any,
+  ConcreteDestOptions extends object = any
+> extends Plugin {
+  __name: PluginName;
   importData: (
-    sourceOptions: any,
-    destOptions: any
-  ) => Promise<{ response: any | null; error: any | null; info?: any | null }>;
+    sourceOptions: ConcreteSourceOptions,
+    destOptions: ConcreteDestOptions,
+    importOptions?: { defer: boolean }
+  ) => Promise<{
+    taskId?: string | null;
+    response: any | null;
+    error: any | null;
+    info?: any | null;
+  }>;
 }
 
 // interface ImportPluginWithOptions extends ImportPlugin {
 //   withOptions: WithOptions<ImportPlugin>;
 // }
 
-export interface ExportPlugin extends Plugin {
+export interface ExportPlugin<
+  PluginName extends string,
+  ConcreteSourceOptions extends object = any,
+  ConcreteDestOptions extends object = any
+> extends Plugin {
+  __name: PluginName;
   exportData: (
-    sourceOptions: any,
-    destOptions: any
-  ) => Promise<{ response: any | null; error: any | null; info?: any | null }>;
+    sourceOptions: ConcreteSourceOptions,
+    destOptions: ConcreteDestOptions,
+    exportOptions?: { defer: boolean }
+  ) => Promise<{
+    response: any | null;
+    error: any | null;
+    info?: any | null;
+    taskId?: string | null;
+    taskIds?: any;
+  }>;
+}
+
+export interface DeferredTaskPlugin<
+  PluginName extends string,
+  // TODO: maybe should extend { __name: PluginName }  to ensure finding
+  // correct task plugin by serialized deferred task
+
+  DeferredTaskResponse extends {
+    completed: boolean;
+    response: any | null;
+    error: any | null;
+    info: any | null;
+  } = {
+    completed: boolean;
+    response: Record<string, unknown>;
+    error: any;
+    info: any;
+  },
+  MemoizedDeferredTask extends object = any
+> extends Plugin {
+  __name: PluginName;
+  pollDeferredTask: (
+    memoizedDeferredTask: MemoizedDeferredTask
+  ) => Promise<DeferredTaskResponse>;
 }
 
 // interface ExportPluginWithOptions extends ExportPlugin {
@@ -51,6 +98,13 @@ export interface DbPluggableInterface<ConcretePluginList extends PluginList>
   exportData: <MatchingPlugin extends ExportPluginFromList<ConcretePluginList>>(
     ...exportDataArgsForPlugin: Parameters<MatchingPlugin["exportData"]>
   ) => Promise<unknown>;
+  pollDeferredTask: <
+    MatchingPlugin extends DeferredTaskPluginFromList<ConcretePluginList>
+  >(
+    ...pollDeferredTaskArgsForPlugin: Parameters<
+      MatchingPlugin["pollDeferredTask"]
+    >
+  ) => Promise<unknown>;
 }
 
 export interface Db<ConcretePluginList extends PluginList> {
@@ -61,6 +115,12 @@ export interface Db<ConcretePluginList extends PluginList> {
   exportData: <MatchingPlugin extends ExportPluginFromList<ConcretePluginList>>(
     pluginName: MatchingPlugin["__name"],
     ...rest: Parameters<MatchingPlugin["exportData"]>
+  ) => Promise<unknown>;
+  pollDeferredTask: <
+    MatchingPlugin extends DeferredTaskPluginFromList<ConcretePluginList>
+  >(
+    pluginName: MatchingPlugin["__name"],
+    ...rest: Parameters<MatchingPlugin["pollDeferredTask"]>
   ) => Promise<unknown>;
   makeClient: <ImplementationSpecificClientOptions extends ClientOptions>(
     makeClientForProtocol: (
@@ -74,17 +134,25 @@ export type ImportPluginFromList<
   ConcretePluginList extends PluginList,
   PluginName extends ExtractPlugin<
     ConcretePluginList,
-    ImportPlugin
+    ImportPlugin<string>
   >["__name"] = string
-> = ExtractPlugin<ConcretePluginList, ImportPlugin & { __name: PluginName }>;
+> = ExtractPlugin<ConcretePluginList, ImportPlugin<PluginName>>;
 
 export type ExportPluginFromList<
   ConcretePluginList extends PluginList,
   PluginName extends ExtractPlugin<
     ConcretePluginList,
-    ExportPlugin
+    ExportPlugin<string>
   >["__name"] = string
-> = ExtractPlugin<ConcretePluginList, ExportPlugin & { __name: PluginName }>;
+> = ExtractPlugin<ConcretePluginList, ExportPlugin<PluginName>>;
+
+export type DeferredTaskPluginFromList<
+  ConcretePluginList extends PluginList,
+  PluginName extends ExtractPlugin<
+    ConcretePluginList,
+    DeferredTaskPlugin<string>
+  >["__name"] = string
+> = ExtractPlugin<ConcretePluginList, DeferredTaskPlugin<PluginName>>;
 
 export interface DbOptions<ConcretePluginList extends PluginList> {
   plugins: ConcretePluginList;
@@ -173,6 +241,20 @@ export abstract class BaseDb<
     ...rest: Parameters<MatchingPlugin["exportData"]>
   ): Promise<unknown>;
 
+  abstract pollDeferredTask<
+    PluginName extends DeferredTaskPluginFromList<
+      ConcretePluginList,
+      string
+    >["__name"],
+    MatchingPlugin extends DeferredTaskPluginFromList<
+      ConcretePluginList,
+      PluginName
+    >
+  >(
+    pluginName: PluginName,
+    ...rest: Parameters<MatchingPlugin["pollDeferredTask"]>
+  ): Promise<unknown>;
+
   /**
    * Return a fingerprint and normalized query (used as input to the fingerprint)
    * for a given SQL string. Default to SHA-256 and normalizing for HTTP headers.
@@ -187,7 +269,7 @@ export abstract class BaseDb<
     // In vitest, really JSDOM, it's a bit of a mix between the two (window is available?)
     // NOTE: Need to test how this will work in a browser bundle which we don't even have yet
     const subtle = await (async () => {
-      if (!window?.crypto?.subtle) {
+      if (typeof window === "undefined" || !window?.crypto?.subtle) {
         const { webcrypto } = await import("crypto");
 
         if (webcrypto.subtle) {

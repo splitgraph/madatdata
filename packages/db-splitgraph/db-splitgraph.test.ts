@@ -3,9 +3,13 @@ import { randSuffix } from "@madatdata/test-helpers/rand-suffix";
 import type { Expect, Equal } from "@madatdata/test-helpers/type-test-utils";
 import { makeDb } from "./db-splitgraph";
 import { SplitgraphImportCSVPlugin } from "./plugins/importers/splitgraph-import-csv-plugin";
-import { ExportQueryPlugin } from "./plugins/exporters/export-query-plugin";
+import { SplitgraphExportQueryToFilePlugin } from "./plugins/exporters/splitgraph-export-query-to-file-plugin";
 
-import { shouldSkipIntegrationTests } from "@madatdata/test-helpers/env-config";
+import {
+  shouldSkipExportFromSplitgraphToSeafowlIntegrationTests,
+  shouldSkipIntegrationTests,
+  shouldSkipIntegrationTestsForGitHubExternalDataSource,
+} from "@madatdata/test-helpers/env-config";
 import { setupMswServerTestHooks } from "@madatdata/test-helpers/msw-server-hooks";
 import { setupMemo } from "@madatdata/test-helpers/setup-memo";
 import { compose, graphql, rest, type DefaultBodyType } from "msw";
@@ -13,6 +17,8 @@ import { compose, graphql, rest, type DefaultBodyType } from "msw";
 import { defaultHost } from "@madatdata/base-client";
 
 import { faker } from "@faker-js/faker";
+import { SplitgraphAirbyteGithubImportPlugin } from "./plugins/importers/generated/airbyte-github/plugin";
+import { SplitgraphExportToSeafowlPlugin } from "./plugins/exporters/splitgraph-export-to-seafowl-plugin";
 
 describe("importData", () => {
   it("returns false for unknown plugin", async () => {
@@ -70,9 +76,13 @@ const createDb = () => {
     graphqlEndpoint: defaultHost.baseUrls.gql,
     transformRequestHeaders,
 
-    // NOTE: exportQuery is not mocked yet
+    // NOTE: not all plugins are fully mocked
     plugins: [
       new SplitgraphImportCSVPlugin({
+        graphqlEndpoint: defaultHost.baseUrls.gql,
+        transformRequestHeaders,
+      }),
+      new SplitgraphAirbyteGithubImportPlugin({
         graphqlEndpoint: defaultHost.baseUrls.gql,
         transformRequestHeaders,
       }),
@@ -108,12 +118,70 @@ const createRealDb = () => {
         graphqlEndpoint: defaultHost.baseUrls.gql,
       }),
 
-      new ExportQueryPlugin({
+      new SplitgraphAirbyteGithubImportPlugin({
+        graphqlEndpoint: defaultHost.baseUrls.gql,
+      }),
+
+      new SplitgraphExportQueryToFilePlugin({
+        graphqlEndpoint: defaultHost.baseUrls.gql,
+      }),
+
+      new SplitgraphExportToSeafowlPlugin({
         graphqlEndpoint: defaultHost.baseUrls.gql,
       }),
     ],
   });
 };
+
+// @ts-expect-error https://stackoverflow.com/a/70711231
+const GITHUB_PAT_SECRET = import.meta.env.VITE_TEST_GITHUB_PAT_SECRET;
+
+describe.skipIf(shouldSkipIntegrationTestsForGitHubExternalDataSource())(
+  "importData for AirbyeGitHubImportPlugin",
+  () => {
+    it("can use the plugin", async () => {
+      const db = createRealDb();
+
+      const { username: namespace } = await fetchToken(db);
+
+      // NOTE: not actually asserting anything here atm, and these tests
+      // should usually be skipped until we have a better way of integration
+      // testing that doesn't require spam-ingesting GitHub repos into Splitgraph,
+      // or at least has the capability to delete them afterward
+      // SEE: packages/test-helpers/env-config.ts for hardcoded skip logic
+
+      // For now this is just a way to manually check everything is working
+      await db.importData(
+        "airbyte-github",
+        {
+          credentials: {
+            credentials: {
+              personal_access_token: GITHUB_PAT_SECRET,
+            },
+          },
+          params: {
+            repository: "splitgraph/seafowl",
+            start_date: "2021-06-01T00:00:00Z",
+          },
+        },
+        {
+          namespace: namespace,
+          repository: "madatdata-test-github-ingestion",
+          tables: [
+            {
+              name: "stargazers",
+              options: {
+                airbyte_cursor_field: ["starred_at"],
+                airbyte_primary_key_field: [],
+              },
+              schema: [],
+            },
+          ],
+        }
+      );
+    }, 60_000);
+  }
+);
 
 // Useful when writing initial tests against real server (where anon is allowed)
 // const _makeAnonymousDb = () => {
@@ -566,11 +634,55 @@ describe("importData for SplitgraphImportCSVPlugin", () => {
 
 // TODO: Make a mocked version of this test
 describe.skipIf(shouldSkipIntegrationTests())("real export query", () => {
-  it("exports a basic postgres query to parquet", async () => {
+  // NOTE: test assumes that the task hasn't completed by the time we send the first check
+  it("deferred exports basic postgres query to parquet returns a taskId", async () => {
+    const db = createRealDb();
+    const {
+      taskId,
+      response,
+      error: _e,
+      info,
+    } = await db.exportData(
+      "export-query-to-file",
+      // NOTE: Use a fairly big query (10,000 rows) so that it takes long enough to complete
+      // that when we check it's status for the first time, we can expect it to still be pending
+      // (with a low number of rows, this test sometimes failed since the task was complete when checking it)
+      {
+        query: `SELECT a as int_val, string_agg(random()::text, '') as text_val
+FROM generate_series(1, 10000) a, generate_series(1, 50) b
+GROUP BY a ORDER BY a;`,
+        vdbId: "ddn",
+      },
+      {
+        format: "parquet",
+        filename: "random-series",
+      },
+      { defer: true }
+    );
+
+    expect(typeof taskId).toBe("string");
+    expect(taskId?.length).toEqual(36);
+
+    expect(taskId).toBeDefined();
+
+    expect(response).toBeDefined();
+    expect(info).toBeDefined();
+
+    const startedTask = await db.pollDeferredTask("export-query-to-file", {
+      taskId: taskId as string,
+    });
+
+    expect(startedTask.completed).toBe(false);
+    expect(startedTask.error).toBeNull();
+    expect(startedTask.response?.status).toBe("STARTED");
+    expect(startedTask.response!.exportFormat).toBe("parquet");
+  });
+
+  it("exports a basic postgres query to parquet (and pollDeferredTask returns completed task)", async () => {
     const db = createRealDb();
 
     const { response, error, info } = await db.exportData(
-      "exportQuery",
+      "export-query-to-file",
       {
         query: `SELECT a as int_val, string_agg(random()::text, '') as text_val
 FROM generate_series(1, 5) a, generate_series(1, 50) b
@@ -615,8 +727,272 @@ GROUP BY a ORDER BY a;`,
     `);
 
     expect(error).toMatchInlineSnapshot("null");
+
+    // PIGGYBACK on this test to also test pollDeferredTask
+    // This is kind of cheating: we didn't initialize it as a deferred task, but
+    // we know that with the taskId, we can get the tatus of a deferred task. And
+    // we want to test that pollDeferredTask returns completed: true when a task
+    // has completed, and it's convenient to check that here since we know for
+    // sure that this task has completed (since we didn't defer it and therefore waited for it)
+    const shouldBeCompletedTask = await db.pollDeferredTask(
+      "export-query-to-file",
+      { taskId: response.taskId }
+    );
+
+    expect(shouldBeCompletedTask.completed).toBe(true);
+    expect(shouldBeCompletedTask.error).toBeNull();
+    expect(shouldBeCompletedTask.response?.exportFormat).toBe("parquet");
+
+    const taskOutput = shouldBeCompletedTask.response?.output;
+
+    expect(typeof taskOutput).toBe("object");
+    expect("url" in (taskOutput as object)).toBe(true);
+    expect(typeof (taskOutput as { url: string })["url"]).toBe("string");
   }, 30_000);
 });
+
+// @ts-expect-error https://stackoverflow.com/a/70711231
+const SEAFOWL_DEST_SECRET = import.meta.env
+  .VITE_TEST_SEAFOWL_EXPORT_DEST_SECRET;
+
+// @ts-expect-error https://stackoverflow.com/a/70711231
+const SEAFOWL_DEST_URL = import.meta.env.VITE_TEST_SEAFOWL_EXPORT_DEST_URL;
+
+// @ts-expect-error https://stackoverflow.com/a/70711231
+const SEAFOWL_DEST_DBNAME = import.meta.env
+  .VITE_TEST_SEAFOWL_EXPORT_DEST_DBNAME;
+
+describe.skipIf(shouldSkipExportFromSplitgraphToSeafowlIntegrationTests())(
+  "export from splitgraph to seafowl",
+  () => {
+    it("defers an export to seafowl", async () => {
+      const db = createRealDb();
+
+      const { username: splitgraphUsername } = await fetchToken(db);
+
+      expect(splitgraphUsername).toEqual(SEAFOWL_DEST_DBNAME);
+
+      // Should be _only the base URL_, like: https://demo.seafowl.cloud
+      expect(SEAFOWL_DEST_URL.endsWith("/")).toEqual(false);
+      expect(SEAFOWL_DEST_URL.endsWith("/q")).toEqual(false);
+
+      const destTableSuffix = randSuffix();
+      const destTable = `random_series_${destTableSuffix}`;
+
+      const res = await db.exportData(
+        "export-to-seafowl",
+        {
+          queries: [
+            {
+              source: {
+                query: `SELECT a as int_val, string_agg(random()::text, '') as text_val
+            FROM generate_series(1, 5) a, generate_series(1, 50) b
+            GROUP BY a ORDER BY a;`,
+              },
+              destination: {
+                schema: "madatdata_testing",
+                table: destTable,
+              },
+            },
+          ],
+        },
+        {
+          seafowlInstance: {
+            selfHosted: {
+              url: SEAFOWL_DEST_URL,
+              dbname: SEAFOWL_DEST_DBNAME,
+              secret: SEAFOWL_DEST_SECRET,
+            },
+          },
+        },
+        { defer: true }
+      );
+
+      expect({
+        queries: res.taskIds.queries.map((_: string) => "some query id"),
+        tables: res.taskIds.tables,
+        vdbs: res.taskIds.vdbs,
+      }).toMatchInlineSnapshot(`
+        {
+          "queries": [
+            "some query id",
+          ],
+          "tables": [],
+          "vdbs": [],
+        }
+      `);
+
+      expect(res.taskIds.queries.length).toEqual(1);
+
+      const taskId = res.taskIds.queries[0].jobId;
+
+      const startedTask = await db.pollDeferredTask("export-to-seafowl", {
+        taskId: taskId as string,
+      });
+
+      expect(startedTask.completed).toBe(false);
+      expect(startedTask.error).toBeNull();
+      expect(startedTask.info).not.toBeNull();
+      expect(startedTask.info?.jobStatus).not.toBeNull();
+      expect(startedTask.info?.jobStatus?.status).toBe(200);
+      expect(startedTask.response?.status).toBe("STARTED");
+      expect(startedTask.response?.exportFormat).toBe("sync");
+      expect(typeof startedTask.response?.started).toBe("string");
+      expect(startedTask.response?.finished).toBeNull();
+    }, 20_000);
+
+    it("exports a query to seafowl", async () => {
+      const db = createRealDb();
+
+      const { username: splitgraphUsername } = await fetchToken(db);
+
+      expect(splitgraphUsername).toEqual(SEAFOWL_DEST_DBNAME);
+
+      // Should be _only the base URL_, like: https://demo.seafowl.cloud
+      expect(SEAFOWL_DEST_URL.endsWith("/")).toEqual(false);
+      expect(SEAFOWL_DEST_URL.endsWith("/q")).toEqual(false);
+
+      const destTableSuffix = randSuffix();
+      const destTable = `random_series_${destTableSuffix}`;
+
+      const queryToExport = `SELECT a as int_val, string_agg(random()::text, '') as text_val
+      FROM generate_series(1, 5) a, generate_series(1, 50) b
+      GROUP BY a ORDER BY a;`;
+
+      const res = await db.exportData(
+        "export-to-seafowl",
+        {
+          queries: [
+            {
+              source: {
+                query: queryToExport,
+              },
+              destination: {
+                schema: "madatdata_testing",
+                table: destTable,
+              },
+            },
+          ],
+        },
+        {
+          seafowlInstance: {
+            selfHosted: {
+              url: SEAFOWL_DEST_URL,
+              dbname: SEAFOWL_DEST_DBNAME,
+              secret: SEAFOWL_DEST_SECRET,
+            },
+          },
+        }
+      );
+
+      expect(
+        (({ error, info }: typeof res) => ({
+          error,
+          info: {
+            allFailed: info.allFailed,
+            allPassed: info.allPassed,
+            somePassed: info.somePassed,
+            totalFailed: info.totalFailed,
+            totalPassed: info.totalPassed,
+          },
+        }))(res)
+      ).toMatchInlineSnapshot(`
+        {
+          "error": null,
+          "info": {
+            "allFailed": false,
+            "allPassed": true,
+            "somePassed": false,
+            "totalFailed": 0,
+            "totalPassed": 1,
+          },
+        }
+      `);
+
+      expect(res.response.passedJobs.queries.length).toEqual(1);
+      expect(res.response.passedJobs.tables.length).toEqual(0);
+      expect(res.response.passedJobs.vdbs.length).toEqual(0);
+
+      expect(
+        res.response.passedJobs.queries[0].result.response.exportFormat
+      ).toEqual("sync");
+      expect(res.response.passedJobs.queries[0].result.response.status).toEqual(
+        "SUCCESS"
+      );
+      expect(
+        res.response.passedJobs.queries[0].result.response.output.tables.length
+      ).toEqual(1);
+
+      const exportedTableTuple =
+        res.response.passedJobs.queries[0].result.response.output.tables[0];
+
+      const [
+        exportedQuery,
+        destDbname,
+        destSchema,
+        destTableName,
+        ingestedParquetURL,
+      ] = exportedTableTuple;
+
+      expect(destTableName).toEqual(destTable);
+      expect(destDbname).toEqual(SEAFOWL_DEST_DBNAME);
+
+      expect({
+        exportedQuery,
+        destSchema,
+      }).toMatchInlineSnapshot(`
+        {
+          "destSchema": "madatdata_testing",
+          "exportedQuery": "SELECT a as int_val, string_agg(random()::text, '') as text_val
+              FROM generate_series(1, 5) a, generate_series(1, 50) b
+              GROUP BY a ORDER BY a",
+        }
+      `);
+
+      expect(ingestedParquetURL.includes(".parquet")).toEqual(true);
+
+      // PIGGYBACK on this test to also test pollDeferredTask case of a completd task
+      const shouldBeCompletedTask = await db.pollDeferredTask(
+        "export-to-seafowl",
+        { taskId: res.response.passedJobs.queries[0].job.jobId as string }
+      );
+
+      expect(shouldBeCompletedTask.completed).toBe(true);
+      expect(shouldBeCompletedTask.error).toBeNull();
+      expect(shouldBeCompletedTask.info).not.toBeNull();
+      expect(shouldBeCompletedTask.info?.jobStatus?.status).toBe(200);
+      expect(shouldBeCompletedTask.response?.exportFormat).toBe("sync");
+      expect(shouldBeCompletedTask.response?.status).toBe("SUCCESS");
+      expect(typeof shouldBeCompletedTask.response?.started).toBe("string");
+      expect(typeof shouldBeCompletedTask.response?.finished).toBe("string");
+
+      const outputTable = (
+        shouldBeCompletedTask.response?.output! as { tables: string[][] }
+      )["tables"][0];
+
+      const [
+        inputQuery,
+        outputDbName,
+        outputSchema,
+        outputTableName,
+        intermediateParquetUrl,
+      ] = outputTable;
+
+      expect(inputQuery).toEqual(exportedQuery);
+      expect(inputQuery).toMatchInlineSnapshot(`
+        "SELECT a as int_val, string_agg(random()::text, '') as text_val
+              FROM generate_series(1, 5) a, generate_series(1, 50) b
+              GROUP BY a ORDER BY a"
+      `);
+      expect(outputDbName).toEqual(destDbname);
+      expect(outputSchema).toEqual(destSchema);
+      expect(outputTableName).toEqual(destTableName);
+      expect(typeof intermediateParquetUrl).toBe("string");
+      expect(intermediateParquetUrl.startsWith("https://")).toBe(true);
+      expect(intermediateParquetUrl.includes(".parquet")).toBe(true);
+    }, 60_000);
+  }
+);
 
 describe.skipIf(shouldSkipIntegrationTests())("real DDN", () => {
   it("uploads with TableParamsSchema semicolon delimiter", async () => {
@@ -641,6 +1017,84 @@ describe.skipIf(shouldSkipIntegrationTests())("real DDN", () => {
     expect(info?.jobStatus.status).toEqual("SUCCESS");
 
     expect(info?.jobLog?.url.includes(info.jobStatus.taskId)).toBe(true);
+
+    // PIGGYBACK on this test to also test pollDeferredTask (just like with export)
+    // We wouldn't normally do this since we didn't defer the task and have already
+    // awaited it, but since we know it's complete we can conveniently check the
+    // test case of pollDeferredTask returning a completed task
+    const shouldBeCompletedTask = await db.pollDeferredTask("csv", {
+      // This is the hacky part, note that this didn't come from the return value
+      taskId: info.jobStatus.taskId,
+      namespace,
+      repository: "dunno",
+    });
+
+    expect(shouldBeCompletedTask.completed).toBe(true);
+    expect(shouldBeCompletedTask.error).toBeNull();
+    expect(shouldBeCompletedTask.info?.jobStatus).not.toBeNull();
+    expect(shouldBeCompletedTask.info?.jobLog).not.toBeNull();
+
+    expect(shouldBeCompletedTask.response).not.toBeNull();
+    expect(typeof shouldBeCompletedTask.response?.jobLog?.url).toEqual(
+      "string"
+    );
+    expect(shouldBeCompletedTask.response?.jobStatus?.status).toEqual(
+      "SUCCESS"
+    );
+    expect(shouldBeCompletedTask.response?.jobStatus?.taskId).toEqual(
+      info.jobStatus.taskId
+    );
+    expect(shouldBeCompletedTask.response?.jobStatus?.isManual).toEqual(true);
+    expect(typeof shouldBeCompletedTask.response?.jobStatus?.finished).toEqual(
+      "string"
+    );
+    expect(typeof shouldBeCompletedTask.response?.jobStatus?.started).toEqual(
+      "string"
+    );
+  }, 20_000);
+
+  // NOTE: test assumes that the task hasn't completed by the time we send the first check
+  it("upload starts a deferred task", async () => {
+    const db = createRealDb();
+    const { username: namespace } = await fetchToken(db);
+
+    const { response, info, taskId } = await db.importData(
+      "csv",
+      { data: Buffer.from(`name;candies\r\nBob;5\r\nAlice;10`) },
+      {
+        tableName: `irrelevant-${randSuffix()}`,
+        namespace,
+        repository: "dunno",
+        tableParams: {
+          delimiter: ";",
+        },
+      },
+      { defer: true }
+    );
+
+    expect(typeof taskId).toBe("string");
+    expect(taskId?.length).toEqual(36);
+
+    expect(taskId).toBeDefined();
+
+    expect(response).toBeDefined();
+    expect(info).toBeDefined();
+
+    const startedTask = await db.pollDeferredTask("csv", {
+      taskId: taskId as string,
+      namespace,
+      repository: "dunno",
+    });
+
+    expect(startedTask.completed).toBe(false);
+    expect(startedTask.error).toBeNull();
+    expect(startedTask.info).toBeNull();
+    expect(startedTask.response?.jobStatus?.status).toBe("STARTED");
+    expect(startedTask.response?.jobStatus?.finished).toBeNull();
+    expect(startedTask.response?.jobStatus?.taskId).toEqual(taskId);
+    expect(typeof startedTask.response?.jobStatus?.started).toEqual("string");
+    expect(startedTask.response?.jobStatus?.finished).toBeNull();
+    expect(startedTask.response?.jobStatus?.isManual).toEqual(true);
   }, 20_000);
 });
 describe("makeFakeJwt and claimsFromJwt", () => {

@@ -208,7 +208,7 @@ describe("makeDefaultAnonymousContext", () => {
               },
             },
             "plugins": [
-              _SplitgraphImportCSVPlugin {
+              SplitgraphImportCSVPlugin {
                 "__name": "csv",
                 "graphqlClient": SplitgraphGraphQLClient {
                   "graphqlClient": GraphQLClient {
@@ -227,8 +227,46 @@ describe("makeDefaultAnonymousContext", () => {
                 },
                 "transformRequestHeaders": [Function],
               },
-              _ExportQueryPlugin {
-                "__name": "exportQuery",
+              SplitgraphGeneratedImportPlugin {
+                "__name": "airbyte-github",
+                "graphqlClient": SplitgraphGraphQLClient {
+                  "graphqlClient": GraphQLClient {
+                    "options": {
+                      "headers": [Function],
+                    },
+                    "url": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                  },
+                  "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                  "transformRequestHeaders": [Function],
+                },
+                "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                "opts": {
+                  "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                  "transformRequestHeaders": [Function],
+                },
+                "transformRequestHeaders": [Function],
+              },
+              SplitgraphExportQueryToFilePlugin {
+                "__name": "export-query-to-file",
+                "graphqlClient": SplitgraphGraphQLClient {
+                  "graphqlClient": GraphQLClient {
+                    "options": {
+                      "headers": [Function],
+                    },
+                    "url": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                  },
+                  "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                  "transformRequestHeaders": [Function],
+                },
+                "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                "opts": {
+                  "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                  "transformRequestHeaders": [Function],
+                },
+                "transformRequestHeaders": [Function],
+              },
+              SplitgraphExportToSeafowlPlugin {
+                "__name": "export-to-seafowl",
                 "graphqlClient": SplitgraphGraphQLClient {
                   "graphqlClient": GraphQLClient {
                     "options": {
@@ -251,7 +289,7 @@ describe("makeDefaultAnonymousContext", () => {
           "plugins": PluginRegistry {
             "hostContext": {},
             "plugins": [
-              _SplitgraphImportCSVPlugin {
+              SplitgraphImportCSVPlugin {
                 "__name": "csv",
                 "graphqlClient": SplitgraphGraphQLClient {
                   "graphqlClient": GraphQLClient {
@@ -270,8 +308,46 @@ describe("makeDefaultAnonymousContext", () => {
                 },
                 "transformRequestHeaders": [Function],
               },
-              _ExportQueryPlugin {
-                "__name": "exportQuery",
+              SplitgraphGeneratedImportPlugin {
+                "__name": "airbyte-github",
+                "graphqlClient": SplitgraphGraphQLClient {
+                  "graphqlClient": GraphQLClient {
+                    "options": {
+                      "headers": [Function],
+                    },
+                    "url": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                  },
+                  "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                  "transformRequestHeaders": [Function],
+                },
+                "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                "opts": {
+                  "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                  "transformRequestHeaders": [Function],
+                },
+                "transformRequestHeaders": [Function],
+              },
+              SplitgraphExportQueryToFilePlugin {
+                "__name": "export-query-to-file",
+                "graphqlClient": SplitgraphGraphQLClient {
+                  "graphqlClient": GraphQLClient {
+                    "options": {
+                      "headers": [Function],
+                    },
+                    "url": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                  },
+                  "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                  "transformRequestHeaders": [Function],
+                },
+                "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                "opts": {
+                  "graphqlEndpoint": "https://api.splitgraph.com/gql/cloud/unified/graphql",
+                  "transformRequestHeaders": [Function],
+                },
+                "transformRequestHeaders": [Function],
+              },
+              SplitgraphExportToSeafowlPlugin {
+                "__name": "export-to-seafowl",
                 "graphqlClient": SplitgraphGraphQLClient {
                   "graphqlClient": GraphQLClient {
                     "options": {
