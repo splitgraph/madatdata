@@ -183,6 +183,9 @@ defined, in topological order. Therefore, to indicate a workspace is
 publishable, make sure the `package.json` includes `scripts.version` and
 `scripts.publish`.
 
+If you want to publish a prerelease ("tag"), then add `--tag` to the
+`publish-all` command, e.g. `yarn publish-all --tag canary --otp <your otp>`
+
 Create deferred patch (0.0.x) changes (if necessary) in topological order
 
 (NOTE: To update all versions immediately, change `-d` to `-i`, and then there
