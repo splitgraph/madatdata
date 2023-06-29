@@ -269,7 +269,7 @@ export abstract class BaseDb<
     // In vitest, really JSDOM, it's a bit of a mix between the two (window is available?)
     // NOTE: Need to test how this will work in a browser bundle which we don't even have yet
     const subtle = await (async () => {
-      if (!window?.crypto?.subtle) {
+      if (typeof window === "undefined" || !window?.crypto?.subtle) {
         const { webcrypto } = await import("crypto");
 
         if (webcrypto.subtle) {
