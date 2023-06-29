@@ -73,7 +73,6 @@ export class SplitgraphExportToSeafowlPlugin
       typeof startExportResponse.exportToSeafowl.tables === "undefined" ||
       !startExportResponse.exportToSeafowl.vdbs
     ) {
-      debugger;
       return {
         response: startExportResponse ?? null,
         error: startExportError ?? null,
@@ -100,7 +99,14 @@ export class SplitgraphExportToSeafowlPlugin
         taskIds: {
           queries: queryExportJobs,
           // There can be maximum one table job, but put it in a list for consistency with vdbs and queries
-          tables: tableExportJobId ? [tableExportJobId] : [],
+          tables: tableExportJobId
+            ? [
+                {
+                  jobId: tableExportJobId,
+                  tables: tableExportTablesDetails,
+                },
+              ]
+            : [],
           vdbs: vdbExportJobs,
         },
         response: startExportResponse,
