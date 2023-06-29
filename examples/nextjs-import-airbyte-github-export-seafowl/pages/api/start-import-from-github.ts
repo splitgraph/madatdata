@@ -94,7 +94,8 @@ const startImport = async ({
       },
       params: {
         repository: githubSourceRepository,
-        start_date: githubStartDate ?? "2020-01-01T00:00:00Z",
+        start_date: githubStartDate ?? "2023-01-01T00:00:00Z",
+        page_size_for_large_streams: 100,
       },
     },
     {
