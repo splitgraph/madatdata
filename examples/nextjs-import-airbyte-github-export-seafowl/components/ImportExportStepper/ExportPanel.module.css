@@ -1,0 +1,34 @@
+.exportPanel {
+  background: inherit;
+  margin-top: 2rem;
+}
+
+.startExportButton {
+  color: var(--background);
+  background-color: var(--secondary);
+  padding: 8px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: bold;
+  border-style: none;
+  margin-bottom: 1rem;
+}
+
+.startExportButtonLoading {
+  /* color: var(--muted); */
+  /* background-color: transparent; */
+  opacity: 0.5;
+}
+
+.startExportButton:hover {
+  text-shadow: 0 0 5px rgba(43, 0, 255, 0.5);
+  cursor: pointer;
+}
+
+.exportCompleteInfo p {
+  margin-bottom: 1rem;
+}
+
+.exportInfo p {
+  margin-bottom: 1rem;
+}

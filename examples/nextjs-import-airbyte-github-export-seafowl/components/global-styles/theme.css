@@ -1,0 +1,33 @@
+:root {
+  --primary: #007bff;
+  --secondary: #ef00a7;
+  --background: #ffffff;
+  --header: #f2f6ff;
+  /* --header: #718096; */
+  --sidebar: #718096;
+  --text: #1a202c;
+  --subtext: #718096;
+  --danger: #eb8585;
+  --muted: rgba(113, 128, 150, 0.5);
+}
+
+body {
+  font-family: Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+}
+
+body a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+body a:hover {
+  text-decoration: underline;
+}
+
+body a:visited {
+  color: var(--primary);
+}
+
+code {
+  font-size: 1rem;
+}

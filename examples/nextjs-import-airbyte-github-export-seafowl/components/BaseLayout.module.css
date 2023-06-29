@@ -1,0 +1,38 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: var(--background);
+}
+
+.header {
+  width: 100%;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: var(--header);
+  color: var(--text);
+}
+
+.main {
+  display: flex;
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 20%; /* adjust as per your needs */
+  overflow-y: auto;
+  /* add additional styles for your sidebar */
+  color: var(--text);
+}
+
+.content {
+  width: 80%; /* adjust as per your needs */
+  overflow-y: auto;
+  position: relative;
+  /* add additional styles for your content area */
+  color: var(--text);
+  background-color: var(--background);
+  padding: 24px;
+}

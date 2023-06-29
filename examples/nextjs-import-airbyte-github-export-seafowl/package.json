@@ -1,0 +1,22 @@
+{
+  "private": true,
+  "scripts": {
+    "dev": "yarn next",
+    "dev-mitm": "MITMPROXY_ADDRESS=http://localhost:7979 yarn next",
+    "build": "yarn next build",
+    "start": "yarn next start"
+  },
+  "dependencies": {
+    "@madatdata/core": "latest",
+    "@madatdata/react": "latest",
+    "@observablehq/plot": "0.6.7",
+    "next": "latest",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/react": "^18.0.14",
+    "typescript": "^4.7.4"
+  }
+}

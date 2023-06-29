@@ -1,0 +1,44 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+}
+
+.logo a {
+  text-decoration: none;
+}
+
+.logo a:hover .wordmark {
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.logo .wordmark {
+  color: var(--primary);
+  font-size: large;
+}
+
+.logo .logo_link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo svg {
+  height: 36px;
+  margin: 8px;
+}
+
+.nav {
+  margin: 16px;
+}
+
+.nav a {
+  margin-left: 20px;
+  color: var(--secondary);
+  text-decoration: none;
+}
+
+.nav a:hover {
+  text-decoration: underline;
+}

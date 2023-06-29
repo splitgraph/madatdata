@@ -1,0 +1,4 @@
+.next
+.env.local
+.env.*.local
+!.env.test.local

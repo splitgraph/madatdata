@@ -1,0 +1,54 @@
+.sidebar {
+  background-color: var(--background);
+  border-right: 1px solid var(--header);
+  position: relative;
+}
+
+.importButtonContainer {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  background-color: var(--background);
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  border-bottom: 1px dotted var(--sidebar);
+}
+
+.importButton {
+  color: var(--background) !important;
+  background-color: var(--secondary);
+  padding: 16px;
+  border-radius: 16px;
+}
+
+.importButton {
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.importButton:hover {
+  text-shadow: 0 0 5px rgba(43, 0, 255, 0.5);
+}
+
+.repoList {
+  list-style: none;
+  padding: 0;
+}
+
+.repoList li {
+  margin-left: 0;
+  border-bottom: 1px dotted var(--sidebar);
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.repoList li a {
+  text-decoration: none;
+}
+
+.repoList li a:hover {
+  text-decoration: underline;
+}
