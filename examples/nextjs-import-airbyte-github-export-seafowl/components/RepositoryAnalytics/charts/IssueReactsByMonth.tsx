@@ -17,25 +17,25 @@ type Reaction =
   | "rocket"
   | "eyes";
 
-type MappedMonthlyIssueStatsRow = MonthlyIssueStatsRow & {
+type MappedIssueReactsByMonthRow = IssueReactsByMonthRow & {
   created_at_month: Date;
 };
 
 /**
  * A stacked bar chart of the number of reactions each month, grouped by reaction type
  */
-export const MonthlyIssueStats = ({
+export const IssueReactsByMonth = ({
   splitgraphNamespace,
   splitgraphRepository,
 }: ImportedRepository) => {
   const renderPlot = useSqlPlot({
     sqlParams: { splitgraphNamespace, splitgraphRepository },
     buildQuery: monthlyIssueStatsTableQuery,
-    mapRows: (r: MonthlyIssueStatsRow) => ({
+    mapRows: (r: IssueReactsByMonthRow) => ({
       ...r,
       created_at_month: new Date(r.created_at_month),
     }),
-    reduceRows: (rows: MappedMonthlyIssueStatsRow[]) => {
+    reduceRows: (rows: MappedIssueReactsByMonthRow[]) => {
       const reactions = new Map<
         Reaction,
         { created_at_month: Date; count: number }[]
@@ -89,14 +89,41 @@ export const MonthlyIssueStats = ({
     isRenderable: (p) => !!p.splitgraphRepository,
 
     makePlotOptions: (issueStats) => ({
-      y: { grid: true },
-      color: { legend: true },
+      y: { grid: true, label: "Number of Reactions" },
+      x: {
+        label: "Month",
+      },
+      color: {
+        legend: true,
+        label: "Reaction",
+        tickFormat: (reaction) => {
+          switch (reaction) {
+            case "plus_one":
+              return "👍 plus_one";
+            case "minus_one":
+              return "👎 minus_one";
+            case "laugh":
+              return "😄 laugh";
+            case "confused":
+              return "😕 confused";
+            case "heart":
+              return "❤️ heart";
+            case "hooray":
+              return "🎉 hooray";
+            case "rocket":
+              return "🚀 rocket";
+            case "eyes":
+              return "👀 eyes";
+          }
+        },
+      },
       marks: [
         Plot.rectY(issueStats, {
           x: "created_at_month",
           y: "count",
           interval: "month",
           fill: "reaction",
+          tip: true,
         }),
         Plot.ruleY([0]),
       ],
@@ -107,7 +134,7 @@ export const MonthlyIssueStats = ({
 };
 
 /** Shape of row returned by {@link monthlyIssueStatsTableQuery} */
-export type MonthlyIssueStatsRow = {
+export type IssueReactsByMonthRow = {
   created_at_month: string;
   num_issues: number;
   total_reacts: number;
