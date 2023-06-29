@@ -7,6 +7,7 @@ import { useMemo } from "react";
 
 import { StargazersChart } from "./charts/StargazersChart";
 import { IssueReactsByMonth } from "./charts/IssueReactsByMonth";
+import { UserCodeVsComment } from "./charts/UserCodeVsComment";
 
 export interface ChartsProps {
   importedRepository: ImportedRepository;
@@ -32,6 +33,8 @@ export const Charts = ({ importedRepository }: ChartsProps) => {
         <StargazersChart {...importedRepository} />
         <h3>Issue Reacts by Month</h3>
         <IssueReactsByMonth {...importedRepository} />
+        <h3>Code vs. Comment Length</h3>
+        <UserCodeVsComment {...importedRepository} />
       </SqlProvider>
     </div>
   );

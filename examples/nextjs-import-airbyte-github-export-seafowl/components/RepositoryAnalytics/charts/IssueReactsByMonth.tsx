@@ -7,7 +7,6 @@ const META_NAMESPACE =
   process.env.NEXT_PUBLIC_SPLITGRAPH_GITHUB_ANALYTICS_META_NAMESPACE;
 
 type Reaction =
-  // | "all"
   | "plus_one"
   | "minus_one"
   | "laugh"

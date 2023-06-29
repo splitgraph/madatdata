@@ -92,8 +92,6 @@ export const useSqlPlot = <
     return reduceRows(mappedRows);
   }, [mappedRows]);
 
-  console.log(JSON.stringify(reducedRows));
-
   const plotOptions = useMemo(
     () => makePlotOptions(reducedRows),
     [reducedRows]
